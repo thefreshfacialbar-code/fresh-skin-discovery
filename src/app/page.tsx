@@ -1,68 +1,60 @@
 import Image from "next/image";
+import Link from "next/link";
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+    <div className="min-h-screen bg-[linear-gradient(135deg,_#f7efe7_0%,_#f2e8dd_100%)] px-4 py-8 text-stone-700 sm:px-6 lg:px-8">
+      <main className="mx-auto flex min-h-[calc(100vh-4rem)] max-w-7xl items-center">
+        <section className="w-full rounded-[2rem] border border-[#DAD6DB] bg-[#fcf8f2]/95 p-8 shadow-[0_24px_75px_rgba(144,138,155,0.14)] backdrop-blur sm:p-10 lg:p-16">
+          <header className="mb-8 flex justify-center">
+            <div className="flex h-[256px] w-[256px] items-center justify-center sm:h-[320px] sm:w-[320px] lg:h-[416px] lg:w-[416px]">
+              <Image src="/ffb-logo.png" alt="Fresh Facial Bar & Lash Lounge logo" width={1664} height={1664} priority />
+            </div>
+          </header>
+
+          <div className="mt-10 grid gap-10 lg:grid-cols-[1.15fr_0.85fr] lg:items-start">
+            <div className="max-w-2xl">
+              <p className="text-[0.8rem] font-semibold uppercase tracking-[0.4em] text-[#908A9B] sm:text-sm">
+                The Skin Discovery Journey
+              </p>
+              <h1 className="mt-4 font-serif text-4xl leading-[1.05] text-stone-800 sm:text-5xl lg:text-6xl">
+                Every complexion tells a story.
+              </h1>
+
+              <p className="mt-6 text-lg leading-8 text-stone-600 sm:text-xl">
+                Your Skin Discovery Journey helps uncover what your skin is asking for, so your Farmacist can craft a personalized skincare plan designed specifically for you.
+              </p>
+
+              <p className="mt-5 max-w-xl text-base leading-8 text-stone-600 sm:text-lg">
+                “Freshly crafted for your skin, because no two complexions are alike.”
+              </p>
+
+              <div className="mt-8 flex flex-col items-start gap-3">
+                <Link
+                  href="/discovery"
+                  className="inline-flex items-center justify-center rounded-full bg-[#908A9B] px-8 py-4 text-base font-semibold text-white shadow-[0_12px_30px_rgba(144,138,155,0.2)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#7d7688] sm:px-9 sm:py-4.5 sm:text-lg"
+                >
+                  Begin My Journey
+                </Link>
+                <p className="max-w-md text-base leading-7 italic text-stone-600 sm:text-lg">
+                  Thoughtfully curated. Expertly guided. Uniquely yours.
+                </p>
+              </div>
+            </div>
+
+            <div className="rounded-[1.75rem] border-[1.5px] border-[#DAD6D8] bg-[#fffdf9] p-6 shadow-[0_18px_45px_rgba(144,138,155,0.08)] sm:p-8">
+              <div className="text-sm font-semibold uppercase tracking-[0.3em] text-[#908A9B]">
+                Your Journey Begins Here
+              </div>
+              <ul className="mt-5 space-y-3 text-base leading-7 text-stone-600">
+                <li>• Personalized by your Farmacist</li>
+                <li>• Built around your skincare goals</li>
+                <li>• No one-size-fits-all routines</li>
+                <li>• <span className="font-semibold text-stone-700">Results in about 5 minutes</span></li>
+              </ul>
+            </div>
+          </div>
+        </section>
       </main>
     </div>
   );
