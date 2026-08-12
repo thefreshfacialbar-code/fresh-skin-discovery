@@ -10,6 +10,13 @@ import {
   skinExperienceLabels,
   desiredOutcomesLabels,
 } from "@/lib/journeyReviewMappings";
+import {
+  evaluateRecommendation,
+} from "@/lib/recommendationEngine";
+import {
+  readRecommendationInputFromStorage,
+  writeRecommendationToStorage,
+} from "@/lib/recommendationSession";
 
 function SummaryPill({ children }: { children: React.ReactNode }) {
   return (
@@ -202,7 +209,18 @@ export default function ReviewingPage() {
         <div className="mt-10 flex flex-col items-center pb-12">
           <button
             type="button"
-            onClick={() => router.push("/journey/results")}
+            onClick={() => {
+              const recommendationInput = readRecommendationInputFromStorage();
+
+              if (!recommendationInput) {
+                router.push("/journey/listening");
+                return;
+              }
+
+              const recommendation = evaluateRecommendation(recommendationInput);
+              writeRecommendationToStorage(recommendation);
+              router.push("/journey/results");
+            }}
             className="inline-flex items-center justify-center rounded-full bg-[#908A9B] px-9 py-4 text-sm font-semibold uppercase tracking-[0.16em] text-white shadow-[0_10px_28px_rgba(144,138,155,0.24)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#817B8B]"
           >
             Reveal My Journey →
