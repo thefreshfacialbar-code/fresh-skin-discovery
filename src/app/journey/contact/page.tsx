@@ -123,10 +123,7 @@ export default function ContactCapturePage() {
             Where should we send it?
           </h1>
           <p className="mx-auto mt-5 max-w-2xl text-base leading-8 text-[#5A5553] sm:text-lg">
-            Your personalized Skin Discovery is ready. Tell us where to send your Journey + Fresh Picks so you can come back to them anytime.
-          </p>
-          <p className="mx-auto mt-4 max-w-2xl text-base leading-8 text-[#5A5553] sm:text-lg">
-            We&apos;ll also share a copy with your Skintender so they&apos;re ready to continue your Journey with you.
+            Your personalized Skin Discovery is ready. Tell us where to send a copy, then reveal your Journey + Fresh Picks right here.
           </p>
         </section>
 
@@ -228,6 +225,13 @@ export default function ContactCapturePage() {
             >
               REVEAL MY JOURNEY →
             </button>
+
+            <p className="text-center text-sm leading-6 text-[#7E7877]">
+              Your Journey + Fresh Picks are waiting on the other side.
+            </p>
+            <p className="text-center text-sm leading-6 text-[#7E7877]">
+              We&apos;ll also share a copy with your Skintender so they&apos;re ready to continue your Journey with you.
+            </p>
 
             <button
               type="button"
