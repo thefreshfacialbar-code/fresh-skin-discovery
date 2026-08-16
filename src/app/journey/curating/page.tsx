@@ -59,11 +59,11 @@ export default function CuratingTransitionPage() {
   return (
     <main
       className={[
-        "flex min-h-screen items-center justify-center bg-[#FAF7F1] px-6 py-12 text-[#302C2A] transition-opacity duration-500 ease-out",
+        "flex min-h-screen items-center justify-center bg-[#FAF7F1] px-6 pb-12 pt-4 text-[#302C2A] transition-opacity duration-500 ease-out",
         isVisible ? "opacity-100" : "opacity-0",
       ].join(" ")}
     >
-      <div className="w-full max-w-4xl text-center">
+      <div className="w-full max-w-4xl -mt-4 text-center sm:-mt-3">
         <div className="flex justify-center">
           <div className="flex h-60 w-60 items-center justify-center sm:h-72 sm:w-72 lg:h-80 lg:w-80">
             <Image

@@ -16,7 +16,7 @@ const experiences = [
   },
   {
     id: "gentlemens-corner",
-    title: "Curated Gentlemen's Corner",
+    title: "Curated Gentlemen's\nCorner",
     subtitle: "Skincare Thoughtfully Curated for Men",
     description:
       "Men's skin plays different. Skincare built for men. Made simple.",
@@ -74,10 +74,10 @@ export default function DiscoveryPage() {
                     key={experience.id}
                     type="button"
                     onClick={() => handleCardClick(experience.id, experience.available)}
-                    className={cardClassName}
+                    className={`${cardClassName} flex h-full flex-col`}
                   >
                     <div className="flex items-start justify-between gap-3">
-                      <div>
+                      <div className="min-w-0 flex-1">
                         <h2 className="font-serif text-2xl leading-tight text-stone-800">
                           {experience.title.split("\n").map((line, index) => (
                             <span key={`${experience.id}-${index}`} className="block">
@@ -104,13 +104,15 @@ export default function DiscoveryPage() {
                       {experience.description}
                     </p>
 
-                    <div className="mt-6 flex justify-center border-t border-[#DAD6D8] pt-4">
-                      <span
-                        aria-hidden="true"
-                        className="inline-flex items-center justify-center rounded-full bg-[#908A9B] px-4 py-2 text-sm font-semibold uppercase tracking-[0.2em] text-white transition-all duration-200"
-                      >
-                        Begin My Journey
-                      </span>
+                    <div className="mt-auto pt-6">
+                      <div className="flex justify-center border-t border-[#DAD6D8] pt-4">
+                        <span
+                          aria-hidden="true"
+                          className="inline-flex items-center justify-center rounded-full bg-[#908A9B] px-4 py-2 text-sm font-semibold uppercase tracking-[0.2em] text-white transition-all duration-200"
+                        >
+                          Begin My Journey
+                        </span>
+                      </div>
                     </div>
                   </button>
                 );
@@ -119,11 +121,11 @@ export default function DiscoveryPage() {
               return (
                 <div
                   key={experience.id}
-                  className={cardClassName}
+                  className={`${cardClassName} flex h-full flex-col`}
                   aria-hidden="true"
                 >
                   <div className="flex items-start justify-between gap-3">
-                    <div>
+                    <div className="min-w-0 flex-1">
                       <h2 className="font-serif text-2xl leading-tight text-stone-800">
                         {experience.title.split("\n").map((line, index) => (
                           <span key={`${experience.id}-${index}`} className="block">
@@ -150,13 +152,15 @@ export default function DiscoveryPage() {
                     {experience.description}
                   </p>
 
-                  <div className="mt-6 flex justify-center border-t border-[#DAD6D8] pt-4">
-                    <span
-                      aria-hidden="true"
-                      className="inline-flex items-center justify-center rounded-full bg-[#908A9B] px-4 py-2 text-sm font-semibold uppercase tracking-[0.2em] text-white"
-                    >
-                      Launching Soon
-                    </span>
+                  <div className="mt-auto pt-6">
+                    <div className="flex justify-center border-t border-[#DAD6D8] pt-4">
+                      <span
+                        aria-hidden="true"
+                        className="inline-flex items-center justify-center rounded-full bg-[#908A9B] px-4 py-2 text-sm font-semibold uppercase tracking-[0.2em] text-white"
+                      >
+                        Launching Soon
+                      </span>
+                    </div>
                   </div>
                 </div>
               );

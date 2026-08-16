@@ -11,6 +11,7 @@ import {
   desiredOutcomesLabels,
 } from "@/lib/journeyReviewMappings";
 import { readStoredRecommendation } from "@/lib/recommendationSession";
+import { clearProductRecommendationSession } from "@/lib/productRecommendationSession";
 
 type JourneyKey = "quench" | "calm" | "purify" | "illuminate" | "renew";
 
@@ -78,7 +79,7 @@ const JOURNEY_CONTENT: Record<JourneyKey, JourneyContent> = {
     focusAreas: ["Smoothness", "Firmness", "Texture", "Healthy aging support"],
     editorialLine:
       "The goal: skin that looks smoother, supported and beautifully refreshed.",
-    icon: "❋",
+    icon: "renew",
   },
 };
 
@@ -90,6 +91,29 @@ function SummaryPill({ children }: { children: React.ReactNode }) {
     >
       {children}
     </span>
+  );
+}
+
+function JourneyGlyph({ journeyId, className = "" }: { journeyId: JourneyKey; className?: string }) {
+  if (journeyId !== "renew") {
+    const content = JOURNEY_CONTENT[journeyId];
+    return <span className={className}>{content.icon}</span>;
+  }
+
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M19.2 4.8c-6.2 0-10.9 3.7-12.7 10.2C4 18.7 5.7 20.9 8.7 21.2c3 .3 5.8-1.1 7.1-3.6 1.6-3.1 2.4-7.2 3.4-12.8Z" />
+      <path d="M7.8 18.6c2.9-3.8 5.8-7.1 10-9.7" />
+    </svg>
   );
 }
 
@@ -128,7 +152,7 @@ function JourneyCard({
           aria-hidden="true"
           className="flex h-12 w-12 items-center justify-center rounded-full border border-[#DAD6DB] bg-[#F5F2F4] text-xl text-[#908A9B]"
         >
-          {content.icon}
+          <JourneyGlyph journeyId={journeyId} className={journeyId === "renew" ? "h-5 w-5" : "text-xl"} />
         </div>
       </div>
 
@@ -166,6 +190,7 @@ function clearSkinDiscoverySession() {
     "skinDiscoverySkinExperience",
     "skinDiscoveryDesiredOutcomes",
     "skinDiscoveryRecommendation",
+    "skinDiscoveryProductRecommendations",
   ];
 
   keys.forEach((key) => window.sessionStorage.removeItem(key));
@@ -185,7 +210,7 @@ export default function ResultsPage() {
       <main className="min-h-screen bg-[#FAF7F1] px-5 py-6 text-[#302C2A] sm:px-8 md:py-8">
         <div className="mx-auto max-w-6xl">
           <div className="flex justify-center">
-            <div className="flex h-32 w-32 items-center justify-center sm:h-40 sm:w-40 lg:h-44 lg:w-44">
+            <div className="flex h-40 w-40 items-center justify-center sm:h-48 sm:w-48 lg:h-56 lg:w-56">
               <Image
                 src="/ffb-logo.png"
                 alt="Fresh Facial Bar & Lash Lounge"
@@ -244,7 +269,7 @@ export default function ResultsPage() {
     <main className="min-h-screen bg-[#FAF7F1] px-5 py-6 text-[#302C2A] sm:px-8 md:py-8">
       <div className="mx-auto max-w-6xl">
         <div className="flex justify-center">
-          <div className="flex h-32 w-32 items-center justify-center sm:h-40 sm:w-40 lg:h-44 lg:w-44">
+          <div className="flex h-40 w-40 items-center justify-center sm:h-48 sm:w-48 lg:h-56 lg:w-56">
             <Image
               src="/ffb-logo.png"
               alt="Fresh Facial Bar & Lash Lounge"
@@ -478,6 +503,7 @@ export default function ResultsPage() {
                 type="button"
                 onClick={() => {
                   clearSkinDiscoverySession();
+                  clearProductRecommendationSession();
                   router.push("/journey/listening");
                 }}
                 className="text-sm font-medium uppercase tracking-[0.18em] text-[#908A9B] underline-offset-4 transition hover:text-[#403A3D] hover:underline"
