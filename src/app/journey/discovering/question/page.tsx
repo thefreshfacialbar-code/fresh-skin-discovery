@@ -169,7 +169,7 @@ export default function DiscoveringQuestionPage() {
 
           <p className="mx-auto mt-5 max-w-3xl text-base leading-7 text-[#5A5553] sm:text-lg">
             Select everything that feels important to you. Your goals help your
-            Farmacist understand where you&apos;d most like your skincare journey to
+            Skintender understand where you&apos;d most like your skincare journey to
             go.
           </p>
         </section>

@@ -82,7 +82,7 @@ const answers: Answer[] = [
     id: "not-sure",
     icon: "compass",
     title: "I'm not sure.",
-    description: "That's okay—your Farmacist can help you understand what your skin is telling you.",
+    description: "That's okay—your Skintender can help you understand what your skin is telling you.",
   },
 ];
 
@@ -244,7 +244,7 @@ export default function UnderstandingQuestionPage() {
 
           <p className="mx-auto mt-5 max-w-3xl text-base leading-7 text-[#5A5553] sm:text-lg">
             Select everything that feels true for your skin. Your answers help
-            your Farmacist understand how your skin behaves—not simply how it
+            your Skintender understand how your skin behaves—not simply how it
             looks.
           </p>
         </section>

@@ -141,7 +141,7 @@ export default function ReviewingPage() {
           </h1>
 
           <p className="mx-auto mt-5 max-w-3xl text-base leading-7 text-[#5A5553] sm:text-lg">
-            Your answers give us a thoughtful starting point. Your Farmacist can use this discovery to personalize your recommendations even further.
+            Your answers give us a thoughtful starting point. Your Skintender can use this discovery to personalize your recommendations even further.
           </p>
         </section>
 

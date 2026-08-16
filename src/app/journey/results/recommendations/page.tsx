@@ -55,7 +55,7 @@ function ProductCard({
       : product.usageType === "weekly"
         ? "Weekly ritual"
         : product.usageType === "farmacist-guided"
-          ? "Farmacist-guided treatment"
+          ? "Skintender-guided treatment"
           : product.usageType === "periodic"
             ? "Targeted treatment"
             : "Targeted treatment";
@@ -194,7 +194,7 @@ export default function RecommendationsPage() {
               Your home-care edit deserves a little more personalization.
             </h1>
             <p className="mx-auto mt-5 max-w-4xl text-base leading-8 text-[#5A5553] sm:text-lg">
-              Your Discovery didn&apos;t point strongly enough in one direction for us to thoughtfully choose products automatically. Your Farmacist can use everything you&apos;ve shared to build the right starting point with you.
+              Your Discovery didn&apos;t point strongly enough in one direction for us to thoughtfully choose products automatically. Your Skintender can use everything you&apos;ve shared to build the right starting point with you.
             </p>
           </section>
 
@@ -245,7 +245,7 @@ export default function RecommendationsPage() {
             A few thoughtful places to begin.
           </h1>
           <p className="mx-auto mt-5 max-w-4xl text-base leading-8 text-[#5A5553] sm:text-lg">
-            Your Discovery helped us narrow our product library to a few Fresh Picks that align with what your skin is asking for today. Your Farmacist can fine-tune these selections around what you&apos;re already using, your preferences and how your skin is feeling.
+            Your Discovery helped us narrow our product library to a few Fresh Picks that align with what your skin is asking for today. Your Skintender can fine-tune these selections around what you&apos;re already using, your preferences and how your skin is feeling.
           </p>
         </section>
 
@@ -258,14 +258,14 @@ export default function RecommendationsPage() {
 
         <div className="mt-12 rounded-[2rem] border border-[#DAD6DB] bg-[#FFFDFC] p-6 shadow-[0_18px_42px_rgba(61,52,48,0.06)] sm:p-8 lg:p-10">
           <div className="grid gap-6 lg:grid-cols-3">
-            <SummaryCard title="BUILT AROUND YOUR DISCOVERY" value="Your Farmacist crafts the facial.">
-              Your Skin Discovery gives your Farmacist a thoughtful starting point for your visit. They&apos;ll use what we&apos;ve learned about your skin to craft your custom facial around the goals and priorities revealed in your Journey.
+            <SummaryCard title="BUILT AROUND YOUR DISCOVERY" value="Your Skintender crafts the facial.">
+              Your Skin Discovery gives your Skintender a thoughtful starting point for your visit. They&apos;ll use what we&apos;ve learned about your skin to craft your custom facial around the goals and priorities revealed in your Journey.
             </SummaryCard>
             <SummaryCard title="WORTH CONSIDERING" value="LED Light Therapy">
-              Your Farmacist can help determine whether this enhancement makes sense for your custom facial.
+              Your Skintender can help determine whether this enhancement makes sense for your custom facial.
             </SummaryCard>
             <SummaryCard title="WORTH CONSIDERING" value="Dermaplaning">
-              Your Farmacist can help determine whether this enhancement makes sense for your custom facial.
+              Your Skintender can help determine whether this enhancement makes sense for your custom facial.
             </SummaryCard>
           </div>
         </div>
@@ -275,7 +275,7 @@ export default function RecommendationsPage() {
             More Fresh Picks for Your Journey
           </h2>
           <p className="mt-4 text-base leading-8 text-[#5A5553] sm:text-lg">
-            A few additional options your Farmacist may consider as your routine evolves.
+            A few additional options your Skintender may consider as your routine evolves.
           </p>
 
           <div className="mt-8 grid gap-6 lg:grid-cols-2">
@@ -290,13 +290,13 @@ export default function RecommendationsPage() {
                   </div>
                   {product.farmacistReviewRecommended ? (
                     <span className="rounded-full border border-[#DAD6DB] bg-[#F5F2F4] px-3 py-2 text-[0.62rem] font-semibold uppercase tracking-[0.18em] text-[#908A9B]">
-                      Farmacist review
+                      Skintender review
                     </span>
                   ) : null}
                 </div>
                 <p className="mt-4 text-base leading-8 text-[#5A5553]">{product.guestBenefit}</p>
                 {product.farmacistReviewRecommended ? (
-                  <p className="mt-4 text-sm italic text-[#5A5553]">Ask your Farmacist if this Fresh Pick is right for your routine.</p>
+                  <p className="mt-4 text-sm italic text-[#5A5553]">Ask your Skintender if this Fresh Pick is right for your routine.</p>
                 ) : null}
               </div>
             ))}

@@ -35,7 +35,7 @@ const JOURNEY_CONTENT: Record<JourneyKey, JourneyContent> = {
     focusAreas: ["Hydration", "Comfort", "Barrier support", "Softness and suppleness"],
     editorialLine:
       "The goal: skin that feels replenished, comfortable and beautifully balanced.",
-    icon: "💧",
+    icon: "quench",
   },
   calm: {
     name: "Calm",
@@ -46,7 +46,7 @@ const JOURNEY_CONTENT: Record<JourneyKey, JourneyContent> = {
     focusAreas: ["Calm", "Comfort", "Sensitivity support", "Barrier resilience"],
     editorialLine:
       "The goal: skin that feels soothed, supported and less easily unsettled.",
-    icon: "✦",
+    icon: "calm",
   },
   purify: {
     name: "Purify",
@@ -57,7 +57,7 @@ const JOURNEY_CONTENT: Record<JourneyKey, JourneyContent> = {
     focusAreas: ["Clarity", "Congestion support", "Oil balance", "Healthy-looking pores"],
     editorialLine:
       "The goal: clearer-looking skin that still feels comfortable and supported.",
-    icon: "◈",
+    icon: "purify",
   },
   illuminate: {
     name: "Illuminate",
@@ -68,7 +68,7 @@ const JOURNEY_CONTENT: Record<JourneyKey, JourneyContent> = {
     focusAreas: ["Radiance", "Brightness", "Tone", "Healthy-looking glow"],
     editorialLine:
       "The goal: a complexion that looks fresher, brighter and naturally luminous.",
-    icon: "✧",
+    icon: "illuminate",
   },
   renew: {
     name: "Renew",
@@ -95,24 +95,63 @@ function SummaryPill({ children }: { children: React.ReactNode }) {
 }
 
 function JourneyGlyph({ journeyId, className = "" }: { journeyId: JourneyKey; className?: string }) {
-  if (journeyId !== "renew") {
-    const content = JOURNEY_CONTENT[journeyId];
-    return <span className={className}>{content.icon}</span>;
+  const commonProps = {
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 1.7,
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+    className,
+    "aria-hidden": true,
+  };
+
+  if (journeyId === "quench") {
+    return (
+      <svg {...commonProps}>
+        <path d="M12 2.7S6.5 9 6.5 13.6A5.5 5.5 0 0 0 17.5 13.6C17.5 9 12 2.7 12 2.7Z" />
+        <path d="M12 8.3v4.2" />
+      </svg>
+    );
+  }
+
+  if (journeyId === "calm") {
+    return (
+      <svg {...commonProps}>
+        <path d="M12 5.2c1.8 1.5 2.7 3.2 2.7 5.1 0 1.1-.3 2.1-.8 3" />
+        <path d="M12 5.2c-1.8 1.5-2.7 3.2-2.7 5.1 0 1.1.3 2.1.8 3" />
+        <path d="M8.9 9.4c-2 .5-3.5 1.5-4.7 3 1.3 2.2 3.2 3.5 5.8 3.8" />
+        <path d="M15.1 9.4c2 .5 3.5 1.5 4.7 3-1.3 2.2-3.2 3.5-5.8 3.8" />
+        <path d="M9.8 13.4c.6 1.9 1.3 3.2 2.2 4.1.9-.9 1.6-2.2 2.2-4.1" />
+        <path d="M6.4 16.1c1.7 1.7 3.6 2.6 5.6 2.6s3.9-.9 5.6-2.6" />
+      </svg>
+    );
+  }
+
+  if (journeyId === "purify") {
+    return (
+      <svg {...commonProps}>
+        <path d="M12 3 19 6v5c0 4.6-2.9 8-7 10-4.1-2-7-5.4-7-10V6l7-3Z" />
+        <path d="M9.5 12.5h5" />
+        <path d="m12 10 0 5" />
+      </svg>
+    );
+  }
+
+  if (journeyId === "illuminate") {
+    return (
+      <svg {...commonProps}>
+        <path d="m12 3 1.05 3.05L16 7.1l-2.95 1.05L12 11.2l-1.05-3.05L8 7.1l2.95-1.05L12 3Z" />
+        <path d="m18 13 .8 2.2L21 16l-2.2.8L18 19l-.8-2.2L15 16l2.2-.8L18 13Z" />
+        <path d="m6 13 .65 1.85L8.5 15.5l-1.85.65L6 18l-.65-1.85-1.85-.65 1.85-.65L6 13Z" />
+      </svg>
+    );
   }
 
   return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.7"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      aria-hidden="true"
-    >
-      <path d="M19.2 4.8c-6.2 0-10.9 3.7-12.7 10.2C4 18.7 5.7 20.9 8.7 21.2c3 .3 5.8-1.1 7.1-3.6 1.6-3.1 2.4-7.2 3.4-12.8Z" />
-      <path d="M7.8 18.6c2.9-3.8 5.8-7.1 10-9.7" />
+    <svg {...commonProps}>
+      <path d="M20 4.5C13 4.5 7 7.5 5 13c-1 2.7.2 5.6 2.6 6.5 2.5.9 5.4-.1 6.9-2.4C17.1 13.1 18.5 8.7 20 4.5Z" />
+      <path d="M6.5 18.5c2.7-3.6 5.6-6.3 9-8.5" />
     </svg>
   );
 }
@@ -306,7 +345,7 @@ export default function ResultsPage() {
 
           <p className="mx-auto mt-4 max-w-4xl text-base leading-8 text-[#5A5553] sm:text-lg">
             Everything you shared helped us uncover the direction your skin may be asking for today. Your
-            Farmacist can personalize this journey even further as your skin changes.
+            Skintender can personalize this journey even further as your skin changes.
           </p>
         </section>
 
@@ -351,7 +390,7 @@ export default function ResultsPage() {
 
                   <p className="mt-4 text-base leading-8 text-[#5A5553]">
                     Your answers also consistently point toward {JOURNEY_CONTENT[secondaryJourney].name}, so your
-                    Farmacist may thoughtfully weave elements of this journey into your recommendations.
+                    Skintender may thoughtfully weave elements of this journey into your recommendations.
                   </p>
                 </div>
               </div>
@@ -386,7 +425,7 @@ export default function ResultsPage() {
 
             <div className="mt-6 text-center">
               <p className="text-lg italic text-[#403A3D]" style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}>
-                Your Farmacist can thoughtfully blend both directions into one personalized approach.
+                Your Skintender can thoughtfully blend both directions into one personalized approach.
               </p>
             </div>
           </div>
@@ -412,7 +451,7 @@ export default function ResultsPage() {
               </p>
 
               <p className="mt-5 text-base leading-8 text-[#5A5553] sm:text-lg">
-                Your Farmacist can use everything you&apos;ve shared to personalize your next step.
+                Your Skintender can use everything you&apos;ve shared to personalize your next step.
               </p>
 
               <button
@@ -486,7 +525,7 @@ export default function ResultsPage() {
             </h2>
 
             <p className="mt-5 text-base leading-8 text-[#5A5553] sm:text-lg">
-              Your Skin Discovery gives your Farmacist a thoughtful starting point. From here, your recommendations
+              Your Skin Discovery gives your Skintender a thoughtful starting point. From here, your recommendations
               can be refined around your skin, your goals and how your complexion changes over time.
             </p>
 

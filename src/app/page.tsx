@@ -22,7 +22,7 @@ export default function Home() {
               </h1>
 
               <p className="mt-6 text-lg leading-8 text-stone-600 sm:text-xl">
-                Your Skin Discovery Journey helps uncover what your skin is asking for, so your Farmacist can craft a personalized skincare plan designed specifically for you.
+                Your Skin Discovery Journey helps uncover what your skin is asking for, so your Skintender can craft a personalized skincare plan designed specifically for you.
               </p>
 
               <p className="mt-5 max-w-xl text-base leading-8 text-stone-600 sm:text-lg">
@@ -47,7 +47,7 @@ export default function Home() {
                 Your Journey Begins Here
               </div>
               <ul className="mt-5 space-y-3 text-base leading-7 text-stone-600">
-                <li>• Personalized by your Farmacist</li>
+                <li>• Personalized by your Skintender</li>
                 <li>• Built around your skincare goals</li>
                 <li>• No one-size-fits-all routines</li>
                 <li>• <span className="font-semibold text-stone-700">Results in about 5 minutes</span></li>

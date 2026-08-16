@@ -179,7 +179,7 @@ export default function ListeningQuestionPage() {
           <p className="mx-auto mt-5 max-w-3xl text-base leading-7 text-[#5A5553] sm:text-lg">
             Choose the answer that best reflects what you&apos;re hoping to
             achieve today. Simply select what feels most like you. Your
-            Farmacist will thoughtfully personalize your journey from here.
+            Skintender will thoughtfully personalize your journey from here.
           </p>
         </section>
 

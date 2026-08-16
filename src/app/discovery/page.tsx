@@ -51,7 +51,7 @@ export default function DiscoveryPage() {
               Who are we crafting for today?
             </h1>
             <p className="mx-auto mt-4 max-w-2xl text-base leading-8 text-stone-600 sm:text-lg">
-              Choose the experience that&apos;s right for you. Our Farmacists will personalize everything from here.
+              Choose the experience that&apos;s right for you. Our Skintenders will personalize everything from here.
             </p>
           </div>
 

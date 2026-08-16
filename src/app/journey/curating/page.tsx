@@ -91,7 +91,7 @@ export default function CuratingTransitionPage() {
             style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}
           >
             <span className="block text-[2rem] italic leading-[1.06] sm:text-[2.85rem]">
-              Your Farmacist is crafting something fresh.
+              Your Skintender is crafting something fresh.
             </span>
             <span className="mt-2 block text-[1.55rem] italic leading-[1.15] sm:text-[2.2rem]">
               Just. For. You.
