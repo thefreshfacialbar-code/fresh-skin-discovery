@@ -5,6 +5,12 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { generateEnhancementRecommendation } from "@/lib/enhancementRecommendationEngine";
+import {
+  clearEnhancementRecommendationSession,
+  readStoredEnhancementRecommendation,
+  writeEnhancementRecommendationToStorage,
+} from "@/lib/enhancementRecommendationSession";
 import { generateProductRecommendation } from "@/lib/productRecommendationEngine";
 import {
   clearProductRecommendationSession,
@@ -12,6 +18,7 @@ import {
   writeProductRecommendationToStorage,
 } from "@/lib/productRecommendationSession";
 import { readStoredRecommendation } from "@/lib/recommendationSession";
+import type { RecommendedEnhancement } from "@/types/enhancementRecommendation";
 import type { ProductRecommendationResult, RecommendedProduct } from "@/types/productRecommendation";
 
 const FEATURED_TITLES = {
@@ -20,18 +27,6 @@ const FEATURED_TITLES = {
   moisturize: "MOISTURIZE",
   protect: "PROTECT",
 } as const;
-
-function SummaryCard({ title, value, children }: { title: string; value: string; children: React.ReactNode }) {
-  return (
-    <div className="rounded-[1.5rem] border border-[#DAD6DB] bg-[#F9F5F2] p-5 text-left">
-      <p className="text-[0.72rem] font-semibold uppercase tracking-[0.26em] text-[#908A9B]">{title}</p>
-      <p className="mt-4 text-2xl text-[#302C2A]" style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}>
-        {value}
-      </p>
-      <div className="mt-4 text-base leading-7 text-[#5A5553]">{children}</div>
-    </div>
-  );
-}
 
 function ProductCard({
   step,
@@ -85,8 +80,14 @@ export default function RecommendationsPage() {
   const router = useRouter();
   const [isHydrated, setIsHydrated] = useState(false);
   const [productRecommendation, setProductRecommendation] = useState<ProductRecommendationResult | null>(null);
+  const [enhancementRecommendations, setEnhancementRecommendations] = useState<RecommendedEnhancement[]>([]);
 
   useEffect(() => {
+    const storedEnhancements = readStoredEnhancementRecommendation();
+    if (storedEnhancements.length > 0) {
+      setEnhancementRecommendations(storedEnhancements);
+    }
+
     const stored = readStoredProductRecommendation();
     if (stored) {
       setProductRecommendation(stored);
@@ -112,6 +113,18 @@ export default function RecommendationsPage() {
 
     writeProductRecommendationToStorage(generated);
     setProductRecommendation(generated);
+
+    const generatedEnhancements = generateEnhancementRecommendation({
+      journeyResult: journeyRecommendation,
+      selectedAnswers: {
+        primaryMotivation: journeyRecommendation.selectedAnswers.primaryMotivation,
+        skinExperience: journeyRecommendation.selectedAnswers.skinExperience,
+        desiredOutcomes: journeyRecommendation.selectedAnswers.desiredOutcomes,
+      },
+    });
+
+    writeEnhancementRecommendationToStorage(generatedEnhancements);
+    setEnhancementRecommendations(generatedEnhancements);
     setIsHydrated(true);
   }, []);
 
@@ -256,19 +269,39 @@ export default function RecommendationsPage() {
           <ProductCard step="protect" product={productRecommendation.featured.protect} />
         </div>
 
-        <div className="mt-12 rounded-[2rem] border border-[#DAD6DB] bg-[#FFFDFC] p-6 shadow-[0_18px_42px_rgba(61,52,48,0.06)] sm:p-8 lg:p-10">
-          <div className="grid gap-6 lg:grid-cols-3">
-            <SummaryCard title="BUILT AROUND YOUR DISCOVERY" value="Your Skintender crafts the facial.">
-              Your Skin Discovery gives your Skintender a thoughtful starting point for your visit. They&apos;ll use what we&apos;ve learned about your skin to craft your custom facial around the goals and priorities revealed in your Journey.
-            </SummaryCard>
-            <SummaryCard title="WORTH CONSIDERING" value="LED Light Therapy">
-              Your Skintender can help determine whether this enhancement makes sense for your custom facial.
-            </SummaryCard>
-            <SummaryCard title="WORTH CONSIDERING" value="Dermaplaning">
-              Your Skintender can help determine whether this enhancement makes sense for your custom facial.
-            </SummaryCard>
+        {enhancementRecommendations.length > 0 ? (
+          <div className="mt-12 rounded-[2rem] border border-[#DAD6DB] bg-[#FFFDFC] p-6 shadow-[0_18px_42px_rgba(61,52,48,0.06)] sm:p-8 lg:p-10">
+            <h2 className="text-3xl leading-tight text-[#302C2A] sm:text-[2.2rem]" style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}>
+              Worth Considering
+            </h2>
+            <p className="mt-4 text-base leading-8 text-[#5A5553] sm:text-lg">
+              Your Skintender can help determine whether these Enhancements make sense for your custom facial.
+            </p>
+
+            <div className="mt-8 grid gap-6 lg:grid-cols-2">
+              {enhancementRecommendations.map((enhancement) => (
+                <div key={enhancement.enhancementId} className="rounded-[2rem] border border-[#DAD6DB] bg-[#F9F5F2] p-5 text-left">
+                  <p className="text-[0.72rem] font-semibold uppercase tracking-[0.2em] text-[#908A9B]">{enhancement.category === "results-driven" ? "RESULTS-DRIVEN" : "COMFORT / EXPERIENCE"}</p>
+                  <h3 className="mt-3 text-[1.65rem] leading-tight text-[#302C2A]" style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}>
+                    {enhancement.name}
+                  </h3>
+                  <p className="mt-4 text-base leading-8 text-[#5A5553]">{enhancement.guestBenefit}</p>
+                  <div className="mt-5 border-t border-[#E8E2E5] pt-4">
+                    <p className="text-[0.8rem] font-semibold uppercase tracking-[0.22em] text-[#908A9B]">Why it fits your Journey</p>
+                    <ul className="mt-3 space-y-2 text-base leading-7 text-[#5A5553]">
+                      {enhancement.matchReasons.map((reason) => (
+                        <li key={reason}>• {reason}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  {enhancement.name === "FarmHouse Fresh Peel" ? (
+                    <p className="mt-4 text-sm italic text-[#5A5553]">Your Skintender can determine which peel, if any, best complements your Journey.</p>
+                  ) : null}
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        ) : null}
 
         <div className="mt-12 rounded-[2rem] border border-[#DAD6DB] bg-[#FFFDFC] p-6 shadow-[0_18px_42px_rgba(61,52,48,0.06)] sm:p-8 lg:p-10">
           <h2 className="text-3xl leading-tight text-[#302C2A] sm:text-[2.2rem]" style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}>
@@ -308,6 +341,7 @@ export default function RecommendationsPage() {
             type="button"
             onClick={() => {
               clearProductRecommendationSession();
+              clearEnhancementRecommendationSession();
               router.push("/journey/listening");
             }}
             className="inline-flex items-center justify-center rounded-full bg-[#908A9B] px-8 py-4 text-sm font-semibold uppercase tracking-[0.16em] text-white shadow-[0_10px_28px_rgba(144,138,155,0.24)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#817B8B]"
