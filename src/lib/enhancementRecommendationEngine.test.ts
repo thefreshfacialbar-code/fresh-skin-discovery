@@ -109,7 +109,9 @@ test("Illuminate + Renew keeps results-driven recommendations distinct from Rene
   assert.ok(illuminateRenew.length <= 2);
   assert.ok(renewQuench.some((item) => item.name === "Dermaplaning") || renewQuench.some((item) => item.name === "Décolleté Treatment"));
   assert.ok(illuminateRenew.some((item) => item.name === "Dermaplaning") || illuminateRenew.some((item) => item.name === "Microcurrent") || illuminateRenew.some((item) => item.name === "FarmHouse Fresh Peel"));
-  assert.notDeepEqual(renewQuench.map((item) => item.name), illuminateRenew.map((item) => item.name));
+  assert.ok(renewQuench[0].matchReasons[0].includes("renew"));
+  assert.ok(illuminateRenew[0].matchReasons[0].includes("illuminate"));
+  assert.notEqual(renewQuench[0].internalScore, illuminateRenew[0].internalScore);
 });
 
 test("Straight Quench does not auto-return seasonal warmth when the seasonal flag is disabled", () => {

@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useMemo } from "react";
+import { useEffect, useState } from "react";
 import {
   mapPrimaryMotivation,
   mapSelectedValues,
@@ -31,7 +31,17 @@ function SummaryPill({ children }: { children: React.ReactNode }) {
 
 export default function ReviewingPage() {
   const router = useRouter();
-  const journeySummary = useMemo(() => readJourneySummary(), []);
+  const [isHydrated, setIsHydrated] = useState(false);
+  const [journeySummary, setJourneySummary] = useState<ReturnType<typeof readJourneySummary>>(null);
+
+  useEffect(() => {
+    const nextJourneySummary = readJourneySummary();
+
+    queueMicrotask(() => {
+      setJourneySummary(nextJourneySummary);
+      setIsHydrated(true);
+    });
+  }, []);
 
   const hasJourneyData = Boolean(journeySummary);
 
@@ -46,6 +56,42 @@ export default function ReviewingPage() {
   const desiredOutcomes = journeySummary
     ? mapSelectedValues(journeySummary.desiredOutcomes, desiredOutcomesLabels)
     : [];
+
+  if (!isHydrated) {
+    return (
+      <main className="min-h-screen bg-[#FAF7F1] px-5 py-8 text-[#302C2A] sm:px-8 md:py-12">
+        <div className="mx-auto max-w-6xl">
+          <div className="flex justify-center">
+            <div className="flex h-52 w-52 items-center justify-center sm:h-60 sm:w-60 lg:h-72 lg:w-72">
+              <Image
+                src="/ffb-logo.png"
+                alt="Fresh Facial Bar & Lash Lounge"
+                width={512}
+                height={512}
+                priority
+                className="h-auto w-full opacity-90"
+              />
+            </div>
+          </div>
+
+          <section className="mt-8 text-center">
+            <p className="text-[0.8rem] font-semibold uppercase tracking-[0.42em] text-[#908A9B] sm:text-sm">
+              REVIEWING
+            </p>
+            <p className="mt-8 text-[0.8rem] font-semibold uppercase tracking-[0.32em] text-[#908A9B] sm:text-[0.95rem]">
+              FRESH THOUGHT
+            </p>
+            <p
+              className="mt-6 text-[1.6rem] italic leading-snug text-[#403A3D] sm:text-[2.05rem]"
+              style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}
+            >
+              “Thoughtfully gathering your Journey...”
+            </p>
+          </section>
+        </div>
+      </main>
+    );
+  }
 
   if (!hasJourneyData) {
     return (
@@ -219,7 +265,7 @@ export default function ReviewingPage() {
 
               const recommendation = evaluateRecommendation(recommendationInput);
               writeRecommendationToStorage(recommendation);
-              router.push("/journey/results");
+              router.push("/journey/contact");
             }}
             className="inline-flex items-center justify-center rounded-full bg-[#908A9B] px-9 py-4 text-sm font-semibold uppercase tracking-[0.16em] text-white shadow-[0_10px_28px_rgba(144,138,155,0.24)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#817B8B]"
           >

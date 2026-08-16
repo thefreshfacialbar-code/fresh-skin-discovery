@@ -230,6 +230,9 @@ function clearSkinDiscoverySession() {
     "skinDiscoveryDesiredOutcomes",
     "skinDiscoveryRecommendation",
     "skinDiscoveryProductRecommendations",
+    "skinDiscoveryEnhancementRecommendations",
+    "skinDiscoveryContact",
+    "skinDiscoverySubmission",
   ];
 
   keys.forEach((key) => window.sessionStorage.removeItem(key));

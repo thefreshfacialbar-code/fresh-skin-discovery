@@ -342,6 +342,10 @@ export default function RecommendationsPage() {
             onClick={() => {
               clearProductRecommendationSession();
               clearEnhancementRecommendationSession();
+              if (typeof window !== "undefined") {
+                window.sessionStorage.removeItem("skinDiscoveryContact");
+                window.sessionStorage.removeItem("skinDiscoverySubmission");
+              }
               router.push("/journey/listening");
             }}
             className="inline-flex items-center justify-center rounded-full bg-[#908A9B] px-8 py-4 text-sm font-semibold uppercase tracking-[0.16em] text-white shadow-[0_10px_28px_rgba(144,138,155,0.24)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#817B8B]"
