@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import {
   mapPrimaryMotivation,
   mapSelectedValues,
@@ -12,6 +12,7 @@ import {
 } from "@/lib/journeyReviewMappings";
 import { readStoredRecommendation } from "@/lib/recommendationSession";
 import { clearProductRecommendationSession } from "@/lib/productRecommendationSession";
+import { readStoredSubmission } from "@/lib/skinDiscoverySubmission";
 
 type JourneyKey = "quench" | "calm" | "purify" | "illuminate" | "renew";
 
@@ -242,6 +243,31 @@ export default function ResultsPage() {
   const router = useRouter();
   const recommendation = useMemo(() => readStoredRecommendation(), []);
   const journeySummary = useMemo(() => readJourneySummary(), []);
+
+  useEffect(() => {
+    const submission = readStoredSubmission();
+    if (!submission?.submissionId) {
+      return;
+    }
+
+    const attemptKey = `skinDiscoveryEmailDeliveryAttempted:${submission.submissionId}`;
+    if (window.sessionStorage.getItem(attemptKey) === "true") {
+      return;
+    }
+
+    window.sessionStorage.setItem(attemptKey, "true");
+
+    void fetch("/api/skin-discovery/delivery", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({ submission }),
+      keepalive: true,
+    }).catch(() => {
+      window.sessionStorage.removeItem(attemptKey);
+    });
+  }, []);
 
   const primaryMotivation = journeySummary ? mapPrimaryMotivation(journeySummary.primaryMotivation) : null;
   const skinExperience = journeySummary ? mapSelectedValues(journeySummary.skinExperience, skinExperienceLabels) : [];
