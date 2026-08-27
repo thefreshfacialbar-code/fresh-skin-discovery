@@ -5,8 +5,7 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { readJourneySummary } from "@/lib/journeyReviewMappings";
 import { readStoredRecommendation } from "@/lib/recommendationSession";
-import { readStoredProductRecommendation } from "@/lib/productRecommendationSession";
-import { readStoredEnhancementRecommendation } from "@/lib/enhancementRecommendationSession";
+import { readOrCreateSkinDiscoveryRecommendations } from "@/lib/skinDiscoveryRecommendations";
 import {
   buildSkinDiscoverySubmission,
   readStoredContact,
@@ -45,8 +44,6 @@ export default function ContactCapturePage() {
 
   const journeySummary = useMemo(() => readJourneySummary(), []);
   const recommendation = useMemo(() => readStoredRecommendation(), []);
-  const productRecommendation = useMemo(() => readStoredProductRecommendation(), []);
-  const enhancementRecommendations = useMemo(() => readStoredEnhancementRecommendation(), []);
 
   const updateField = (field: keyof SkinDiscoveryContact, value: string) => {
     setContact((current) => ({ ...current, [field]: value }));
@@ -86,6 +83,11 @@ export default function ContactCapturePage() {
       router.push("/journey/listening");
       return;
     }
+
+    const {
+      productRecommendation,
+      enhancementRecommendations,
+    } = readOrCreateSkinDiscoveryRecommendations(cleanedJourney);
 
     const submission = buildSkinDiscoverySubmission({
       guest: normalizedContact,

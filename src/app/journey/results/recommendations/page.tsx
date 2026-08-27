@@ -5,19 +5,14 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { generateEnhancementRecommendation } from "@/lib/enhancementRecommendationEngine";
 import {
   clearEnhancementRecommendationSession,
-  readStoredEnhancementRecommendation,
-  writeEnhancementRecommendationToStorage,
 } from "@/lib/enhancementRecommendationSession";
-import { generateProductRecommendation } from "@/lib/productRecommendationEngine";
 import {
   clearProductRecommendationSession,
-  readStoredProductRecommendation,
-  writeProductRecommendationToStorage,
 } from "@/lib/productRecommendationSession";
 import { readStoredRecommendation } from "@/lib/recommendationSession";
+import { readOrCreateSkinDiscoveryRecommendations } from "@/lib/skinDiscoveryRecommendations";
 import type { RecommendedEnhancement } from "@/types/enhancementRecommendation";
 import type { ProductRecommendationResult, RecommendedProduct } from "@/types/productRecommendation";
 
@@ -83,18 +78,6 @@ export default function RecommendationsPage() {
   const [enhancementRecommendations, setEnhancementRecommendations] = useState<RecommendedEnhancement[]>([]);
 
   useEffect(() => {
-    const storedEnhancements = readStoredEnhancementRecommendation();
-    if (storedEnhancements.length > 0) {
-      setEnhancementRecommendations(storedEnhancements);
-    }
-
-    const stored = readStoredProductRecommendation();
-    if (stored) {
-      setProductRecommendation(stored);
-      setIsHydrated(true);
-      return;
-    }
-
     const journeyRecommendation = readStoredRecommendation();
     if (!journeyRecommendation) {
       setProductRecommendation(null);
@@ -102,29 +85,9 @@ export default function RecommendationsPage() {
       return;
     }
 
-    const generated = generateProductRecommendation({
-      journeyResult: journeyRecommendation,
-      selectedAnswers: {
-        primaryMotivation: journeyRecommendation.selectedAnswers.primaryMotivation,
-        skinExperience: journeyRecommendation.selectedAnswers.skinExperience,
-        desiredOutcomes: journeyRecommendation.selectedAnswers.desiredOutcomes,
-      },
-    });
-
-    writeProductRecommendationToStorage(generated);
-    setProductRecommendation(generated);
-
-    const generatedEnhancements = generateEnhancementRecommendation({
-      journeyResult: journeyRecommendation,
-      selectedAnswers: {
-        primaryMotivation: journeyRecommendation.selectedAnswers.primaryMotivation,
-        skinExperience: journeyRecommendation.selectedAnswers.skinExperience,
-        desiredOutcomes: journeyRecommendation.selectedAnswers.desiredOutcomes,
-      },
-    });
-
-    writeEnhancementRecommendationToStorage(generatedEnhancements);
-    setEnhancementRecommendations(generatedEnhancements);
+    const generatedRecommendations = readOrCreateSkinDiscoveryRecommendations(journeyRecommendation);
+    setProductRecommendation(generatedRecommendations.productRecommendation);
+    setEnhancementRecommendations(generatedRecommendations.enhancementRecommendations);
     setIsHydrated(true);
   }, []);
 
