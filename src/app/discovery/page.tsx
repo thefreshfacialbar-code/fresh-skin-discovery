@@ -138,7 +138,7 @@ export default function DiscoveryPage() {
                     <div className="flex shrink-0 items-start">
                       <div className="-mt-1 flex h-[82px] w-[82px] items-center justify-center overflow-hidden rounded-full bg-transparent sm:h-[90px] sm:w-[90px] lg:h-[96px] lg:w-[96px]">
                         <Image
-                          src="/cgc-logo.png"
+                          src="/CGC-Logo.png"
                           alt="Curated Gentlemen's Corner logo"
                           width={96}
                           height={96}
