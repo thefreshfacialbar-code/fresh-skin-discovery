@@ -1,4 +1,5 @@
 import { enhancementCatalog } from "@/data/enhancementCatalog";
+import { cgcProductCatalog } from "@/data/cgcProductCatalog";
 import { productCatalog } from "@/data/productCatalog";
 import { EMAIL_BASE_CSS, EMAIL_COLORS, ensureSafeUrl, escapeHtml } from "@/emails/emailStyles";
 import type { SkinDiscoverySubmission } from "@/types/skinDiscoverySubmission";
@@ -23,6 +24,7 @@ export type EmailTemplateResult = {
 };
 
 const productLookup = new Map(productCatalog.map((product) => [product.id, product]));
+const cgcProductLookup = new Map(cgcProductCatalog.map((product) => [product.id, product]));
 const enhancementLookup = new Map(enhancementCatalog.map((enhancement) => [enhancement.id, enhancement]));
 
 const journeyDescriptions: Record<string, string> = {
@@ -55,9 +57,37 @@ function formatName(value: string | null | undefined): string {
   return cleaned ? cleaned : "friend";
 }
 
-function lookupProduct(productId: string | null | undefined) {
+function lookupProduct(productId: string | null | undefined, experience?: string) {
   if (!productId) return null;
-  return productLookup.get(productId) ?? null;
+  if (experience === "gentlemens-corner") {
+    return cgcProductLookup.get(productId) ?? productLookup.get(productId) ?? null;
+  }
+
+  return productLookup.get(productId) ?? cgcProductLookup.get(productId) ?? null;
+}
+
+function isCuratedSubmission(submission: SkinDiscoverySubmission): boolean {
+  return submission.experience === "gentlemens-corner";
+}
+
+function getLogoUrl(submission: SkinDiscoverySubmission, config: GuestEmailConfig): string {
+  if (!isCuratedSubmission(submission)) {
+    return ensureSafeUrl(config.logoUrl ?? null) ?? "";
+  }
+
+  const curatedLogoUrl = config.websiteUrl
+    ? `${config.websiteUrl.replace(/\/$/, "")}/CGC-Logo.png`
+    : (config.logoUrl ?? "").replace(/\/[^/]*$/, "/CGC-Logo.png");
+
+  return ensureSafeUrl(curatedLogoUrl) ?? "";
+}
+
+function getEmailBusinessName(submission: SkinDiscoverySubmission, config: GuestEmailConfig): string {
+  if (isCuratedSubmission(submission) && (!config.businessName || config.businessName === "Fresh Facial Bar & Lash Lounge")) {
+    return "Curated Gentlemen's Corner";
+  }
+
+  return config.businessName ?? "Fresh Facial Bar & Lash Lounge";
 }
 
 function lookupEnhancement(enhancementId: string | null | undefined) {
@@ -136,8 +166,12 @@ function renderJourneySection(submission: SkinDiscoverySubmission): string {
   `;
 }
 
-function renderProductRow(step: string, productId: string | null | undefined): string {
-  const product = lookupProduct(productId);
+function renderProductRow(
+  step: string,
+  productId: string | null | undefined,
+  experience?: string,
+): string {
+  const product = lookupProduct(productId, experience);
   if (!product) return "";
 
   return `
@@ -168,7 +202,11 @@ function renderFeaturedProducts(submission: SkinDiscoverySubmission): string {
     ["MOISTURIZE", submission.productRecommendations.featured.moisturize],
     ["PROTECT", submission.productRecommendations.featured.protect],
   ]
-    .map(([step, productId]) => renderProductRow(step as string, productId as string | null | undefined))
+    .map(([step, productId]) => renderProductRow(
+      step as string,
+      productId as string | null | undefined,
+      submission.experience,
+    ))
     .join("");
 
   return `
@@ -191,7 +229,7 @@ function renderMoreFreshPicks(submission: SkinDiscoverySubmission): string {
 
   const items = submission.productRecommendations.moreFreshPicks
     .map((productId) => {
-      const product = lookupProduct(productId);
+      const product = lookupProduct(productId, submission.experience);
       if (!product) return "";
       return `
         <tr>
@@ -282,9 +320,10 @@ function renderEnhancements(submission: SkinDiscoverySubmission): string {
 function renderGuestEmailHtml(submission: SkinDiscoverySubmission, config: GuestEmailConfig): string {
   const firstName = formatName(submission.guest.firstName);
   const bookingHref = getBookingHref(config);
-  const logoUrl = ensureSafeUrl(config.logoUrl ?? null) ?? "";
+  const logoUrl = getLogoUrl(submission, config);
+  const businessName = getEmailBusinessName(submission, config);
   const logoHtml = logoUrl
-    ? `<img src="${escapeHtml(logoUrl)}" alt="${escapeHtml(config.businessName ?? "Fresh Facial Bar")}" width="180" style="display:block; max-width:180px; width:100%; height:auto; border:0;" />`
+    ? `<img src="${escapeHtml(logoUrl)}" alt="${escapeHtml(businessName)}" width="180" style="display:block; max-width:180px; width:100%; height:auto; border:0;" />`
     : `<div style="font-size: 14px; letter-spacing: 2px; text-transform: uppercase; font-weight: 700; color: ${EMAIL_COLORS.ink};">Fresh Facial Bar & Lash Lounge</div>`;
 
   const hiddenSubmissionMeta = submission.internal.notes
@@ -433,7 +472,7 @@ function renderGuestEmailHtml(submission: SkinDiscoverySubmission, config: Guest
                 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-top:1px solid #e8dfe5;">
                   <tr>
                     <td style="padding-top: 18px; font-size: 12px; line-height: 20px; color: #7d7581; text-align: center; font-family: Arial, Helvetica, sans-serif;">
-                      ${escapeHtml(config.businessName ?? "Fresh Facial Bar & Lash Lounge")}
+                      ${escapeHtml(businessName)}
                     </td>
                   </tr>
                   <tr>
@@ -491,7 +530,7 @@ function renderGuestEmailText(submission: SkinDiscoverySubmission, config: Guest
     ["MOISTURIZE", submission.productRecommendations.featured.moisturize],
     ["PROTECT", submission.productRecommendations.featured.protect],
   ]) {
-    const product = lookupProduct(productId as string | null | undefined);
+    const product = lookupProduct(productId as string | null | undefined, submission.experience);
     if (product) {
       lines.push(`${step}: ${product.name}`);
       lines.push(product.guestBenefit);
@@ -502,7 +541,7 @@ function renderGuestEmailText(submission: SkinDiscoverySubmission, config: Guest
     lines.push("");
     lines.push("A FEW MORE FRESH PICKS");
     for (const productId of submission.productRecommendations.moreFreshPicks) {
-      const product = lookupProduct(productId);
+      const product = lookupProduct(productId, submission.experience);
       if (product) {
         lines.push(`${product.name} - ${product.guestBenefit}`);
       }
@@ -535,7 +574,7 @@ function renderGuestEmailText(submission: SkinDiscoverySubmission, config: Guest
   lines.push("Want to meet your Fresh Picks first?");
   lines.push("Stop by the Skin Bar. Your Skintender can walk you through your recommendations and help you find the right place to start.");
   lines.push("");
-  lines.push(config.businessName ?? "Fresh Facial Bar");
+  lines.push(getEmailBusinessName(submission, config));
   lines.push("Thoughtfully crafted, one step at a time.");
 
   return lines.join("\n");

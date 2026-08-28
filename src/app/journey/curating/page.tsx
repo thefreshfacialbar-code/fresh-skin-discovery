@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { getBrandLogoAlt, getBrandLogoPath } from "@/lib/brandLogo";
 
 const progressSteps = [
   "Reviewing your Skin Discovery Journey...",
@@ -67,8 +68,8 @@ export default function CuratingTransitionPage() {
         <div className="flex justify-center">
           <div className="flex h-60 w-60 items-center justify-center sm:h-72 sm:w-72 lg:h-80 lg:w-80">
             <Image
-              src="/ffb-logo.png"
-              alt="Fresh Facial Bar & Lash Lounge logo"
+              src={getBrandLogoPath()}
+              alt={getBrandLogoAlt()}
               width={512}
               height={512}
               priority

@@ -103,6 +103,7 @@ export function buildSkinDiscoverySubmission(input: SkinDiscoverySubmissionInput
   return {
     submissionId,
     createdAt,
+    ...(input.experience ? { experience: input.experience } : {}),
     guest,
     discovery: {
       primaryMotivation: input.discovery.primaryMotivation,

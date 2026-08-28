@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { getBrandLogoAlt, getBrandLogoPath } from "@/lib/brandLogo";
 
 export default function JourneyTransition({
   stage,
@@ -50,8 +51,8 @@ export default function JourneyTransition({
         <div className="flex justify-center">
           <div className="flex h-40 w-40 items-center justify-center sm:h-48 sm:w-48 lg:h-56 lg:w-56">
             <Image
-              src="/ffb-logo.png"
-              alt="Fresh Facial Bar & Lash Lounge logo"
+              src={getBrandLogoPath()}
+              alt={getBrandLogoAlt()}
               width={512}
               height={512}
               priority

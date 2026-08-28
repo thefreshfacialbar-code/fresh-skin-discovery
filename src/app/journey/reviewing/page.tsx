@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { getBrandLogoAlt, getBrandLogoPath } from "@/lib/brandLogo";
 import {
   mapPrimaryMotivation,
   mapSelectedValues,
@@ -64,8 +65,8 @@ export default function ReviewingPage() {
           <div className="flex justify-center">
             <div className="flex h-52 w-52 items-center justify-center sm:h-60 sm:w-60 lg:h-72 lg:w-72">
               <Image
-                src="/ffb-logo.png"
-                alt="Fresh Facial Bar & Lash Lounge"
+                src={getBrandLogoPath()}
+                alt={getBrandLogoAlt()}
                 width={512}
                 height={512}
                 priority
@@ -100,8 +101,8 @@ export default function ReviewingPage() {
           <div className="flex justify-center">
             <div className="flex h-52 w-52 items-center justify-center sm:h-60 sm:w-60 lg:h-72 lg:w-72">
               <Image
-                src="/ffb-logo.png"
-                alt="Fresh Facial Bar & Lash Lounge"
+                src={getBrandLogoPath()}
+                alt={getBrandLogoAlt()}
                 width={512}
                 height={512}
                 priority
@@ -153,8 +154,8 @@ export default function ReviewingPage() {
         <div className="flex justify-center">
           <div className="flex h-52 w-52 items-center justify-center sm:h-60 sm:w-60 lg:h-72 lg:w-72">
             <Image
-              src="/ffb-logo.png"
-              alt="Fresh Facial Bar & Lash Lounge"
+              src={getBrandLogoPath()}
+              alt={getBrandLogoAlt()}
               width={512}
               height={512}
               priority

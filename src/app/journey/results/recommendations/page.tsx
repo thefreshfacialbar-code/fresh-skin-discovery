@@ -5,6 +5,7 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { getBrandLogoAlt, getBrandLogoPath } from "@/lib/brandLogo";
 import {
   clearEnhancementRecommendationSession,
 } from "@/lib/enhancementRecommendationSession";
@@ -31,12 +32,7 @@ function ProductCard({
   product: RecommendedProduct | null;
 }) {
   if (!product) {
-    return (
-      <div className="rounded-[2rem] border border-dashed border-[#DAD6DB] bg-[#FFFDFC] p-6 text-left shadow-[0_12px_30px_rgba(61,52,48,0.04)]">
-        <p className="text-[0.72rem] font-semibold uppercase tracking-[0.28em] text-[#908A9B]">{FEATURED_TITLES[step]}</p>
-        <p className="mt-4 text-lg text-[#5A5553]">Not selected yet.</p>
-      </div>
-    );
+    return null;
   }
 
   const usageText =
@@ -98,8 +94,8 @@ export default function RecommendationsPage() {
           <div className="flex justify-center">
             <div className="flex h-32 w-32 items-center justify-center sm:h-36 sm:w-36">
               <Image
-                src="/ffb-logo.png"
-                alt="Fresh Facial Bar & Lash Lounge"
+                src={getBrandLogoPath()}
+                alt={getBrandLogoAlt()}
                 width={512}
                 height={512}
                 priority
@@ -146,11 +142,8 @@ export default function RecommendationsPage() {
           <div className="flex justify-center pt-2">
             <div className="flex h-44 w-44 items-center justify-center sm:h-54 sm:w-54 lg:h-68 lg:w-68">
               <Image
-                src="/ffb-logo.png"
-                alt="Fresh Facial Bar & Lash Lounge"
-                width={512}
-                height={512}
-                priority
+              src={getBrandLogoPath()}
+              alt={getBrandLogoAlt()}
                 className="h-auto w-full opacity-90"
               />
             </div>
@@ -197,8 +190,8 @@ export default function RecommendationsPage() {
         <div className="flex justify-center pt-2">
           <div className="flex h-44 w-44 items-center justify-center sm:h-54 sm:w-54 lg:h-68 lg:w-68">
             <Image
-              src="/ffb-logo.png"
-              alt="Fresh Facial Bar & Lash Lounge"
+              src={getBrandLogoPath()}
+              alt={getBrandLogoAlt()}
               width={512}
               height={512}
               priority

@@ -3,6 +3,8 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { clearProductRecommendationSession } from "@/lib/productRecommendationSession";
+import { clearEnhancementRecommendationSession } from "@/lib/enhancementRecommendationSession";
 
 const experiences = [
   {
@@ -20,7 +22,7 @@ const experiences = [
     subtitle: "Skincare Thoughtfully Curated for Men",
     description:
       "Men's skin plays different. Skincare built for men. Made simple.",
-    available: false,
+    available: true,
     badge: null,
   },
 ] as const;
@@ -32,7 +34,11 @@ export default function DiscoveryPage() {
   function handleCardClick(experienceId: string, available: boolean) {
     if (!available) return;
 
+    clearProductRecommendationSession();
+clearEnhancementRecommendationSession();
+
     setSelectedExperience(experienceId);
+    window.sessionStorage.setItem("skinDiscoveryExperience", experienceId);
     router.push("/journey/listening");
   }
 
@@ -42,7 +48,13 @@ export default function DiscoveryPage() {
         <section className="w-full rounded-[2rem] border border-[#DAD6DB] bg-[#fcf8f2]/95 p-8 shadow-[0_24px_75px_rgba(144,138,155,0.14)] backdrop-blur sm:p-10 lg:p-16">
           <header className="mb-8 flex justify-center">
             <div className="flex h-56 w-56 items-center justify-center sm:h-64 sm:w-64 lg:h-80 lg:w-80">
-              <Image src="/ffb-logo.png" alt="Fresh Facial Bar & Lash Lounge logo" width={512} height={512} priority />
+              <Image
+  src="/ffb-logo.png"
+  alt="Fresh Facial Bar & Lash Lounge logo"
+  width={512}
+  height={512}
+  priority
+/>
             </div>
           </header>
 
@@ -88,9 +100,9 @@ export default function DiscoveryPage() {
                         <p className="mt-1 text-base text-[#908A9B]">{experience.subtitle}</p>
                       </div>
                       <div className="flex shrink-0 items-start">
-                        <div className="-mt-3 flex h-[128px] w-[128px] items-center justify-center overflow-hidden rounded-full bg-transparent sm:-mt-3 sm:h-[136px] sm:w-[136px] lg:-mt-3 lg:h-[144px] lg:w-[144px]">
+                       <div className={experience.id === "gentlemens-corner" ? "flex h-[82px] w-[82px] items-center justify-center overflow-hidden rounded-full" : "-mt-3 flex h-[128px] w-[128px] items-center justify-center overflow-hidden rounded-full"}>
                           <Image
-                            src="/1 copy.png"
+                            src={experience.id === "gentlemens-corner" ? "/CGC-Logo.png" : "/1 copy.png"}
                             alt="Fresh Facial Bar experience illustration"
                             width={144}
                             height={144}
@@ -138,8 +150,8 @@ export default function DiscoveryPage() {
                     <div className="flex shrink-0 items-start">
                       <div className="-mt-1 flex h-[82px] w-[82px] items-center justify-center overflow-hidden rounded-full bg-transparent sm:h-[90px] sm:w-[90px] lg:h-[96px] lg:w-[96px]">
                         <Image
-                          src="/CGC-Logo.png"
-                          alt="Curated Gentlemen's Corner logo"
+                          src={experience.id === "gentlemens-corner" ? "/CGC-Logo.png" : "/ffb-logo.png"}
+                          alt="Curated Gentlemen's Corner"
                           width={96}
                           height={96}
                           className="h-full w-full object-contain"

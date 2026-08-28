@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
+import { getBrandLogoAlt, getBrandLogoPath } from "@/lib/brandLogo";
 
 type IconName =
   | "droplet"
@@ -227,8 +228,8 @@ export default function UnderstandingQuestionPage() {
         <div className="flex justify-center">
           <div className="flex h-56 w-56 items-center justify-center sm:h-64 sm:w-64 lg:h-80 lg:w-80">
             <Image
-              src="/ffb-logo.png"
-              alt="Fresh Facial Bar & Lash Lounge"
+              src={getBrandLogoPath()}
+              alt={getBrandLogoAlt()}
               width={512}
               height={512}
               priority

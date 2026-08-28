@@ -1,4 +1,5 @@
 import { enhancementCatalog } from "@/data/enhancementCatalog";
+import { cgcProductCatalog } from "@/data/cgcProductCatalog";
 import { productCatalog } from "@/data/productCatalog";
 import { EMAIL_BASE_CSS, EMAIL_COLORS, escapeHtml } from "@/emails/emailStyles";
 import { mapPrimaryMotivation, mapSelectedValues, skinExperienceLabels, desiredOutcomesLabels } from "@/lib/journeyReviewMappings";
@@ -19,6 +20,16 @@ export type TeamEmailTemplateResult = {
 };
 
 const productLookup = new Map(productCatalog.map((product) => [product.id, product]));
+const cgcProductLookup = new Map(cgcProductCatalog.map((product) => [product.id, product]));
+
+function lookupProduct(productId: string | null | undefined, experience?: string) {
+  if (!productId) return null;
+  if (experience === "gentlemens-corner") {
+    return cgcProductLookup.get(productId) ?? productLookup.get(productId) ?? null;
+  }
+
+  return productLookup.get(productId) ?? cgcProductLookup.get(productId) ?? null;
+}
 const enhancementLookup = new Map(enhancementCatalog.map((enhancement) => [enhancement.id, enhancement]));
 
 function formatJourneyName(journey: string): string {
@@ -116,7 +127,7 @@ function renderFeaturedProducts(submission: SkinDiscoverySubmission): string {
     ["Protect", submission.productRecommendations.featured.protect],
   ]
     .map(([label, productId]) => {
-      const product = productId ? productLookup.get(productId) : null;
+      const product = lookupProduct(productId, submission.experience);
       if (!product) return "";
       return `
         <tr>
@@ -279,13 +290,13 @@ function renderTeamEmailText(submission: SkinDiscoverySubmission, config: TeamEm
     ...["cleanse", "treat", "moisturize", "protect"].map((step) => {
       const key = step as keyof typeof submission.productRecommendations.featured;
       const productId = submission.productRecommendations.featured[key];
-      const product = productId ? productLookup.get(productId) : null;
+      const product = lookupProduct(productId, submission.experience);
       return product ? `${step}: ${product.name}` : `${step}: Not selected`;
     }),
     "",
     "MORE FRESH PICKS",
     submission.productRecommendations.moreFreshPicks.length
-      ? submission.productRecommendations.moreFreshPicks.map((productId) => productLookup.get(productId)?.name ?? productId).join("\n")
+      ? submission.productRecommendations.moreFreshPicks.map((productId) => lookupProduct(productId, submission.experience)?.name ?? productId).join("\n")
       : "None recommended",
     "",
     "RECOMMENDED ENHANCEMENTS",

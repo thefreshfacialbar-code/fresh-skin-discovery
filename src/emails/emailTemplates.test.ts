@@ -88,6 +88,51 @@ test("guest email renders all four featured slots including protect and keeps th
   assert.doesNotMatch(guestEmail.html, /Farmacist|Farmicist/i);
 });
 
+test("Curated submission renders all stored CGC core products and uses the full brand name", () => {
+  const curatedSubmission: SkinDiscoverySubmission = {
+    ...baseSubmission,
+    experience: "gentlemens-corner",
+    productRecommendations: {
+      featured: {
+        cleanse: "clean-slate",
+        treat: "zero-in",
+        moisturize: "second-wind",
+        protect: "am-replenish-non-tinted-spf-40",
+      },
+      moreFreshPicks: [],
+    },
+  };
+
+  const guestEmail = renderGuestDiscoveryEmail(curatedSubmission, {
+    previewMode: true,
+    bookingUrl: "https://example.com/book",
+    logoUrl: "https://example.com/ffb-logo.png",
+  });
+  const teamEmail = renderTeamDiscoveryEmail(curatedSubmission);
+
+  for (const productName of ["Clean Slate", "Zero In", "Second Wind", "AM Replenish Non-Tinted SPF 40"]) {
+    assert.match(guestEmail.html, new RegExp(productName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"));
+    assert.match(guestEmail.text, new RegExp(productName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"));
+    assert.match(teamEmail.html, new RegExp(productName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"));
+  }
+
+  assert.match(guestEmail.html, /https:\/\/example\.com\/CGC-Logo\.png/i);
+  assert.match(guestEmail.html, /Curated Gentlemen(?:'|&#39;)s Corner/i);
+  assert.doesNotMatch(guestEmail.text, /\bCGC\b/i);
+});
+
+test("Fresh submission keeps the existing Fresh logo and product email behavior", () => {
+  const guestEmail = renderGuestDiscoveryEmail(baseSubmission, {
+    previewMode: true,
+    bookingUrl: "https://example.com/book",
+    logoUrl: "https://example.com/ffb-logo.png",
+  });
+
+  assert.match(guestEmail.html, /https:\/\/example\.com\/ffb-logo\.png/i);
+  assert.match(guestEmail.html, /Make It Melt Cleansing Balm/i);
+  assert.doesNotMatch(guestEmail.html, /CGC-Logo\.png/i);
+});
+
 test("dual primary guest email renders both journeys with equal emphasis", () => {
   const dualPrimarySubmission: SkinDiscoverySubmission = {
     ...baseSubmission,

@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
+import { getBrandLogoAlt, getBrandLogoPath, getSelectedExperience } from "@/lib/brandLogo";
 import { readJourneySummary } from "@/lib/journeyReviewMappings";
 import { readStoredRecommendation } from "@/lib/recommendationSession";
 import { readOrCreateSkinDiscoveryRecommendations } from "@/lib/skinDiscoveryRecommendations";
@@ -90,6 +91,7 @@ export default function ContactCapturePage() {
     } = readOrCreateSkinDiscoveryRecommendations(cleanedJourney);
 
     const submission = buildSkinDiscoverySubmission({
+      experience: getSelectedExperience(),
       guest: normalizedContact,
       discovery: {
         primaryMotivation: journeySummary.primaryMotivation ?? null,
@@ -115,7 +117,7 @@ export default function ContactCapturePage() {
       <div className="mx-auto max-w-4xl">
         <div className="flex justify-center">
           <div className="flex h-40 w-40 items-center justify-center sm:h-48 sm:w-48 lg:h-56 lg:w-56">
-            <Image src="/ffb-logo.png" alt="Fresh Facial Bar & Lash Lounge" width={512} height={512} priority className="h-auto w-full opacity-90" />
+            <Image src={getBrandLogoPath()} alt={getBrandLogoAlt()} width={512} height={512} priority className="h-auto w-full opacity-90" />
           </div>
         </div>
 

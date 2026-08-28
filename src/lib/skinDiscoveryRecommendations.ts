@@ -3,6 +3,7 @@ import {
   readStoredEnhancementRecommendation,
   writeEnhancementRecommendationToStorage,
 } from "@/lib/enhancementRecommendationSession";
+import { generateCgcProductRecommendation } from "@/lib/cgcProductRecommendationEngine";
 import { generateProductRecommendation } from "@/lib/productRecommendationEngine";
 import {
   readStoredProductRecommendation,
@@ -11,6 +12,20 @@ import {
 import type { RecommendedEnhancement } from "@/types/enhancementRecommendation";
 import type { ProductRecommendationResult } from "@/types/productRecommendation";
 import type { RecommendationResult } from "@/types/recommendation";
+
+function filterBrandSpecificRecommendations(
+  enhancementRecommendations: RecommendedEnhancement[],
+): RecommendedEnhancement[] {
+  const selectedExperience = typeof window !== "undefined"
+    ? window.sessionStorage.getItem("skinDiscoveryExperience")
+    : null;
+
+  if (selectedExperience !== "gentlemens-corner") {
+    return enhancementRecommendations;
+  }
+
+  return enhancementRecommendations.filter((enhancement) => enhancement.name !== "Dermaplaning");
+}
 
 export type SkinDiscoveryRecommendationBundle = {
   productRecommendation: ProductRecommendationResult;
@@ -25,20 +40,41 @@ function readSelectedAnswers(journeyRecommendation: RecommendationResult) {
   };
 }
 
+function getProductRecommendationEngineResult(
+  journeyRecommendation: RecommendationResult,
+  selectedAnswers: ReturnType<typeof readSelectedAnswers>,
+): ProductRecommendationResult {
+  const selectedExperience = typeof window !== "undefined"
+    ? window.sessionStorage.getItem("skinDiscoveryExperience")
+    : null;
+
+  if (selectedExperience === "gentlemens-corner") {
+    return generateCgcProductRecommendation({
+      journeyResult: journeyRecommendation,
+      selectedAnswers,
+    });
+  }
+
+  return generateProductRecommendation({
+    journeyResult: journeyRecommendation,
+    selectedAnswers,
+  });
+}
+
 export function generateSkinDiscoveryRecommendations(
   journeyRecommendation: RecommendationResult,
 ): SkinDiscoveryRecommendationBundle {
   const selectedAnswers = readSelectedAnswers(journeyRecommendation);
+  const enhancementRecommendations = filterBrandSpecificRecommendations(
+    generateEnhancementRecommendation({
+      journeyResult: journeyRecommendation,
+      selectedAnswers,
+    }),
+  );
 
   return {
-    productRecommendation: generateProductRecommendation({
-      journeyResult: journeyRecommendation,
-      selectedAnswers,
-    }),
-    enhancementRecommendations: generateEnhancementRecommendation({
-      journeyResult: journeyRecommendation,
-      selectedAnswers,
-    }),
+    productRecommendation: getProductRecommendationEngineResult(journeyRecommendation, selectedAnswers),
+    enhancementRecommendations,
   };
 }
 
@@ -49,20 +85,22 @@ export function readOrCreateSkinDiscoveryRecommendations(
   const storedEnhancementRecommendations = readStoredEnhancementRecommendation();
   const selectedAnswers = readSelectedAnswers(journeyRecommendation);
 
-  const productRecommendation = storedProductRecommendation ?? generateProductRecommendation({
-    journeyResult: journeyRecommendation,
+  const productRecommendation = storedProductRecommendation ?? getProductRecommendationEngineResult(
+    journeyRecommendation,
     selectedAnswers,
-  });
+  );
   if (!storedProductRecommendation) {
     writeProductRecommendationToStorage(productRecommendation);
   }
 
-  const enhancementRecommendations = storedEnhancementRecommendations.length > 0
-    ? storedEnhancementRecommendations
-    : generateEnhancementRecommendation({
-        journeyResult: journeyRecommendation,
-        selectedAnswers,
-      });
+  const enhancementRecommendations = filterBrandSpecificRecommendations(
+    storedEnhancementRecommendations.length > 0
+      ? storedEnhancementRecommendations
+      : generateEnhancementRecommendation({
+          journeyResult: journeyRecommendation,
+          selectedAnswers,
+        }),
+  );
   if (storedEnhancementRecommendations.length === 0) {
     writeEnhancementRecommendationToStorage(enhancementRecommendations);
   }

@@ -12,6 +12,7 @@ export type SkinDiscoveryContact = {
 export type SkinDiscoverySubmission = {
   submissionId: string;
   createdAt: string;
+  experience?: string;
 
   guest: {
     firstName: string;
@@ -56,6 +57,7 @@ export type SkinDiscoverySubmission = {
 };
 
 export type SkinDiscoverySubmissionInput = {
+  experience?: string | null;
   guest: SkinDiscoveryContact;
   discovery: {
     primaryMotivation: string | null;

@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo } from "react";
+import { getBrandLogoAlt, getBrandLogoPath } from "@/lib/brandLogo";
 import {
   mapPrimaryMotivation,
   mapSelectedValues,
@@ -280,11 +281,8 @@ export default function ResultsPage() {
           <div className="flex justify-center">
             <div className="flex h-40 w-40 items-center justify-center sm:h-48 sm:w-48 lg:h-56 lg:w-56">
               <Image
-                src="/ffb-logo.png"
-                alt="Fresh Facial Bar & Lash Lounge"
-                width={512}
-                height={512}
-                priority
+              src={getBrandLogoPath()}
+              alt={getBrandLogoAlt()}
                 className="h-auto w-full opacity-90"
               />
             </div>
@@ -339,8 +337,8 @@ export default function ResultsPage() {
         <div className="flex justify-center">
           <div className="flex h-40 w-40 items-center justify-center sm:h-48 sm:w-48 lg:h-56 lg:w-56">
             <Image
-              src="/ffb-logo.png"
-              alt="Fresh Facial Bar & Lash Lounge"
+              src={getBrandLogoPath()}
+              alt={getBrandLogoAlt()}
               width={512}
               height={512}
               priority
