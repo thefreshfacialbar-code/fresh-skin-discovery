@@ -15,18 +15,18 @@ export default function Home() {
           <div className="mt-10 grid gap-10 lg:grid-cols-[1.15fr_0.85fr] lg:items-start">
             <div className="max-w-2xl">
               <p className="text-[0.8rem] font-semibold uppercase tracking-[0.4em] text-[#908A9B] sm:text-sm">
-                The Skin Discovery Journey
+                THE SKIN DISCOVERY
               </p>
               <h1 className="mt-4 font-serif text-4xl leading-[1.05] text-stone-800 sm:text-5xl lg:text-6xl">
                 Every complexion tells a story.
               </h1>
 
               <p className="mt-6 text-lg leading-8 text-stone-600 sm:text-xl">
-                Your Skin Discovery Journey helps uncover what your skin is asking for, so your Skintender can craft a personalized skincare plan designed specifically for you.
+                Your Skin Discovery helps us understand what your skin is telling us, so your Mixo can thoughtfully craft a Blend around what your skin needs, your goals, and what matters most to you.
               </p>
 
               <p className="mt-5 max-w-xl text-base leading-8 text-stone-600 sm:text-lg">
-                “Freshly crafted for your skin, because no two complexions are alike.”
+                Because before we choose, treat, recommend, or blend—we listen.
               </p>
 
               <div className="mt-8 flex flex-col items-start gap-3">
@@ -34,20 +34,21 @@ export default function Home() {
                   href="/discovery"
                   className="inline-flex items-center justify-center rounded-full bg-[#908A9B] px-8 py-4 text-base font-semibold text-white shadow-[0_12px_30px_rgba(144,138,155,0.2)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#7d7688] sm:px-9 sm:py-4.5 sm:text-lg"
                 >
-                  Begin My Journey
+                  BEGIN MY DISCOVERY
                 </Link>
-                <p className="max-w-md text-base leading-7 italic text-stone-600 sm:text-lg">
-                  Thoughtfully curated. Expertly guided. Uniquely yours.
+                <p className="text-base leading-7 italic text-stone-600 sm:text-lg sm:whitespace-nowrap">
+                  Thoughtfully crafted. Expertly guided. Personally blended. Uniquely yours.
                 </p>
               </div>
             </div>
 
             <div className="rounded-[1.75rem] border-[1.5px] border-[#DAD6D8] bg-[#fffdf9] p-6 shadow-[0_18px_45px_rgba(144,138,155,0.08)] sm:p-8">
               <div className="text-sm font-semibold uppercase tracking-[0.3em] text-[#908A9B]">
-                Your Journey Begins Here
+                YOUR DISCOVERY BEGINS HERE
               </div>
               <ul className="mt-5 space-y-3 text-base leading-7 text-stone-600">
-                <li>• Personalized by your Skintender</li>
+                <li>• Guided by your Mixo</li>
+                <li className="italic">Your Mixo is a skin expert trained in The Art of Skin Mixology—and your guide throughout your Skin Journey.</li>
                 <li>• Built around your skincare goals</li>
                 <li>• No one-size-fits-all routines</li>
                 <li>• <span className="font-semibold text-stone-700">Results in about 5 minutes</span></li>

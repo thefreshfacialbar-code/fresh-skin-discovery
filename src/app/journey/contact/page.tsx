@@ -34,6 +34,7 @@ function isValidPhone(value: string): boolean {
 
 export default function ContactCapturePage() {
   const router = useRouter();
+  const isCurated = getSelectedExperience() === "gentlemens-corner";
   const [contact, setContact] = useState<SkinDiscoveryContact>(() => {
     if (typeof window === "undefined") {
       return initialContactState;
@@ -127,7 +128,9 @@ export default function ContactCapturePage() {
             Where should we send it?
           </h1>
           <p className="mx-auto mt-5 max-w-2xl text-base leading-8 text-[#5A5553] sm:text-lg">
-            Your personalized Skin Discovery is ready. Tell us where to send a copy, then reveal your Journey + Fresh Picks right here.
+            {isCurated
+              ? "Your Skin Discovery is ready. Tell us where to send your copy, then reveal your Skin Journey + curated routine right here."
+              : "Your personalized Skin Discovery is ready. Tell us where to send a copy, then reveal your Journey + Fresh Picks right here."}
           </p>
         </section>
 
@@ -227,14 +230,16 @@ export default function ContactCapturePage() {
               disabled={!isFormValid}
               className="inline-flex items-center justify-center rounded-full bg-[#908A9B] px-9 py-4 text-sm font-semibold uppercase tracking-[0.16em] text-white shadow-[0_10px_28px_rgba(144,138,155,0.24)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#817B8B] disabled:cursor-not-allowed disabled:bg-[#DAD6DB] disabled:shadow-none"
             >
-              REVEAL MY JOURNEY →
+              REVEAL MY SKIN JOURNEY →
             </button>
 
-            <p className="text-center text-sm leading-6 text-[#7E7877]">
-              Your Journey + Fresh Picks are waiting on the other side.
+            <p className="mt-2 text-center text-base font-medium leading-7 text-[#5A5553] sm:text-lg">
+              {isCurated
+                ? "Your Skin Journey + curated routine are waiting on the other side."
+                : "Your Skin Journey + personal Blend are waiting on the other side."}
             </p>
             <p className="text-center text-sm leading-6 text-[#7E7877]">
-              We&apos;ll also share a copy with your Skintender so they&apos;re ready to continue your Journey with you.
+              We&apos;ll also share a copy with your Mixo so they&apos;re ready to continue your Skin Journey with you.
             </p>
 
             <button
@@ -242,7 +247,7 @@ export default function ContactCapturePage() {
               onClick={() => router.push("/journey/reviewing")}
               className="text-sm font-medium uppercase tracking-[0.18em] text-[#908A9B] underline-offset-4 transition hover:text-[#403A3D] hover:underline"
             >
-              Review My Answers
+              REVIEW MY ANSWERS
             </button>
           </div>
         </div>

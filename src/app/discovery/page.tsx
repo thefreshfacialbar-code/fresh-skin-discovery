@@ -10,9 +10,9 @@ const experiences = [
   {
     id: "fresh-facial-bar-lash-lounge",
     title: "Fresh Facial Bar\n& Lash Lounge",
-    subtitle: "Skincare Thoughtfully Curated for Women and Teens",
+    subtitle: "Skincare Thoughtfully Blended for Women & Teens",
     description:
-      "A personalized skincare journey that begins with listening and is thoughtfully crafted just for you.",
+      "A personalized Skin Journey that begins with listening and evolves with you.",
     available: true,
     badge: null,
   },
@@ -63,7 +63,7 @@ clearEnhancementRecommendationSession();
               Who are we crafting for today?
             </h1>
             <p className="mx-auto mt-4 max-w-2xl text-base leading-8 text-stone-600 sm:text-lg">
-              Choose the experience that&apos;s right for you. Our Skintenders will personalize everything from here.
+              Choose the experience that&apos;s right for you. Your Mixo will personalize everything from here.
             </p>
           </div>
 
@@ -122,7 +122,7 @@ clearEnhancementRecommendationSession();
                           aria-hidden="true"
                           className="inline-flex items-center justify-center rounded-full bg-[#908A9B] px-4 py-2 text-sm font-semibold uppercase tracking-[0.2em] text-white transition-all duration-200"
                         >
-                          Begin My Journey
+                          BEGIN MY DISCOVERY
                         </span>
                       </div>
                     </div>

@@ -3,26 +3,36 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { getBrandLogoAlt, getBrandLogoPath } from "@/lib/brandLogo";
+import { getBrandLogoAlt, getBrandLogoPath, getSelectedExperience } from "@/lib/brandLogo";
 
-const progressSteps = [
-  "Reviewing your Skin Discovery Journey...",
+const freshProgressSteps = [
+  "Reviewing your Skin Discovery...",
   "Thoughtfully selecting your recommendations...",
-  "Crafting your personalized journey...",
+  "Creating your personal Blend...",
+  "Preparing your next step...",
+];
+
+const curatedProgressSteps = [
+  "Reviewing your Skin Discovery...",
+  "Selecting what fits your skin...",
+  "Building your personal Blend...",
   "Preparing your next step...",
 ];
 
 export default function CuratingTransitionPage() {
   const router = useRouter();
+  const isCurated = getSelectedExperience() === "gentlemens-corner";
   const prefersReducedMotion =
     typeof window !== "undefined" &&
     window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const [isVisible, setIsVisible] = useState(true);
   const [activeStep, setActiveStep] = useState(
-    prefersReducedMotion ? progressSteps.length - 1 : 0,
+    prefersReducedMotion ? freshProgressSteps.length - 1 : 0,
   );
 
   useEffect(() => {
+    const progressSteps = isCurated ? curatedProgressSteps : freshProgressSteps;
+
     if (prefersReducedMotion) {
       const timer = window.setTimeout(() => {
         router.push("/journey/reviewing");
@@ -55,7 +65,7 @@ export default function CuratingTransitionPage() {
     return () => {
       timers.forEach((timer) => window.clearTimeout(timer));
     };
-  }, [prefersReducedMotion, router]);
+  }, [isCurated, prefersReducedMotion, router]);
 
   return (
     <main
@@ -84,24 +94,26 @@ export default function CuratingTransitionPage() {
 
         <div className="mt-10">
           <p className="text-[0.8rem] font-semibold uppercase tracking-[0.32em] text-[#908A9B] sm:text-[0.95rem]">
-            FRESH THOUGHT
+            {isCurated ? "MIXO'S NOTE" : "FRESH THOUGHT"}
           </p>
 
           <h1
             className="mt-6 text-[#403A3D] sm:text-[2.2rem]"
             style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}
           >
-            <span className="block text-[2rem] italic leading-[1.06] sm:text-[2.85rem]">
-              Your Skintender is crafting something fresh.
-            </span>
-            <span className="mt-2 block text-[1.55rem] italic leading-[1.15] sm:text-[2.2rem]">
-              Just. For. You.
-            </span>
+            {isCurated ? (
+              <span className="block text-[2rem] italic leading-[1.06] sm:text-[2.85rem]">Your Mixo is curating your routine.</span>
+            ) : (
+              <>
+                <span className="block text-[2rem] italic leading-[1.06] sm:text-[2.85rem]">Your Mixo is crafting something fresh.</span>
+                <span className="mt-2 block text-[1.55rem] italic leading-[1.15] sm:text-[2.2rem]">Just. For. You.</span>
+              </>
+            )}
           </h1>
         </div>
 
         <div className="mx-auto mt-12 max-w-xl space-y-3 text-left sm:text-center">
-          {progressSteps.map((step, index) => {
+          {(isCurated ? curatedProgressSteps : freshProgressSteps).map((step, index) => {
             const isPast = index < activeStep;
             const isCurrent = index === activeStep;
             const isFuture = index > activeStep;

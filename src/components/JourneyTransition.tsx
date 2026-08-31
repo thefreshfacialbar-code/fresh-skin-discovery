@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { getBrandLogoAlt, getBrandLogoPath } from "@/lib/brandLogo";
+import { getBrandLogoAlt, getBrandLogoPath, getSelectedExperience } from "@/lib/brandLogo";
 
 export default function JourneyTransition({
   stage,
@@ -15,6 +15,7 @@ export default function JourneyTransition({
   nextRoute: string;
 }) {
   const router = useRouter();
+  const isCurated = getSelectedExperience() === "gentlemens-corner";
   const [isVisible, setIsVisible] = useState(true);
 
   useEffect(() => {
@@ -67,7 +68,7 @@ export default function JourneyTransition({
 
         <div className="mt-10">
           <p className="text-[0.8rem] font-semibold uppercase tracking-[0.32em] text-[#908A9B] sm:text-[0.95rem]">
-            FRESH THOUGHT
+            {isCurated ? "MIXO'S NOTE" : "FRESH THOUGHT"}
           </p>
 
           <p className="mt-6 font-serif text-[1.5rem] italic leading-snug text-[#403A3D] sm:text-[1.75rem]">

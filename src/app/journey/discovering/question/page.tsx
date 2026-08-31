@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
-import { getBrandLogoAlt, getBrandLogoPath } from "@/lib/brandLogo";
+import { getBrandLogoAlt, getBrandLogoPath, getSelectedExperience } from "@/lib/brandLogo";
 
 type IconName = "droplet" | "shield" | "flower" | "sparkles" | "leaf" | "heart";
 
@@ -124,6 +124,7 @@ function JourneyIcon({ name }: { name: IconName }) {
 
 export default function DiscoveringQuestionPage() {
   const router = useRouter();
+  const isCurated = getSelectedExperience() === "gentlemens-corner";
   const [selectedAnswers, setSelectedAnswers] = useState<string[]>([]);
 
   const canContinue = useMemo(() => selectedAnswers.length > 0, [selectedAnswers]);
@@ -165,13 +166,13 @@ export default function DiscoveringQuestionPage() {
 
         <section className="mt-9 text-center">
           <h1 className="font-serif text-4xl leading-tight tracking-[-0.02em] sm:text-5xl">
-            What would you love your skin to do more of?
+            {isCurated ? "What do you want from your skin?" : "What would you love your skin to do more of?"}
           </h1>
 
           <p className="mx-auto mt-5 max-w-3xl text-base leading-7 text-[#5A5553] sm:text-lg">
-            Select everything that feels important to you. Your goals help your
-            Skintender understand where you&apos;d most like your skincare journey to
-            go.
+            {isCurated
+              ? "Select everything that matters to you. Your goals help your Mixo build the right plan for your skin."
+              : "Select everything that feels important to you. Your goals help your Mixo understand where you'd most like your Skin Journey to go."}
           </p>
         </section>
 
@@ -258,7 +259,7 @@ export default function DiscoveringQuestionPage() {
                 : "cursor-not-allowed bg-[#DAD6DB] text-[#AAA4AC] shadow-[0_4px_12px_rgba(61,52,48,0.04)]",
             ].join(" ")}
           >
-            <span>CONTINUE MY JOURNEY</span>
+            <span>CONTINUE</span>
             <svg
               viewBox="0 0 20 20"
               width="16"
@@ -275,9 +276,7 @@ export default function DiscoveringQuestionPage() {
             </svg>
           </button>
 
-          <p className="mt-4 text-sm text-[#77706F]">
-            Thoughtfully crafted, one step at a time.
-          </p>
+          {!isCurated ? <p className="mt-4 text-sm text-[#77706F]">Thoughtfully crafted, one step at a time.</p> : null}
         </div>
       </div>
     </main>

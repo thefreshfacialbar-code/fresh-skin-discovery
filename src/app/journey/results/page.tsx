@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo } from "react";
-import { getBrandLogoAlt, getBrandLogoPath } from "@/lib/brandLogo";
+import { getBrandLogoAlt, getBrandLogoPath, getSelectedExperience } from "@/lib/brandLogo";
 import {
   mapPrimaryMotivation,
   mapSelectedValues,
@@ -242,6 +242,7 @@ function clearSkinDiscoverySession() {
 
 export default function ResultsPage() {
   const router = useRouter();
+  const isCurated = getSelectedExperience() === "gentlemens-corner";
   const recommendation = useMemo(() => readStoredRecommendation(), []);
   const journeySummary = useMemo(() => readJourneySummary(), []);
 
@@ -294,7 +295,7 @@ export default function ResultsPage() {
             </p>
 
             <p className="mt-6 text-[0.8rem] font-semibold uppercase tracking-[0.32em] text-[#908A9B] sm:text-[0.95rem]">
-              FRESH THOUGHT
+              {isCurated ? "MIXO'S NOTE" : "FRESH THOUGHT"}
             </p>
 
             <p
@@ -353,7 +354,7 @@ export default function ResultsPage() {
           </p>
 
           <p className="mt-6 text-[0.8rem] font-semibold uppercase tracking-[0.32em] text-[#908A9B] sm:text-[0.95rem]">
-            FRESH THOUGHT
+            {isCurated ? "MIXO'S NOTE" : "FRESH THOUGHT"}
           </p>
 
           <p
@@ -372,7 +373,7 @@ export default function ResultsPage() {
 
           <p className="mx-auto mt-4 max-w-4xl text-base leading-8 text-[#5A5553] sm:text-lg">
             Everything you shared helped us uncover the direction your skin may be asking for today. Your
-            Skintender can personalize this journey even further as your skin changes.
+            Mixo can personalize this journey even further as your skin changes.
           </p>
         </section>
 
@@ -417,7 +418,7 @@ export default function ResultsPage() {
 
                   <p className="mt-4 text-base leading-8 text-[#5A5553]">
                     Your answers also consistently point toward {JOURNEY_CONTENT[secondaryJourney].name}, so your
-                    Skintender may thoughtfully weave elements of this journey into your recommendations.
+                    Mixo may thoughtfully weave elements of this journey into your recommendations.
                   </p>
                 </div>
               </div>
@@ -452,7 +453,9 @@ export default function ResultsPage() {
 
             <div className="mt-6 text-center">
               <p className="text-lg italic text-[#403A3D]" style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}>
-                Your Skintender can thoughtfully blend both directions into one personalized approach.
+                {isCurated
+                  ? "Your Mixo can thoughtfully bring both directions together to curate a routine around your skin."
+                  : "Your Mixo can thoughtfully bring both directions together as part of your personal Blend."}
               </p>
             </div>
           </div>
@@ -478,7 +481,7 @@ export default function ResultsPage() {
               </p>
 
               <p className="mt-5 text-base leading-8 text-[#5A5553] sm:text-lg">
-                Your Skintender can use everything you&apos;ve shared to personalize your next step.
+                Your Mixo can use everything you&apos;ve shared to personalize your next step.
               </p>
 
               <button
@@ -497,7 +500,7 @@ export default function ResultsPage() {
             className="text-3xl leading-tight text-[#302C2A] sm:text-[2.3rem]"
             style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}
           >
-            What We Heard
+            YOUR SKIN STORY
           </h2>
 
           <div className="mt-8 grid gap-6 lg:grid-cols-3">
@@ -552,8 +555,9 @@ export default function ResultsPage() {
             </h2>
 
             <p className="mt-5 text-base leading-8 text-[#5A5553] sm:text-lg">
-              Your Skin Discovery gives your Skintender a thoughtful starting point. From here, your recommendations
-              can be refined around your skin, your goals and how your complexion changes over time.
+              {isCurated
+                ? "Your Skin Discovery gives your Mixo a thoughtful starting point. From here, your routine can be refined around your skin, your goals and how your complexion changes over time."
+                : "Your Skin Discovery gives your Mixo a thoughtful starting point. From here, your recommendations can be refined around your skin, your goals and how your complexion changes over time."}
             </p>
 
             <div className="mt-8 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -562,7 +566,7 @@ export default function ResultsPage() {
                 onClick={() => router.push("/journey/results/recommendations")}
                 className="inline-flex items-center justify-center rounded-full bg-[#908A9B] px-8 py-4 text-sm font-semibold uppercase tracking-[0.16em] text-white shadow-[0_10px_28px_rgba(144,138,155,0.24)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#817B8B]"
               >
-                View My Recommendations →
+                {isCurated ? "VIEW MY CURATED ROUTINE →" : "DISCOVER MY BLEND →"}
               </button>
 
               <button
@@ -580,14 +584,16 @@ export default function ResultsPage() {
           </div>
         </div>
 
-        <div className="pb-12 pt-10 text-center">
-          <p
-            className="text-[1.05rem] italic text-[#403A3D] sm:text-[1.3rem]"
-            style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}
-          >
-            Freshly considered. Thoughtfully curated. Uniquely yours.
-          </p>
-        </div>
+        {!isCurated ? (
+          <div className="pb-12 pt-10 text-center">
+            <p
+              className="text-[1.05rem] italic text-[#403A3D] sm:text-[1.3rem]"
+              style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}
+            >
+              Thoughtfully crafted. Expertly guided. Personally blended. Uniquely yours.
+            </p>
+          </div>
+        ) : null}
       </div>
     </main>
   );

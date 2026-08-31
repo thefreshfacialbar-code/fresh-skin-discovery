@@ -5,7 +5,7 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { getBrandLogoAlt, getBrandLogoPath } from "@/lib/brandLogo";
+import { getBrandLogoAlt, getBrandLogoPath, getSelectedExperience } from "@/lib/brandLogo";
 import {
   clearEnhancementRecommendationSession,
 } from "@/lib/enhancementRecommendationSession";
@@ -27,24 +27,15 @@ const FEATURED_TITLES = {
 function ProductCard({
   step,
   product,
+  isCurated,
 }: {
   step: keyof typeof FEATURED_TITLES;
   product: RecommendedProduct | null;
+  isCurated: boolean;
 }) {
   if (!product) {
     return null;
   }
-
-  const usageText =
-    product.usageType === "daily"
-      ? "Daily treatment"
-      : product.usageType === "weekly"
-        ? "Weekly ritual"
-        : product.usageType === "farmacist-guided"
-          ? "Skintender-guided treatment"
-          : product.usageType === "periodic"
-            ? "Targeted treatment"
-            : "Targeted treatment";
 
   return (
     <div className="rounded-[2rem] border border-[#DAD6DB] bg-[#FFFDFC] p-6 text-left shadow-[0_18px_42px_rgba(61,52,48,0.06)]">
@@ -53,10 +44,11 @@ function ProductCard({
         {product.productName}
       </h3>
       <p className="mt-3 text-[0.72rem] font-semibold uppercase tracking-[0.2em] text-[#908A9B]">{product.category}</p>
-      <p className="mt-2 text-[0.7rem] font-medium uppercase tracking-[0.18em] text-[#7E7A80]">{usageText}</p>
       <p className="mt-4 text-base leading-8 text-[#5A5553]">{product.guestBenefit}</p>
       <div className="mt-5 border-t border-[#E8E2E5] pt-4">
-        <p className="text-[0.8rem] font-semibold uppercase tracking-[0.22em] text-[#908A9B]">Why we picked it</p>
+        <p className="text-[0.8rem] font-semibold uppercase tracking-[0.22em] text-[#908A9B]">
+          {isCurated ? "Why it's in your routine" : "Why we picked it"}
+        </p>
         <ul className="mt-3 space-y-2 text-base leading-7 text-[#5A5553]">
           {product.matchReasons.map((reason) => (
             <li key={reason}>• {reason}</li>
@@ -69,6 +61,7 @@ function ProductCard({
 
 export default function RecommendationsPage() {
   const router = useRouter();
+  const isCurated = getSelectedExperience() === "gentlemens-corner";
   const [isHydrated, setIsHydrated] = useState(false);
   const [productRecommendation, setProductRecommendation] = useState<ProductRecommendationResult | null>(null);
   const [enhancementRecommendations, setEnhancementRecommendations] = useState<RecommendedEnhancement[]>([]);
@@ -103,7 +96,9 @@ export default function RecommendationsPage() {
               />
             </div>
           </div>
-          <p className="mt-6 text-[0.8rem] font-semibold uppercase tracking-[0.38em] text-[#908A9B]">YOUR FRESH PICKS</p>
+          <p className="mt-6 text-[0.8rem] font-semibold uppercase tracking-[0.38em] text-[#908A9B]">
+            {isCurated ? "YOUR CURATED ROUTINE" : "YOUR FRESH PICKS"}
+          </p>
           <h1 className="mt-6 text-4xl leading-tight text-[#302C2A] sm:text-5xl" style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}>
             Thoughtfully gathering your Fresh Picks...
           </h1>
@@ -116,7 +111,9 @@ export default function RecommendationsPage() {
     return (
       <main className="min-h-screen bg-[#FAF7F1] px-5 py-8 text-[#302C2A] sm:px-8 md:py-12">
         <div className="mx-auto max-w-4xl rounded-[2rem] border border-[#DAD6DB] bg-[#FFFDFC] p-8 text-center shadow-[0_20px_60px_rgba(61,52,48,0.06)] sm:p-12">
-          <p className="text-[0.8rem] font-semibold uppercase tracking-[0.38em] text-[#908A9B]">YOUR FRESH PICKS</p>
+          <p className="text-[0.8rem] font-semibold uppercase tracking-[0.38em] text-[#908A9B]">
+            {isCurated ? "YOUR CURATED ROUTINE" : "YOUR FRESH PICKS"}
+          </p>
           <h1 className="mt-6 text-4xl leading-tight text-[#302C2A] sm:text-5xl" style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}>
             Freshly picked for your skin.
           </h1>
@@ -151,19 +148,19 @@ export default function RecommendationsPage() {
 
           <section className="mt-3 text-center">
             <p className="text-[0.8rem] font-semibold uppercase tracking-[0.42em] text-[#908A9B] sm:text-sm">
-              YOUR FRESH PICKS
+              {isCurated ? "YOUR CURATED ROUTINE" : "YOUR FRESH PICKS"}
             </p>
             <p className="mt-6 text-[0.8rem] font-semibold uppercase tracking-[0.32em] text-[#908A9B] sm:text-[0.95rem]">
-              FRESH THOUGHT
+              {isCurated ? "MIXO'S NOTE" : "FRESH THOUGHT"}
             </p>
             <p className="mt-4 text-[1.3rem] italic leading-snug text-[#403A3D] sm:text-[1.9rem]" style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}>
-              “Freshly picked for your skin.”
+              {isCurated ? "Built around what your skin needs." : "“Freshly picked for your skin.”"}
             </p>
             <h1 className="mt-6 text-4xl leading-tight text-[#302C2A] sm:text-[3rem]" style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}>
               Your home-care edit deserves a little more personalization.
             </h1>
             <p className="mx-auto mt-5 max-w-4xl text-base leading-8 text-[#5A5553] sm:text-lg">
-              Your Discovery didn&apos;t point strongly enough in one direction for us to thoughtfully choose products automatically. Your Skintender can use everything you&apos;ve shared to build the right starting point with you.
+              Your Discovery didn&apos;t point strongly enough in one direction for us to thoughtfully choose products automatically. Your Mixo can use everything you&apos;ve shared to build the right starting point with you.
             </p>
           </section>
 
@@ -202,27 +199,29 @@ export default function RecommendationsPage() {
 
         <section className="mt-3 text-center">
           <p className="text-[0.8rem] font-semibold uppercase tracking-[0.42em] text-[#908A9B] sm:text-sm">
-            YOUR FRESH PICKS
+            {isCurated ? "YOUR CURATED ROUTINE" : "YOUR FRESH PICKS"}
           </p>
           <p className="mt-6 text-[0.8rem] font-semibold uppercase tracking-[0.32em] text-[#908A9B] sm:text-[0.95rem]">
-            FRESH THOUGHT
+            {isCurated ? "MIXO'S NOTE" : "FRESH THOUGHT"}
           </p>
           <p className="mt-4 text-[1.3rem] italic leading-snug text-[#403A3D] sm:text-[1.9rem]" style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}>
-            “Freshly picked for your skin.”
+            {isCurated ? "Built around what your skin needs." : "“Freshly picked for your skin.”"}
           </p>
           <h1 className="mt-6 text-4xl leading-tight text-[#302C2A] sm:text-[3rem]" style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}>
-            A few thoughtful places to begin.
+            {isCurated ? "Your routine starts here." : "A few thoughtful places to begin."}
           </h1>
           <p className="mx-auto mt-5 max-w-4xl text-base leading-8 text-[#5A5553] sm:text-lg">
-            Your Discovery helped us narrow our product library to a few Fresh Picks that align with what your skin is asking for today. Your Skintender can fine-tune these selections around what you&apos;re already using, your preferences and how your skin is feeling.
+            {isCurated
+              ? "Your Discovery helped us narrow the options to a routine built around what your skin is asking for today. Your Mixo can fine-tune these selections around what you're already using, your preferences and how your skin is feeling."
+              : "Your Discovery helped us narrow our product library to a few Fresh Picks that align with what your skin is asking for today. Your Mixo can fine-tune these selections around what you're already using, your preferences and how your skin is feeling."}
           </p>
         </section>
 
         <div className="mt-12 grid gap-6 lg:grid-cols-2">
-          <ProductCard step="cleanse" product={productRecommendation.featured.cleanse} />
-          <ProductCard step="treat" product={productRecommendation.featured.treat} />
-          <ProductCard step="moisturize" product={productRecommendation.featured.moisturize} />
-          <ProductCard step="protect" product={productRecommendation.featured.protect} />
+          <ProductCard step="cleanse" product={productRecommendation.featured.cleanse} isCurated={isCurated} />
+          <ProductCard step="treat" product={productRecommendation.featured.treat} isCurated={isCurated} />
+          <ProductCard step="moisturize" product={productRecommendation.featured.moisturize} isCurated={isCurated} />
+          <ProductCard step="protect" product={productRecommendation.featured.protect} isCurated={isCurated} />
         </div>
 
         {enhancementRecommendations.length > 0 ? (
@@ -231,7 +230,7 @@ export default function RecommendationsPage() {
               Worth Considering
             </h2>
             <p className="mt-4 text-base leading-8 text-[#5A5553] sm:text-lg">
-              Your Skintender can help determine whether these Enhancements make sense for your custom facial.
+              Your Mixo can help determine whether these Enhancements make sense for your custom facial.
             </p>
 
             <div className="mt-8 grid gap-6 lg:grid-cols-2">
@@ -251,7 +250,7 @@ export default function RecommendationsPage() {
                     </ul>
                   </div>
                   {enhancement.name === "FarmHouse Fresh Peel" ? (
-                    <p className="mt-4 text-sm italic text-[#5A5553]">Your Skintender can determine which peel, if any, best complements your Journey.</p>
+                    <p className="mt-4 text-sm italic text-[#5A5553]">Your Mixo can determine which peel, if any, best complements your Journey.</p>
                   ) : null}
                 </div>
               ))}
@@ -261,10 +260,12 @@ export default function RecommendationsPage() {
 
         <div className="mt-12 rounded-[2rem] border border-[#DAD6DB] bg-[#FFFDFC] p-6 shadow-[0_18px_42px_rgba(61,52,48,0.06)] sm:p-8 lg:p-10">
           <h2 className="text-3xl leading-tight text-[#302C2A] sm:text-[2.2rem]" style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}>
-            More Fresh Picks for Your Journey
+            {isCurated ? "Worth Adding to the Mix" : "More Fresh Picks for Your Journey"}
           </h2>
           <p className="mt-4 text-base leading-8 text-[#5A5553] sm:text-lg">
-            A few additional options your Skintender may consider as your routine evolves.
+            {isCurated
+              ? "A few additional options your Mixo may consider as your routine evolves."
+              : "A few additional options your Mixo may consider as your Blend evolves."}
           </p>
 
           <div className="mt-8 grid gap-6 lg:grid-cols-2">
@@ -279,13 +280,13 @@ export default function RecommendationsPage() {
                   </div>
                   {product.farmacistReviewRecommended ? (
                     <span className="rounded-full border border-[#DAD6DB] bg-[#F5F2F4] px-3 py-2 text-[0.62rem] font-semibold uppercase tracking-[0.18em] text-[#908A9B]">
-                      Skintender review
+                      Mixo review
                     </span>
                   ) : null}
                 </div>
                 <p className="mt-4 text-base leading-8 text-[#5A5553]">{product.guestBenefit}</p>
                 {product.farmacistReviewRecommended ? (
-                  <p className="mt-4 text-sm italic text-[#5A5553]">Ask your Skintender if this Fresh Pick is right for your routine.</p>
+                  <p className="mt-4 text-sm italic text-[#5A5553]">Ask your Mixo if this Fresh Pick is right for your routine.</p>
                 ) : null}
               </div>
             ))}

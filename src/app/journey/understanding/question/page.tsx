@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
-import { getBrandLogoAlt, getBrandLogoPath } from "@/lib/brandLogo";
+import { getBrandLogoAlt, getBrandLogoPath, getSelectedExperience } from "@/lib/brandLogo";
 
 type IconName =
   | "droplet"
@@ -83,7 +83,7 @@ const answers: Answer[] = [
     id: "not-sure",
     icon: "compass",
     title: "I'm not sure.",
-    description: "That's okay—your Skintender can help you understand what your skin is telling you.",
+    description: "That's okay—your Mixo can help you understand what your skin is telling you.",
   },
 ];
 
@@ -199,6 +199,7 @@ function JourneyIcon({ name }: { name: IconName }) {
 
 export default function UnderstandingQuestionPage() {
   const router = useRouter();
+  const isCurated = getSelectedExperience() === "gentlemens-corner";
   const [selectedAnswers, setSelectedAnswers] = useState<string[]>([]);
 
   const canContinue = useMemo(() => selectedAnswers.length > 0, [selectedAnswers]);
@@ -244,9 +245,9 @@ export default function UnderstandingQuestionPage() {
           </h1>
 
           <p className="mx-auto mt-5 max-w-3xl text-base leading-7 text-[#5A5553] sm:text-lg">
-            Select everything that feels true for your skin. Your answers help
-            your Skintender understand how your skin behaves—not simply how it
-            looks.
+            {isCurated
+              ? "Select everything that sounds like your skin. Your answers help your Mixo understand how your skin behaves—not just how it looks."
+              : "Select everything that feels true for your skin. Your answers help your Mixo understand how your skin behaves—not simply how it looks."}
           </p>
         </section>
 
@@ -289,7 +290,11 @@ export default function UnderstandingQuestionPage() {
                   </span>
 
                   <span className="mt-2 block text-[0.98rem] leading-6 text-[#625C5A]">
-                    {answer.description}
+                    {answer.id === "not-sure"
+                      ? isCurated
+                        ? "That's okay. Your Mixo will help you figure it out."
+                        : "That's okay—your Mixo can help you understand what your skin is telling you."
+                      : answer.description}
                   </span>
                 </span>
 
@@ -333,7 +338,7 @@ export default function UnderstandingQuestionPage() {
                 : "cursor-not-allowed bg-[#DAD6DB] text-[#AAA4AC] shadow-[0_4px_12px_rgba(61,52,48,0.04)]",
             ].join(" ")}
           >
-            <span>Continue My Journey</span>
+            <span>CONTINUE</span>
             <svg
               viewBox="0 0 20 20"
               width="16"
@@ -350,9 +355,7 @@ export default function UnderstandingQuestionPage() {
             </svg>
           </button>
 
-          <p className="mt-4 text-sm text-[#77706F]">
-            Thoughtfully crafted, one step at a time.
-          </p>
+          {!isCurated ? <p className="mt-4 text-sm text-[#77706F]">Thoughtfully crafted, one step at a time.</p> : null}
         </div>
       </div>
     </main>

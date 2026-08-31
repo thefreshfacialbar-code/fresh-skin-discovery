@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { getBrandLogoAlt, getBrandLogoPath } from "@/lib/brandLogo";
+import { getBrandLogoAlt, getBrandLogoPath, getSelectedExperience } from "@/lib/brandLogo";
 
 type IconName =
   | "droplet"
@@ -147,6 +147,7 @@ function JourneyIcon({ name }: { name: IconName }) {
 
 export default function ListeningQuestionPage() {
   const router = useRouter();
+  const isCurated = getSelectedExperience() === "gentlemens-corner";
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
 
   function continueJourney() {
@@ -178,9 +179,9 @@ export default function ListeningQuestionPage() {
           </h1>
 
           <p className="mx-auto mt-5 max-w-3xl text-base leading-7 text-[#5A5553] sm:text-lg">
-            Choose the answer that best reflects what you&apos;re hoping to
-            achieve today. Simply select what feels most like you. Your
-            Skintender will thoughtfully personalize your journey from here.
+            {isCurated
+              ? "Choose the answer that best reflects what you're noticing about your skin today. Your Mixo will take it from there."
+              : "Choose the answer that best reflects what you're hoping to achieve today. Simply select what feels most like you. Your Mixo will thoughtfully personalize your Skin Journey from here."}
           </p>
         </section>
 
@@ -268,7 +269,7 @@ export default function ListeningQuestionPage() {
                 : "cursor-not-allowed bg-[#DAD6DB] text-[#AAA4AC] shadow-[0_4px_12px_rgba(61,52,48,0.04)]",
             ].join(" ")}
           >
-            <span>Continue My Journey</span>
+            <span>CONTINUE →</span>
             <svg
               viewBox="0 0 20 20"
               width="16"
@@ -285,9 +286,7 @@ export default function ListeningQuestionPage() {
             </svg>
           </button>
 
-          <p className="mt-4 text-sm text-[#77706F]">
-            Thoughtfully crafted, one step at a time.
-          </p>
+          {!isCurated ? <p className="mt-4 text-sm text-[#77706F]">Thoughtfully crafted, one step at a time.</p> : null}
         </div>
       </div>
     </main>
