@@ -99,7 +99,10 @@ export function validateSkinDiscoverySubmission(input: unknown): SkinDiscoveryVa
     errors.push("journey object is required");
   } else {
     const journeyRecord = journey as Record<string, unknown>;
-    if (!Array.isArray(journeyRecord.primaryJourneys) || journeyRecord.primaryJourneys.length < 1) {
+    if (
+      !Array.isArray(journeyRecord.primaryJourneys)
+      || (journeyRecord.primaryJourneys.length < 1 && journeyRecord.resultType !== "no-strong-journey")
+    ) {
       errors.push("journey must include at least one primary journey");
     }
   }

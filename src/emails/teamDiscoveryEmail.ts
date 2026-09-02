@@ -205,14 +205,21 @@ function renderEnhancements(submission: SkinDiscoverySubmission): string {
 }
 
 function renderTeamEmailHtml(submission: SkinDiscoverySubmission, config: TeamEmailConfig): string {
-  const subjectJourney = submission.journey.primaryJourneys.map((journey) => formatJourneyName(journey)).join(" + ");
+  const needsMixoFollowUp = submission.journey.resultType === "no-strong-journey";
+  const subjectJourney = needsMixoFollowUp
+    ? "Mixo follow-up needed"
+    : submission.journey.primaryJourneys.map((journey) => formatJourneyName(journey)).join(" + ");
   const now = new Date(submission.createdAt).toLocaleString();
   const customDirection = createCustomFacialDirection(submission);
   const bookedStatus = submission.actions.booked === null ? "Not yet known" : submission.actions.booked ? "Yes" : "No";
   const membershipStatus = submission.actions.membershipInterest === null ? "Not yet known" : submission.actions.membershipInterest ? "Yes" : "No";
   const boulevardTags = submission.internal.boulevardTags.length ? submission.internal.boulevardTags.join("<br />") : "None";
 
-  return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /><title>${escapeHtml("New Skin Discovery")}</title><style>${EMAIL_BASE_CSS}</style></head><body><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f3f0ef; padding: 32px 18px;"><tr><td align="center"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width: 760px; background:#ffffff; border:1px solid ${EMAIL_COLORS.border}; border-radius: 18px;"><tr><td style="padding: 28px 28px 6px; font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: ${EMAIL_COLORS.mutedAlt}; font-weight: 700;">NEW SKIN DISCOVERY</td></tr><tr><td style="padding: 0 28px 20px; font-size: 24px; line-height: 32px; color: ${EMAIL_COLORS.ink}; font-weight: 700;">${escapeHtml(subjectJourney)}</td></tr><tr><td style="padding: 0 28px 20px;">
+  const followUpNotice = needsMixoFollowUp
+    ? `<tr><td style="padding: 0 28px 20px; font-size: 16px; line-height: 24px; color: ${EMAIL_COLORS.ink}; font-weight: 700;">Skin Discovery needs Mixo follow-up — no strong Skin Journey result was generated.</td></tr>`
+    : "";
+
+  return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /><title>${escapeHtml("New Skin Discovery")}</title><style>${EMAIL_BASE_CSS}</style></head><body><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f3f0ef; padding: 32px 18px;"><tr><td align="center"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width: 760px; background:#ffffff; border:1px solid ${EMAIL_COLORS.border}; border-radius: 18px;"><tr><td style="padding: 28px 28px 6px; font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: ${EMAIL_COLORS.mutedAlt}; font-weight: 700;">NEW SKIN DISCOVERY</td></tr><tr><td style="padding: 0 28px 20px; font-size: 24px; line-height: 32px; color: ${EMAIL_COLORS.ink}; font-weight: 700;">${escapeHtml(subjectJourney)}</td></tr>${followUpNotice}<tr><td style="padding: 0 28px 20px;">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid ${EMAIL_COLORS.border}; background:#fff; border-radius: 12px;">
           <tr>
             <td style="padding: 14px 18px; font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; color: ${EMAIL_COLORS.mutedAlt}; font-weight: 700;">Submission Details</td>
@@ -261,7 +268,10 @@ function renderTeamEmailHtml(submission: SkinDiscoverySubmission, config: TeamEm
 }
 
 function renderTeamEmailText(submission: SkinDiscoverySubmission, config: TeamEmailConfig): string {
-  const subjectJourney = submission.journey.primaryJourneys.map((journey) => formatJourneyName(journey)).join(" + ");
+  const needsMixoFollowUp = submission.journey.resultType === "no-strong-journey";
+  const subjectJourney = needsMixoFollowUp
+    ? "Mixo follow-up needed"
+    : submission.journey.primaryJourneys.map((journey) => formatJourneyName(journey)).join(" + ");
   const bookedStatus = submission.actions.booked === null ? "Not yet known" : submission.actions.booked ? "Yes" : "No";
   const membershipStatus = submission.actions.membershipInterest === null ? "Not yet known" : submission.actions.membershipInterest ? "Yes" : "No";
   const boulevardTags = submission.internal.boulevardTags.length ? submission.internal.boulevardTags.join("\n- ") : "None";
@@ -269,6 +279,7 @@ function renderTeamEmailText(submission: SkinDiscoverySubmission, config: TeamEm
   const lines = [
     "NEW SKIN DISCOVERY",
     `Journey: ${subjectJourney}`,
+    needsMixoFollowUp ? "Skin Discovery needs Mixo follow-up — no strong Skin Journey result was generated." : "",
     `Submission ID: ${submission.submissionId}`,
     `Date/time: ${new Date(submission.createdAt).toLocaleString()}`,
     `First Name: ${submission.guest.firstName}`,
@@ -334,10 +345,14 @@ export function renderTeamDiscoveryEmail(
     ...config,
   };
 
-  const subjectJourney = submission.journey.primaryJourneys.map((journey) => formatJourneyName(journey)).join(" + ");
+  const subjectJourney = submission.journey.resultType === "no-strong-journey"
+    ? "Mixo follow-up needed"
+    : submission.journey.primaryJourneys.map((journey) => formatJourneyName(journey)).join(" + ");
 
   return {
-    subject: `New Skin Discovery — ${submission.guest.firstName} ${submission.guest.lastName} — ${subjectJourney}`,
+    subject: submission.journey.resultType === "no-strong-journey"
+      ? `Skin Discovery needs Mixo follow-up — ${submission.guest.firstName} ${submission.guest.lastName}`
+      : `New Skin Discovery — ${submission.guest.firstName} ${submission.guest.lastName} — ${subjectJourney}`,
     html: renderTeamEmailHtml(submission, normalizedConfig),
     text: renderTeamEmailText(submission, normalizedConfig),
   };

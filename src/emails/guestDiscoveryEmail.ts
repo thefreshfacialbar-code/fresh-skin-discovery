@@ -273,7 +273,7 @@ function renderEnhancements(submission: SkinDiscoverySubmission): string {
       if (!enhancement) return "";
 
       const note = enhancement.name === "FarmHouse Fresh Peel"
-        ? "Your Skintender can determine which peel, if any, best complements your Journey."
+        ? "Your Mixo can determine which peel, if any, best complements your Journey."
         : enhancement.guestBenefit;
 
       return `
@@ -311,7 +311,7 @@ function renderEnhancements(submission: SkinDiscoverySubmission): string {
     ${rows}
     <tr>
       <td style="padding: 12px 0 0; font-size: 14px; line-height: 22px; color: ${EMAIL_COLORS.muted};">
-        Your Skintender can help determine whether these Enhancements make sense for your custom facial.
+        Your Mixo can help determine whether these Enhancements make sense for your custom facial.
       </td>
     </tr>
   `;
@@ -413,12 +413,12 @@ function renderGuestEmailHtml(submission: SkinDiscoverySubmission, config: Guest
                 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${EMAIL_COLORS.accentSoft}; border:1px solid ${EMAIL_COLORS.border}; border-radius:18px;">
                   <tr>
                     <td style="padding: 20px 20px 10px; font-size: 22px; line-height: 30px; color: ${EMAIL_COLORS.ink}; font-weight: 700; font-family: Georgia, 'Times New Roman', serif;">
-                      Your Skintender Takes It From Here
+                      Your Mixo Takes It From Here
                     </td>
                   </tr>
                   <tr>
                     <td style="padding: 0 20px 20px; font-size: 15px; line-height: 24px; color: ${EMAIL_COLORS.muted};">
-                      Your Discovery is the starting point. When you visit, your Skintender will use what you've shared to craft your facial around your skin, your goals, and how you're feeling that day.
+                      Your Discovery is the starting point. When you visit, your Mixo will use what you've shared to craft your facial around your skin, your goals, and how you're feeling that day.
                     </td>
                   </tr>
                 </table>
@@ -449,7 +449,7 @@ function renderGuestEmailHtml(submission: SkinDiscoverySubmission, config: Guest
                   </tr>
                   <tr>
                     <td style="padding-top: 8px; font-size: 14px; line-height: 24px; color: ${EMAIL_COLORS.muted}; font-family: Arial, Helvetica, sans-serif;">
-                      Curious if membership fits your Journey? Your Skintender can walk you through the benefits and help you decide if it's right for you.
+                      Curious if membership fits your Journey? Your Mixo can walk you through the benefits and help you decide if it's right for you.
                     </td>
                   </tr>
                 </table>
@@ -462,7 +462,10 @@ function renderGuestEmailHtml(submission: SkinDiscoverySubmission, config: Guest
                   Want to meet your Fresh Picks first?
                 </div>
                 <div style="font-size: 15px; line-height: 24px; color: ${EMAIL_COLORS.muted}; font-family: Arial, Helvetica, sans-serif;">
-                  Stop by the Skin Bar. Your Skintender can walk you through your recommendations and help you find the right place to start.
+                  Stop by the Skin Bar located at:<br />
+                  105 E. Court St.<br />
+                  Tarpon Springs, FL 34689<br /><br />
+                  Your Mixo can walk you through your recommendations and help you find the right place to start.
                 </div>
               </td>
             </tr>
@@ -558,21 +561,25 @@ function renderGuestEmailText(submission: SkinDiscoverySubmission, config: Guest
         lines.push(`${enhancement.name} - ${enhancement.guestBenefit}`);
       }
     }
-    lines.push("Your Skintender can help determine whether these Enhancements make sense for your custom facial.");
+    lines.push("Your Mixo can help determine whether these Enhancements make sense for your custom facial.");
   }
 
   lines.push("");
-  lines.push("Your Skintender Takes It From Here");
-  lines.push("Your Discovery is the starting point. When you visit, your Skintender will use what you've shared to craft your facial around your skin, your goals, and how you're feeling that day.");
+  lines.push("Your Mixo Takes It From Here");
+  lines.push("Your Discovery is the starting point. When you visit, your Mixo will use what you've shared to craft your facial around your skin, your goals, and how you're feeling that day.");
   lines.push("");
   lines.push("CRAFT MY FACIAL →");
   lines.push(getBookingHref({ ...config, previewMode: true }));
   lines.push("");
   lines.push("Explore Membership Benefits");
-  lines.push("Curious if membership fits your Journey? Your Skintender can walk you through the benefits and help you decide if it's right for you.");
+  lines.push("Curious if membership fits your Journey? Your Mixo can walk you through the benefits and help you decide if it's right for you.");
   lines.push("");
   lines.push("Want to meet your Fresh Picks first?");
-  lines.push("Stop by the Skin Bar. Your Skintender can walk you through your recommendations and help you find the right place to start.");
+  lines.push("Stop by the Skin Bar located at:");
+  lines.push("105 E. Court St.");
+  lines.push("Tarpon Springs, FL 34689");
+  lines.push("");
+  lines.push("Your Mixo can walk you through your recommendations and help you find the right place to start.");
   lines.push("");
   lines.push(getEmailBusinessName(submission, config));
   lines.push("Thoughtfully crafted, one step at a time.");

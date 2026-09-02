@@ -99,6 +99,38 @@ test("team delivery uses server-configured recipient and correct team subject", 
   assert.match(provider.delivered[1].html, /NEW SKIN DISCOVERY/i);
 });
 
+test("no-result submission sends the internal Mixo follow-up without fabricating a journey", async () => {
+  const noResultSubmission = buildSkinDiscoverySubmission({
+    guest: validSubmission.guest,
+    discovery: validSubmission.discovery,
+    journeyResult: {
+      ...validSubmission.journey,
+      resultType: "no-strong-journey",
+      primaryJourneys: [],
+      secondaryJourney: null,
+      scores: { quench: 0, calm: 0, purify: 0, illuminate: 0, renew: 0 },
+      supports: { quench: 0, calm: 0, purify: 0, illuminate: 0, renew: 0 },
+      selectedAnswers: validSubmission.discovery,
+    },
+    productRecommendation: null,
+    enhancementRecommendations: [],
+  });
+  const provider = new StubProvider();
+  const { sendSkinDiscoveryEmails } = await import("@/lib/email/sendSkinDiscoveryEmails");
+  const result = await sendSkinDiscoveryEmails(noResultSubmission, {
+    provider,
+    teamRecipient: "team@example.com",
+    config: { appUrl: "https://example.com", bookingUrl: "https://example.com/book", logoUrl: "https://example.com/logo.png" },
+  });
+
+  assert.equal(noResultSubmission.journey.primaryJourneys.length, 0);
+  assert.equal(noResultSubmission.journey.resultType, "no-strong-journey");
+  assert.equal(result.teamEmail.success, true);
+  assert.equal(provider.delivered.length, 2);
+  assert.match(provider.delivered[1].subject, /Skin Discovery needs Mixo follow-up/i);
+  assert.match(provider.delivered[1].html, /no strong Skin Journey result was generated/i);
+});
+
 test("validation rejects malformed submission and missing required fields", () => {
   const invalid = { ...validSubmission, guest: { ...validSubmission.guest, email: "" } };
   const result = validateSkinDiscoverySubmission(invalid);

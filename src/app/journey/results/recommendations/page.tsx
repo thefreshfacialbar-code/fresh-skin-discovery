@@ -123,7 +123,7 @@ export default function RecommendationsPage() {
           <button
             type="button"
             onClick={() => router.push("/journey/listening")}
-            className="mt-8 inline-flex items-center justify-center rounded-full bg-[#908A9B] px-8 py-4 text-sm font-semibold uppercase tracking-[0.16em] text-white shadow-[0_10px_28px_rgba(144,138,155,0.24)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#817B8B]"
+            className={`mt-8 inline-flex items-center justify-center rounded-full px-8 py-4 text-sm font-semibold uppercase tracking-[0.16em] text-white transition-all duration-200 hover:-translate-y-0.5 ${isCurated ? "bg-[#24201F] shadow-[0_10px_28px_rgba(36,32,31,0.24)] hover:bg-[#3B3532] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#24201F]" : "bg-[#908A9B] shadow-[0_10px_28px_rgba(144,138,155,0.24)] hover:bg-[#817B8B]"}`}
           >
             Return to My Journey
           </button>
@@ -139,8 +139,10 @@ export default function RecommendationsPage() {
           <div className="flex justify-center pt-2">
             <div className="flex h-44 w-44 items-center justify-center sm:h-54 sm:w-54 lg:h-68 lg:w-68">
               <Image
-              src={getBrandLogoPath()}
-              alt={getBrandLogoAlt()}
+                src={getBrandLogoPath()}
+                alt={getBrandLogoAlt()}
+                width={512}
+                height={512}
                 className="h-auto w-full opacity-90"
               />
             </div>
@@ -157,7 +159,7 @@ export default function RecommendationsPage() {
               {isCurated ? "Built around what your skin needs." : "“Freshly picked for your skin.”"}
             </p>
             <h1 className="mt-6 text-4xl leading-tight text-[#302C2A] sm:text-[3rem]" style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}>
-              Your home-care edit deserves a little more personalization.
+              Your recommendations need a little more personalization.
             </h1>
             <p className="mx-auto mt-5 max-w-4xl text-base leading-8 text-[#5A5553] sm:text-lg">
               Your Discovery didn&apos;t point strongly enough in one direction for us to thoughtfully choose products automatically. Your Mixo can use everything you&apos;ve shared to build the right starting point with you.
@@ -171,7 +173,7 @@ export default function RecommendationsPage() {
                 clearProductRecommendationSession();
                 router.push("/journey/listening");
               }}
-              className="inline-flex items-center justify-center rounded-full bg-[#908A9B] px-8 py-4 text-sm font-semibold uppercase tracking-[0.16em] text-white shadow-[0_10px_28px_rgba(144,138,155,0.24)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#817B8B]"
+              className={`inline-flex items-center justify-center rounded-full px-8 py-4 text-sm font-semibold uppercase tracking-[0.16em] text-white transition-all duration-200 hover:-translate-y-0.5 ${isCurated ? "bg-[#24201F] shadow-[0_10px_28px_rgba(36,32,31,0.24)] hover:bg-[#3B3532] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#24201F]" : "bg-[#908A9B] shadow-[0_10px_28px_rgba(144,138,155,0.24)] hover:bg-[#817B8B]"}`}
             >
               Start My Discovery Again
             </button>
@@ -293,7 +295,13 @@ export default function RecommendationsPage() {
           </div>
         </div>
 
-        <div className="mt-10 flex flex-col items-center pb-8">
+        <div className="mt-10 flex flex-col items-center gap-4 pb-8">
+          <a
+            href="/api/skin-discovery/booking"
+            className={`inline-flex items-center justify-center rounded-full px-8 py-4 text-sm font-semibold uppercase tracking-[0.16em] text-white transition-all duration-200 hover:-translate-y-0.5 ${isCurated ? "bg-[#24201F] shadow-[0_10px_28px_rgba(36,32,31,0.24)] hover:bg-[#3B3532] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#24201F]" : "bg-[#908A9B] shadow-[0_10px_28px_rgba(144,138,155,0.24)] hover:bg-[#817B8B]"}`}
+          >
+            CRAFT MY FACIAL
+          </a>
           <button
             type="button"
             onClick={() => {
@@ -305,7 +313,7 @@ export default function RecommendationsPage() {
               }
               router.push("/journey/listening");
             }}
-            className="inline-flex items-center justify-center rounded-full bg-[#908A9B] px-8 py-4 text-sm font-semibold uppercase tracking-[0.16em] text-white shadow-[0_10px_28px_rgba(144,138,155,0.24)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#817B8B]"
+            className={`inline-flex items-center justify-center rounded-full px-8 py-4 text-sm font-semibold uppercase tracking-[0.16em] text-white transition-all duration-200 hover:-translate-y-0.5 ${isCurated ? "bg-[#24201F] shadow-[0_10px_28px_rgba(36,32,31,0.24)] hover:bg-[#3B3532] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#24201F]" : "bg-[#908A9B] shadow-[0_10px_28px_rgba(144,138,155,0.24)] hover:bg-[#817B8B]"}`}
           >
             Start My Discovery Again
           </button>

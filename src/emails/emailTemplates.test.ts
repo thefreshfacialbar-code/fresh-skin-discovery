@@ -55,7 +55,7 @@ test("guest email renders first name and primary journey and uses clean copy", (
   assert.match(guestEmail.html, /Renew/i);
   assert.match(guestEmail.html, /Quench/i);
   assert.match(guestEmail.html, /Your Fresh Picks/i);
-  assert.match(guestEmail.html, /Your Skintender Takes It From Here/i);
+  assert.match(guestEmail.html, /Your Mixo Takes It From Here/i);
   assert.equal((guestEmail.html.match(/CRAFT MY FACIAL/gi) ?? []).length, 1);
   assert.match(guestEmail.html, /Explore Membership Benefits/i);
   assert.doesNotMatch(guestEmail.html, /Farmacist|Farmicist/i);
@@ -68,7 +68,10 @@ test("guest email renders supporting journey and more picks section when present
   assert.match(guestEmail.html, /SUPPORTING YOUR JOURNEY/i);
   assert.match(guestEmail.html, /A FEW MORE FRESH PICKS/i);
   assert.match(guestEmail.html, /Want to meet your Fresh Picks first\?/i);
-  assert.match(guestEmail.html, /Stop by the Skin Bar\. Your Skintender can walk you through your recommendations and help you find the right place to start\./i);
+  assert.match(guestEmail.html, /Stop by the Skin Bar located at:/i);
+  assert.match(guestEmail.html, /105 E\. Court St\./i);
+  assert.match(guestEmail.html, /Tarpon Springs, FL 34689/i);
+  assert.match(guestEmail.html, /Your Mixo can walk you through your recommendations and help you find the right place to start\./i);
   assert.match(guestEmail.html, /Worth Considering/i);
   assert.match(guestEmail.html, /Dermaplaning/i);
   assert.match(guestEmail.html, /Microcurrent/i);
@@ -84,7 +87,7 @@ test("guest email renders all four featured slots including protect and keeps th
   assert.match(guestEmail.html, /AM Replenish Non Tinted SPF 40/i);
   assert.equal((guestEmail.html.match(/CRAFT MY FACIAL/gi) ?? []).length, 1);
   assert.equal((guestEmail.html.match(/Explore Membership Benefits/gi) ?? []).length, 1);
-  assert.match(guestEmail.html, /Your Skintender can help determine whether these Enhancements make sense for your custom facial\./i);
+  assert.match(guestEmail.html, /Your Mixo can help determine whether these Enhancements make sense for your custom facial\./i);
   assert.doesNotMatch(guestEmail.html, /Farmacist|Farmicist/i);
 });
 

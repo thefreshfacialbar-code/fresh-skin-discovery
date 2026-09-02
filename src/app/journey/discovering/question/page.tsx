@@ -192,7 +192,7 @@ export default function DiscoveringQuestionPage() {
                 onClick={() => toggleAnswer(answer.id)}
                 className={[
                   "group relative flex min-h-[122px] w-full items-center gap-5 rounded-[1.6rem] border px-6 py-6 text-left transition-all duration-200",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#908A9B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#FAF7F1]",
+                  `focus-visible:outline-none focus-visible:ring-2 ${isCurated ? "focus-visible:ring-[#24201F]" : "focus-visible:ring-[#908A9B]"} focus-visible:ring-offset-2 focus-visible:ring-offset-[#FAF7F1]`,
                   selected
                     ? "border-[#908A9B] bg-[#F3EFF3] shadow-[0_10px_30px_rgba(144,138,155,0.14)]"
                     : "border-[#DAD6DB] bg-[#FFFDFC] shadow-[0_7px_24px_rgba(61,52,48,0.04)] hover:-translate-y-0.5 hover:border-[#AAA3AF] hover:shadow-[0_12px_30px_rgba(61,52,48,0.08)]",
@@ -255,7 +255,9 @@ export default function DiscoveringQuestionPage() {
             className={[
               "group inline-flex min-w-[255px] items-center justify-center gap-2 rounded-full px-9 py-4 text-sm font-semibold uppercase tracking-[0.16em] transition-all duration-200",
               canContinue
-                ? "bg-[#908A9B] text-white shadow-[0_10px_28px_rgba(144,138,155,0.24)] hover:-translate-y-0.5 hover:bg-[#817B8B]"
+                ? isCurated
+                  ? "bg-[#24201F] text-white shadow-[0_10px_28px_rgba(36,32,31,0.24)] hover:-translate-y-0.5 hover:bg-[#3B3532]"
+                  : "bg-[#908A9B] text-white shadow-[0_10px_28px_rgba(144,138,155,0.24)] hover:-translate-y-0.5 hover:bg-[#817B8B]"
                 : "cursor-not-allowed bg-[#DAD6DB] text-[#AAA4AC] shadow-[0_4px_12px_rgba(61,52,48,0.04)]",
             ].join(" ")}
           >

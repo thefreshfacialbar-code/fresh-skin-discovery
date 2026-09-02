@@ -292,6 +292,7 @@ test("CGC route selects the CGC engine when gentlemens-corner is active", () => 
     assert.equal(result.productRecommendation.featured.cleanse?.productName, "Clean Slate");
     assert.equal(result.productRecommendation.featured.moisturize?.productName, "Thirsty Face");
     assert.equal(result.enhancementRecommendations.some((entry) => entry.name === "Dermaplaning"), false);
+    assert.equal(result.enhancementRecommendations.some((entry) => entry.name === "Décolleté Treatment"), false);
   } finally {
     if (previousWindow === undefined) {
       Reflect.deleteProperty(globalThis, "window");

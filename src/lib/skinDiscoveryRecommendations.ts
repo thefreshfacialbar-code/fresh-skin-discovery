@@ -24,7 +24,9 @@ function filterBrandSpecificRecommendations(
     return enhancementRecommendations;
   }
 
-  return enhancementRecommendations.filter((enhancement) => enhancement.name !== "Dermaplaning");
+  return enhancementRecommendations.filter(
+    (enhancement) => enhancement.name !== "Dermaplaning" && enhancement.name !== "Décolleté Treatment",
+  );
 }
 
 export type SkinDiscoveryRecommendationBundle = {
