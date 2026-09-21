@@ -302,6 +302,14 @@ export default function RecommendationsPage() {
           >
             CRAFT MY FACIAL
           </a>
+          <a
+            href="https://shop.thefreshfacialbar.com/"
+            target="_blank"
+            rel="noreferrer"
+            className={`inline-flex items-center justify-center rounded-full px-8 py-4 text-sm font-semibold uppercase tracking-[0.16em] text-white transition-all duration-200 hover:-translate-y-0.5 ${isCurated ? "bg-[#24201F] shadow-[0_10px_28px_rgba(36,32,31,0.24)] hover:bg-[#3B3532] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#24201F]" : "bg-[#908A9B] shadow-[0_10px_28px_rgba(144,138,155,0.24)] hover:bg-[#817B8B]"}`}
+          >
+            SHOP MY PICKS
+          </a>
           <button
             type="button"
             onClick={() => {
