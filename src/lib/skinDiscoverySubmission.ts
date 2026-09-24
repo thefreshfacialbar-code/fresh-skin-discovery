@@ -114,6 +114,7 @@ export function buildSkinDiscoverySubmission(input: SkinDiscoverySubmissionInput
       resultType: input.journeyResult.resultType,
       primaryJourneys: input.journeyResult.primaryJourneys,
       secondaryJourney: input.journeyResult.secondaryJourney,
+      scores: input.journeyResult.scores,
     },
     productRecommendations: {
       featured: {

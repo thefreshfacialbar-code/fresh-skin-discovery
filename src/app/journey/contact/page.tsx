@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 import { getBrandLogoAlt, getBrandLogoPath, getSelectedExperience } from "@/lib/brandLogo";
 import { readJourneySummary } from "@/lib/journeyReviewMappings";
 import { readStoredRecommendation } from "@/lib/recommendationSession";
+import { fetchProductCatalog } from "@/lib/productCatalogClient";
 import { readOrCreateSkinDiscoveryRecommendations } from "@/lib/skinDiscoveryRecommendations";
 import {
   buildSkinDiscoverySubmission,
@@ -65,7 +66,7 @@ export default function ContactCapturePage() {
     isValidEmail(contact.email) &&
     isValidPhone(contact.phone);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const nextErrors = validateAll();
     setErrors(nextErrors);
 
@@ -85,11 +86,20 @@ export default function ContactCapturePage() {
       router.push("/journey/listening");
       return;
     }
+let products;
 
+try {
+  products = await fetchProductCatalog();
+} catch (error) {
+  console.error(
+    "Could not load Supabase product catalog. Using fallback catalog.",
+    error,
+  );
+}
     const {
       productRecommendation,
       enhancementRecommendations,
-    } = readOrCreateSkinDiscoveryRecommendations(cleanedJourney);
+  } = readOrCreateSkinDiscoveryRecommendations(cleanedJourney, products);
 
     const submission = buildSkinDiscoverySubmission({
       experience: getSelectedExperience(),

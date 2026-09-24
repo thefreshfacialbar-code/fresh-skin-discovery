@@ -10,7 +10,10 @@ import {
   writeProductRecommendationToStorage,
 } from "@/lib/productRecommendationSession";
 import type { RecommendedEnhancement } from "@/types/enhancementRecommendation";
-import type { ProductRecommendationResult } from "@/types/productRecommendation";
+import type {
+  Product,
+  ProductRecommendationResult,
+} from "@/types/productRecommendation";
 import type { RecommendationResult } from "@/types/recommendation";
 
 function filterBrandSpecificRecommendations(
@@ -45,6 +48,7 @@ function readSelectedAnswers(journeyRecommendation: RecommendationResult) {
 function getProductRecommendationEngineResult(
   journeyRecommendation: RecommendationResult,
   selectedAnswers: ReturnType<typeof readSelectedAnswers>,
+  products?: Product[],
 ): ProductRecommendationResult {
   const selectedExperience = typeof window !== "undefined"
     ? window.sessionStorage.getItem("skinDiscoveryExperience")
@@ -57,46 +61,34 @@ function getProductRecommendationEngineResult(
     });
   }
 
-  return generateProductRecommendation({
-    journeyResult: journeyRecommendation,
-    selectedAnswers,
-  });
+ return generateProductRecommendation({
+  journeyResult: journeyRecommendation,
+  selectedAnswers,
+  products,
+});
 }
 
-export function generateSkinDiscoveryRecommendations(
-  journeyRecommendation: RecommendationResult,
-): SkinDiscoveryRecommendationBundle {
-  const selectedAnswers = readSelectedAnswers(journeyRecommendation);
-  const enhancementRecommendations = filterBrandSpecificRecommendations(
-    generateEnhancementRecommendation({
-      journeyResult: journeyRecommendation,
-      selectedAnswers,
-    }),
-  );
 
-  return {
-    productRecommendation: getProductRecommendationEngineResult(journeyRecommendation, selectedAnswers),
-    enhancementRecommendations,
-  };
-}
 
-export function readOrCreateSkinDiscoveryRecommendations(
-  journeyRecommendation: RecommendationResult,
-): SkinDiscoveryRecommendationBundle {
-  const storedProductRecommendation = readStoredProductRecommendation();
-  const storedEnhancementRecommendations = readStoredEnhancementRecommendation();
-  const selectedAnswers = readSelectedAnswers(journeyRecommendation);
+  export function readOrCreateSkinDiscoveryRecommendations(
+    journeyRecommendation: RecommendationResult,
+    products?: Product[],
+  ): SkinDiscoveryRecommendationBundle {
+    const storedProductRecommendation = readStoredProductRecommendation();
+    const storedEnhancementRecommendations = readStoredEnhancementRecommendation();
+    const selectedAnswers = readSelectedAnswers(journeyRecommendation);
 
-  const productRecommendation = storedProductRecommendation ?? getProductRecommendationEngineResult(
+    const productRecommendation = storedProductRecommendation ?? getProductRecommendationEngineResult(
     journeyRecommendation,
     selectedAnswers,
+    products,
   );
-  if (!storedProductRecommendation) {
-    writeProductRecommendationToStorage(productRecommendation);
-  }
+    if (!storedProductRecommendation) {
+      writeProductRecommendationToStorage(productRecommendation);
+    }
 
-  const enhancementRecommendations = filterBrandSpecificRecommendations(
-    storedEnhancementRecommendations.length > 0
+    const enhancementRecommendations = filterBrandSpecificRecommendations(
+      storedEnhancementRecommendations.length > 0
       ? storedEnhancementRecommendations
       : generateEnhancementRecommendation({
           journeyResult: journeyRecommendation,

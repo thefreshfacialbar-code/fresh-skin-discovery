@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { getBrandLogoAlt, getBrandLogoPath, getSelectedExperience } from "@/lib/brandLogo";
 import {
   mapPrimaryMotivation,
@@ -242,9 +242,16 @@ function clearSkinDiscoverySession() {
 
 export default function ResultsPage() {
   const router = useRouter();
-  const isCurated = getSelectedExperience() === "gentlemens-corner";
-  const recommendation = useMemo(() => readStoredRecommendation(), []);
-  const journeySummary = useMemo(() => readJourneySummary(), []);
+  const [isCurated, setIsCurated] = useState(false);
+  const [recommendation, setRecommendation] = useState<ReturnType<typeof readStoredRecommendation>>(null);
+  const [journeySummary, setJourneySummary] = useState<ReturnType<typeof readJourneySummary>>(null);
+  
+  useEffect(() => {
+    setIsCurated(getSelectedExperience() === "gentlemens-corner");
+    setRecommendation(readStoredRecommendation());
+    setJourneySummary(readJourneySummary());
+}, []);
+
 
   useEffect(() => {
     const submission = readStoredSubmission();
@@ -284,7 +291,9 @@ export default function ResultsPage() {
               <Image
               src={getBrandLogoPath()}
               alt={getBrandLogoAlt()}
-                className="h-auto w-full opacity-90"
+              width={512}
+              height={512}
+              className="h-auto w-full opacity-90"
               />
             </div>
           </div>

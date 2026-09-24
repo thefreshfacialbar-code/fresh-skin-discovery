@@ -1,4 +1,5 @@
 import { productCatalog, PRODUCT_EXCLUSIONS } from "@/data/productCatalog";
+
 import type {
   Product,
   ProductCategory,
@@ -488,6 +489,7 @@ function buildMoreFreshPicks(
 export function generateProductRecommendation({
   journeyResult,
   selectedAnswers,
+  products = productCatalog,
 }: {
   journeyResult: RecommendationResult;
   selectedAnswers: {
@@ -495,6 +497,7 @@ export function generateProductRecommendation({
     skinExperience: string[];
     desiredOutcomes: string[];
   };
+  products?: Product[];
 }): ProductRecommendationResult {
   const primaryJourneys = journeyResult.primaryJourneys ?? [];
   const secondaryJourney = journeyResult.secondaryJourney ?? null;
@@ -517,7 +520,7 @@ export function generateProductRecommendation({
     };
   }
 
-  const allEligible = productCatalog.filter(
+  const allEligible = products.filter(
     (product) => !PRODUCT_EXCLUSIONS.includes(product.name) && !product.excluded,
   );
 

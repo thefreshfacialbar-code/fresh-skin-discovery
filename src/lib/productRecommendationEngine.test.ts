@@ -323,8 +323,8 @@ test("Renew + Quench keeps Necks-Level eligible without forcing it", () => {
 
   assert.ok(
     result.moreFreshPicks.some((entry) => entry.productName === "Necks-Level Smooth") ||
-      result.featured.treat?.productName === "Watermelonaid" ||
-      result.featured.treat?.productName === "Flat Out Firm Peptide Firming Serum",
+    result.featured.treat?.productName === "Watermelonaid" ||
+    result.featured.treat?.productName === "Flat Out Firm Peptide Firming Serum",
   );
 });
 

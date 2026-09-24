@@ -13,6 +13,7 @@ import {
   clearProductRecommendationSession,
 } from "@/lib/productRecommendationSession";
 import { readStoredRecommendation } from "@/lib/recommendationSession";
+import { fetchProductCatalog } from "@/lib/productCatalogClient";
 import { readOrCreateSkinDiscoveryRecommendations } from "@/lib/skinDiscoveryRecommendations";
 import type { RecommendedEnhancement } from "@/types/enhancementRecommendation";
 import type { ProductRecommendationResult, RecommendedProduct } from "@/types/productRecommendation";
@@ -67,6 +68,7 @@ export default function RecommendationsPage() {
   const [enhancementRecommendations, setEnhancementRecommendations] = useState<RecommendedEnhancement[]>([]);
 
   useEffect(() => {
+  async function loadRecommendations() {
     const journeyRecommendation = readStoredRecommendation();
     if (!journeyRecommendation) {
       setProductRecommendation(null);
@@ -74,11 +76,26 @@ export default function RecommendationsPage() {
       return;
     }
 
-    const generatedRecommendations = readOrCreateSkinDiscoveryRecommendations(journeyRecommendation);
+    let products;
+
+try {
+  products = await fetchProductCatalog();
+} catch (error) {
+  console.error(
+    "Could not load Supabase product catalog. Using fallback catalog.",
+    error,
+  );
+}
+
+const generatedRecommendations =
+  readOrCreateSkinDiscoveryRecommendations(journeyRecommendation, products);
     setProductRecommendation(generatedRecommendations.productRecommendation);
     setEnhancementRecommendations(generatedRecommendations.enhancementRecommendations);
     setIsHydrated(true);
-  }, []);
+  }
+  
+  loadRecommendations();
+}, []);
 
   if (!isHydrated) {
     return (

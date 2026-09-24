@@ -21,6 +21,13 @@ const sampleSubmission: SkinDiscoverySubmission = {
     resultType: "single-primary",
     primaryJourneys: ["renew"],
     secondaryJourney: "quench",
+    scores: {
+  quench: 4,
+  calm: 1,
+  purify: 1,
+  illuminate: 3,
+  renew: 6,
+},
   },
   productRecommendations: {
     featured: {

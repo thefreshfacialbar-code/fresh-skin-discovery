@@ -25,6 +25,13 @@ const baseSubmission: SkinDiscoverySubmission = {
     resultType: "single-primary",
     primaryJourneys: ["renew"],
     secondaryJourney: "quench",
+    scores: {
+  quench: 4,
+  calm: 1,
+  purify: 1,
+  illuminate: 3,
+  renew: 6,
+},
   },
   productRecommendations: {
     featured: {
@@ -143,6 +150,13 @@ test("dual primary guest email renders both journeys with equal emphasis", () =>
       resultType: "dual-primary",
       primaryJourneys: ["illuminate", "renew"],
       secondaryJourney: null,
+      scores: {
+  quench: 2,
+  calm: 1,
+  purify: 1,
+  illuminate: 6,
+  renew: 6,
+},
     },
   };
 
