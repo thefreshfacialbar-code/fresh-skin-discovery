@@ -162,7 +162,7 @@ const profileRecord = {
   if (profileLookupError) {
     return Response.json(
       {
-        error: "Could not check Green Tea Milk Wash recommendation profile",
+        error: `Could not check recommendation profile: ${product.freshProductName}`,
         details: profileLookupError.message,
       },
       { status: 500 }
@@ -178,7 +178,7 @@ const profileRecord = {
     if (profileUpdateError) {
       return Response.json(
         {
-          error: "Could not update Green Tea Milk Wash recommendation profile",
+          error: `Could not update recommendation profile: ${product.freshProductName}`,
           details: profileUpdateError.message,
         },
         { status: 500 }
@@ -192,7 +192,7 @@ const profileRecord = {
     if (profileInsertError) {
       return Response.json(
         {
-          error: "Could not insert Green Tea Milk Wash recommendation profile",
+          error: `Could not insert recommendation profile: ${product.freshProductName}`,
           details: profileInsertError.message,
         },
         { status: 500 }
