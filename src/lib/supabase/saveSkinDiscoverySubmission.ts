@@ -2,7 +2,7 @@ import "server-only";
 
 import type { SkinDiscoverySubmission } from "@/types/skinDiscoverySubmission";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
-
+import { enhancementCatalog } from "@/data/enhancementCatalog";
 export type SaveSkinDiscoveryResult = {
   success: boolean;
   businessId?: string;
@@ -416,6 +416,41 @@ if (skinPlanProductsError) {
     error: "Skin Plan products could not be saved.",
   };
 }
+const enhancementIds = submission.enhancementRecommendations ?? [];
+
+if (enhancementIds.length > 0) {
+const enhancementRows = enhancementIds.map((enhancementId, index) => {
+  const enhancement = enhancementCatalog.find(
+    (item) => item.id === enhancementId
+  );
+
+  return {
+    skin_plan_id: skinPlan.id,
+    enhancement_id: enhancementId,
+    enhancement_name_snapshot: enhancement?.name ?? enhancementId,
+    recommendation_order: index + 1,
+    recommendation_reason: null,
+    customer_guidance: enhancement?.guestBenefit ?? null,
+    status: "suggested",
+  };
+});
+
+  const { error: skinPlanEnhancementsError } = await supabaseAdmin
+    .from("skin_plan_enhancements")
+    .insert(enhancementRows);
+
+  if (skinPlanEnhancementsError) {
+    console.error(
+      "Unable to save Skin Plan enhancements:",
+      skinPlanEnhancementsError
+    );
+
+    return {
+      success: false,
+      error: "Skin Plan enhancements could not be saved.",
+    };
+  }
+} 
 console.log(
   `Fresh Customer 360 Skin Plan v${skinPlan.version} created:`,
   skinPlan.id
