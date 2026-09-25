@@ -3,6 +3,7 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 
 import Image from "next/image";
+import Script from "next/script";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { getBrandLogoAlt, getBrandLogoPath, getSelectedExperience } from "@/lib/brandLogo";
@@ -17,7 +18,19 @@ import { fetchProductCatalog } from "@/lib/productCatalogClient";
 import { readOrCreateSkinDiscoveryRecommendations } from "@/lib/skinDiscoveryRecommendations";
 import type { RecommendedEnhancement } from "@/types/enhancementRecommendation";
 import type { ProductRecommendationResult, RecommendedProduct } from "@/types/productRecommendation";
-
+declare global {
+  interface Window {
+    blvd?: {
+      init: (config: { businessId: string }) => void;
+      openBookingWidget: (config: {
+        urlParams: {
+          locationId: string;
+          visitType: string;
+        };
+      }) => void;
+    };
+  }
+}
 const FEATURED_TITLES = {
   cleanse: "CLEANSE",
   treat: "TREAT",
@@ -201,6 +214,17 @@ const generatedRecommendations =
   }
 
   return (
+  <>
+    <Script
+      src="https://static.joinboulevard.com/injector.min.js"
+      strategy="afterInteractive"
+      onLoad={() => {
+        window.blvd?.init({
+          businessId: "8478558b-a7be-4dad-9050-9885cda11ca9",
+        });
+      }}
+    />
+
     <main className="min-h-screen bg-[#FAF7F1] px-5 py-8 text-[#302C2A] sm:px-8 md:py-12">
       <div className="mx-auto max-w-6xl">
         <div className="flex justify-center pt-2">
@@ -313,12 +337,20 @@ const generatedRecommendations =
         </div>
 
         <div className="mt-10 flex flex-col items-center gap-4 pb-8">
-          <a
-            href="/api/skin-discovery/booking"
-            className={`inline-flex items-center justify-center rounded-full px-8 py-4 text-sm font-semibold uppercase tracking-[0.16em] text-white transition-all duration-200 hover:-translate-y-0.5 ${isCurated ? "bg-[#24201F] shadow-[0_10px_28px_rgba(36,32,31,0.24)] hover:bg-[#3B3532] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#24201F]" : "bg-[#908A9B] shadow-[0_10px_28px_rgba(144,138,155,0.24)] hover:bg-[#817B8B]"}`}
-          >
-            CRAFT MY FACIAL
-          </a>
+          <button
+  type="button"
+  onClick={() => {
+    window.blvd?.openBookingWidget({
+      urlParams: {
+        locationId: "d64c39d5-645d-4343-b9b9-d4798b331f95",
+        visitType: "SELF_VISIT",
+      },
+    });
+  }}
+  className={`inline-flex items-center justify-center rounded-full px-8 py-4 text-sm font-semibold uppercase tracking-[0.16em] text-white transition-all duration-200 hover:-translate-y-0.5 ${isCurated ? "bg-[#24201F] shadow-[0_10px_28px_rgba(36,32,31,0.24)] hover:bg-[#3B3532] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#24201F]" : "bg-[#908A9B] shadow-[0_10px_28px_rgba(144,138,155,0.24)] hover:bg-[#817B8B]"}`}
+>
+  CRAFT MY FACIAL
+</button>
           <a
             href="https://shop.thefreshfacialbar.com/"
             target="_blank"
@@ -345,5 +377,6 @@ const generatedRecommendations =
         </div>
       </div>
     </main>
+    </>
   );
 }
