@@ -1,7 +1,16 @@
 import { getShopifyProducts } from "@/lib/shopifyAdmin";
 import { productCatalog } from "@/data/productCatalog";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
-export async function POST() {
+export async function POST(request: Request) {
+      const syncSecret = process.env.SHOPIFY_SYNC_SECRET;
+  const providedSecret = request.headers.get("x-shopify-sync-secret");
+
+  if (!syncSecret || providedSecret !== syncSecret) {
+    return Response.json(
+      { error: "Unauthorized" },
+      { status: 401 },
+    );
+  }
     const { data: business, error: businessError } = await supabaseAdmin
   .from("businesses")
   .select("id")
