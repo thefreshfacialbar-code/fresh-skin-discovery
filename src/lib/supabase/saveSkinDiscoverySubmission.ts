@@ -327,7 +327,95 @@ if (skinPlanError || !skinPlan) {
     error: "Skin Plan could not be created.",
   };
 }
+const recommendedProducts = [
+  { routineStep: "cleanse", freshProductId: submission.productRecommendations.featured.cleanse },
+  { routineStep: "treat", freshProductId: submission.productRecommendations.featured.treat },
+  { routineStep: "moisturize", freshProductId: submission.productRecommendations.featured.moisturize },
+  { routineStep: "protect", freshProductId: submission.productRecommendations.featured.protect },
+  ...submission.productRecommendations.moreFreshPicks.map((freshProductId) => ({
+    routineStep: "fresh-pick",
+    freshProductId,
+  })),
+].filter(
+  (
+    item
+  ): item is { routineStep: string; freshProductId: string } =>
+    Boolean(item.freshProductId)
+);
+const recommendedProductIds = [
+  ...new Set(recommendedProducts.map((item) => item.freshProductId)),
+];
 
+const { data: productRows, error: productRowsError } = await supabaseAdmin
+  .from("products")
+  .select("id, fresh_product_id, name, brand, price")
+  .eq("business_id", business.id)
+  .in("fresh_product_id", recommendedProductIds);
+
+if (productRowsError) {
+  console.error(
+    "Unable to load recommended products for Skin Plan:",
+    productRowsError
+  );
+
+  return {
+    success: false,
+    error: "Skin Plan products could not be loaded.",
+  };
+}
+const productRowByFreshId = new Map(
+  (productRows ?? []).map((product) => [
+    product.fresh_product_id,
+    product,
+  ])
+);
+
+const missingRecommendedProductIds = recommendedProductIds.filter(
+  (freshProductId) => !productRowByFreshId.has(freshProductId)
+);
+
+if (missingRecommendedProductIds.length > 0) {
+  console.error(
+    "Recommended products missing from Supabase catalog:",
+    missingRecommendedProductIds
+  );
+
+  return {
+    success: false,
+    error: "One or more Skin Plan products could not be matched.",
+  };
+}
+const skinPlanProductRows = recommendedProducts.map((item, index) => {
+  const product = productRowByFreshId.get(item.freshProductId)!;
+
+  return {
+    skin_plan_id: skinPlan.id,
+    product_id: product.id,
+    routine_step: item.routineStep,
+    routine_order: index + 1,
+    recommendation_reason: null,
+    customer_guidance: null,
+    product_name_snapshot: product.name,
+    brand_snapshot: product.brand,
+    price_snapshot: product.price,
+    status: "recommended",
+  };
+});
+const { error: skinPlanProductsError } = await supabaseAdmin
+  .from("skin_plan_products")
+  .insert(skinPlanProductRows);
+
+if (skinPlanProductsError) {
+  console.error(
+    "Unable to save Skin Plan products:",
+    skinPlanProductsError
+  );
+
+  return {
+    success: false,
+    error: "Skin Plan products could not be saved.",
+  };
+}
 console.log(
   `Fresh Customer 360 Skin Plan v${skinPlan.version} created:`,
   skinPlan.id
