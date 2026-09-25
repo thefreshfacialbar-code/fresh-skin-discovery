@@ -1,5 +1,6 @@
 import "server-only";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import Link from "next/link";
 export default async function FreshDeskPage() {
   const { data: customers, error } = await supabaseAdmin
   .from("customers")
@@ -33,9 +34,11 @@ export default async function FreshDeskPage() {
   ) : (
     <div className="mt-4 space-y-3">
       {customers?.map((customer) => (
-        <div
-          key={customer.id}
-          className="rounded-2xl border border-[#DAD6DB] bg-[#FFFDFC] p-5"
+  <Link
+    key={customer.id}
+    href={`/fresh-desk/customers/${customer.id}`}
+    className="block rounded-2xl border border-[#DAD6DB] bg-[#FFFDFC] p-5 transition hover:-translate-y-0.5 hover:shadow-md"
+  
         >
           <p className="font-semibold">
             {customer.first_name} {customer.last_name}
@@ -44,7 +47,7 @@ export default async function FreshDeskPage() {
           <p className="mt-1 text-sm text-[#5A5553]">
             {customer.email}
           </p>
-        </div>
+        </Link>
       ))}
     </div>
   )}

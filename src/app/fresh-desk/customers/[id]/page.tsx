@@ -1,0 +1,127 @@
+import "server-only";
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
+
+type FreshDeskCustomerPageProps = {
+  params: Promise<{ id: string }>;
+};
+
+export default async function FreshDeskCustomerPage({
+  params,
+}: FreshDeskCustomerPageProps) {
+  const { id } = await params;
+
+  const { data: customer, error } = await supabaseAdmin
+    .from("customers")
+    .select("id, first_name, last_name, email, created_at")
+    .eq("id", id)
+    .single();
+    const { data: latestSkinPlan, error: skinPlanError } = await supabaseAdmin
+  .from("skin_plans")
+  .select("*")
+  .eq("customer_id", id)
+  .order("version", { ascending: false })
+  .limit(1)
+  .maybeSingle();
+const { data: skinPlanProducts } = latestSkinPlan
+  ? await supabaseAdmin
+      .from("skin_plan_products")
+      .select(
+        "id, routine_step, routine_order, product_name_snapshot, brand_snapshot, recommendation_reason, customer_guidance"
+      )
+      .eq("skin_plan_id", latestSkinPlan.id)
+      .order("routine_order", { ascending: true })
+  : { data: [] };
+  const { data: skinPlanEnhancements } = latestSkinPlan
+  ? await supabaseAdmin
+      .from("skin_plan_enhancements")
+      .select(
+        "id, enhancement_name_snapshot, recommendation_order, customer_guidance, status"
+      )
+      .eq("skin_plan_id", latestSkinPlan.id)
+      .order("recommendation_order", { ascending: true })
+  : { data: [] };
+  return (
+    <main className="min-h-screen bg-[#FAF7F1] px-6 py-10 text-[#302C2A]">
+      <div className="mx-auto max-w-6xl">
+        <p className="text-sm font-semibold uppercase tracking-[0.22em] text-[#908A9B]">
+          Fresh Desk
+        </p>
+
+   {error || !customer ? (
+  <h1 className="mt-4 text-3xl">Customer not found</h1>
+        ) : (
+          <>
+            <h1
+              className="mt-3 text-4xl"
+              style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}
+            >
+              {customer.first_name} {customer.last_name}
+            </h1>
+
+            <p className="mt-3 text-[#5A5553]">{customer.email}</p>
+<p className="mt-6 text-sm font-semibold text-[#908A9B]">
+  {skinPlanError
+    ? `Skin Plan error: ${skinPlanError.message}`
+    : latestSkinPlan
+      ? `Skin Plan v${latestSkinPlan.version}`
+      : "No Skin Plan yet"}
+</p>
+        {latestSkinPlan && (
+  <div className="mt-8">
+    <h2 className="text-xl font-semibold">Recommended Products</h2>
+
+    <div className="mt-4 space-y-3">
+      {skinPlanProducts?.map((product) => (
+        <div
+          key={product.id}
+          className="rounded-2xl border border-[#DAD6DB] bg-[#FFFDFC] p-5"
+        >
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#908A9B]">
+            {product.routine_step}
+          </p>
+
+          <p className="mt-2 font-semibold">
+            {product.product_name_snapshot}
+          </p>
+
+          {product.brand_snapshot && (
+            <p className="mt-1 text-sm text-[#5A5553]">
+              {product.brand_snapshot}
+            </p>
+          )}
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+ {latestSkinPlan && (
+  <div className="mt-8">
+    <h2 className="text-xl font-semibold">Personalization Suggestions</h2>
+
+    <div className="mt-4 space-y-3">
+      {skinPlanEnhancements?.map((enhancement) => (
+        <div
+          key={enhancement.id}
+          className="rounded-2xl border border-[#DAD6DB] bg-[#FFFDFC] p-5"
+        >
+          <p className="font-semibold">
+            {enhancement.enhancement_name_snapshot}
+          </p>
+
+          {enhancement.customer_guidance && (
+            <p className="mt-2 text-sm leading-6 text-[#5A5553]">
+              {enhancement.customer_guidance}
+            </p>
+          )}
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+          </>
+        )}
+      </div>
+    </main>
+  );
+ 
+}
