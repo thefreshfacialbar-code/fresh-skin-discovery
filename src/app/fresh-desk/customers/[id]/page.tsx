@@ -22,6 +22,15 @@ export default async function FreshDeskCustomerPage({
   .order("version", { ascending: false })
   .limit(1)
   .maybeSingle();
+  const { data: consultationResult } = latestSkinPlan?.consultation_id
+  ? await supabaseAdmin
+      .from("consultation_results")
+      .select(
+        "primary_journey, secondary_journey, result_summary, recommendation_engine_version"
+      )
+      .eq("consultation_id", latestSkinPlan.consultation_id)
+      .maybeSingle()
+  : { data: null };
 const { data: skinPlanProducts } = latestSkinPlan
   ? await supabaseAdmin
       .from("skin_plan_products")
@@ -66,6 +75,29 @@ const { data: skinPlanProducts } = latestSkinPlan
       ? `Skin Plan v${latestSkinPlan.version}`
       : "No Skin Plan yet"}
 </p>
+{consultationResult && (
+  <div className="mt-8 rounded-2xl border border-[#DAD6DB] bg-[#FFFDFC] p-6">
+    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#908A9B]">
+      Fresh Method
+    </p>
+
+    <h2 className="mt-2 text-xl font-semibold">
+      {consultationResult.primary_journey}
+    </h2>
+
+    {consultationResult.secondary_journey && (
+      <p className="mt-2 text-sm text-[#5A5553]">
+        Supporting Journey: {consultationResult.secondary_journey}
+      </p>
+    )}
+
+    {consultationResult.result_summary && (
+      <p className="mt-4 leading-7 text-[#5A5553]">
+        {consultationResult.result_summary}
+      </p>
+    )}
+  </div>
+)}
         {latestSkinPlan && (
   <div className="mt-8">
     <h2 className="text-xl font-semibold">Recommended Products</h2>
