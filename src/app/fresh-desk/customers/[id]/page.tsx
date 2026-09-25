@@ -31,6 +31,13 @@ export default async function FreshDeskCustomerPage({
       .eq("consultation_id", latestSkinPlan.consultation_id)
       .maybeSingle()
   : { data: null };
+  const { data: journeyScores } = latestSkinPlan?.consultation_id
+  ? await supabaseAdmin
+      .from("consultation_journey_scores")
+      .select("journey, score, role")
+      .eq("consultation_id", latestSkinPlan.consultation_id)
+      .order("score", { ascending: false })
+  : { data: [] };
 const { data: skinPlanProducts } = latestSkinPlan
   ? await supabaseAdmin
       .from("skin_plan_products")
@@ -81,23 +88,33 @@ const { data: skinPlanProducts } = latestSkinPlan
       Fresh Method
     </p>
 
-    <h2 className="mt-2 text-xl font-semibold">
-      {consultationResult.primary_journey}
-    </h2>
+    <div className="mt-2">
+  {(journeyScores ?? [])
+    .filter((journey) => journey.role === "primary")
+    .map((journey) => (
+      <h2
+        key={journey.journey}
+        className="text-xl font-semibold capitalize"
+      >
+        {journey.journey}
+      </h2>
+    ))}
+</div>
 
-    {consultationResult.secondary_journey && (
-      <p className="mt-2 text-sm text-[#5A5553]">
-        Supporting Journey: {consultationResult.secondary_journey}
-      </p>
-    )}
-
-    {consultationResult.result_summary && (
-      <p className="mt-4 leading-7 text-[#5A5553]">
-        {consultationResult.result_summary}
-      </p>
-    )}
+{(journeyScores ?? []).some(
+  (journey) => journey.role === "supporting"
+) && (
+  <p className="mt-2 text-sm text-[#5A5553]">
+    Supporting Journey:{" "}
+    {(journeyScores ?? [])
+      .filter((journey) => journey.role === "supporting")
+      .map((journey) => journey.journey)
+      .join(", ")}
+  </p>
+)}
   </div>
 )}
+ 
         {latestSkinPlan && (
   <div className="mt-8">
     <h2 className="text-xl font-semibold">Recommended Products</h2>
