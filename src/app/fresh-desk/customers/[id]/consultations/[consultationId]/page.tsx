@@ -1,5 +1,5 @@
 import "server-only";
-
+import Link from "next/link";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import {
   desiredOutcomesLabels,
@@ -88,6 +88,12 @@ if (skinPlan?.id) {
   return (
     <main className="min-h-screen bg-[#F7F4F2] px-6 py-12 text-[#2F2A28]">
       <div className="mx-auto max-w-3xl">
+        <Link
+  href={`/fresh-desk/customers/${id}`}
+  className="mb-6 inline-block text-sm text-[#5A5553] hover:text-[#2F2A28]"
+>
+  ← Back to Customer
+</Link>
         <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#908A9B]">
           Fresh Desk
         </p>
