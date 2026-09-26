@@ -1,5 +1,6 @@
 import "server-only";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import Link from "next/link";
 import {
   desiredOutcomesLabels,
   primaryMotivationLabels,
@@ -244,37 +245,39 @@ const { data: skinPlanProducts } = latestSkinPlan
         );
 
         return (
-          <div
-            key={consultation.id}
-            className="rounded-2xl border border-[#DAD6DB] bg-[#FFFDFC] p-5"
-          >
-            <p className="font-semibold">
-              {new Date(
-                consultation.completed_at ?? consultation.created_at
-              ).toLocaleDateString("en-US", {
-                month: "long",
-                day: "numeric",
-                year: "numeric",
-              })}
-            </p>
+  <Link
+    key={consultation.id}
+    href={`/fresh-desk/customers/${id}/consultations/${consultation.id}`}
+    className="block rounded-2xl border border-[#DAD6DB] bg-[#FFFDFC] p-5 transition hover:border-[#908A9B]"
+  >
+    <p className="font-semibold">
+      {new Date(
+        consultation.completed_at ?? consultation.created_at
+      ).toLocaleDateString("en-US", {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+      })}
+    </p>
 
-            <p className="mt-1 text-sm text-[#5A5553]">
-              {consultation.status === "completed"
-                ? "Completed"
-                : consultation.status}
-              {" · "}
-              {consultation.consultation_source === "web"
-                ? "Skin Discovery"
-                : consultation.consultation_source}
-            </p>
+    <p className="mt-1 text-sm text-[#5A5553]">
+      {consultation.status === "completed"
+        ? "Completed"
+        : consultation.status}
+      {" · "}
+      {consultation.consultation_source === "web"
+        ? "Skin Discovery"
+        : consultation.consultation_source}
+    </p>
 
-            <p className="mt-2 text-sm font-semibold text-[#908A9B]">
-              {relatedSkinPlan
-                ? `Skin Plan v${relatedSkinPlan.version}`
-                : "No Skin Plan"}
-            </p>
-          </div>
-        );
+    <p className="mt-2 text-sm font-semibold text-[#908A9B]">
+      {relatedSkinPlan
+        ? `Skin Plan v${relatedSkinPlan.version}`
+        : "No Skin Plan"}
+    </p>
+  </Link>
+);
+        
       })}
     </div>
   </div>
