@@ -100,13 +100,35 @@ const { data: skinPlanProducts } = latestSkinPlan
 
             <p className="mt-3 text-[#5A5553]">{customer.email}</p>
 
-<p className="mt-6 text-sm font-semibold text-[#908A9B]">
-  {skinPlanError
-    ? `Skin Plan error: ${skinPlanError.message}`
-    : latestSkinPlan
-      ? `Skin Plan v${latestSkinPlan.version}`
-      : "No Skin Plan yet"}
-</p>
+<div className="mt-8 rounded-2xl border border-[#DAD6DB] bg-[#FFFDFC] p-6">
+  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#908A9B]">
+    Current Skin Plan
+  </p>
+
+  {latestSkinPlan ? (
+    <div className="mt-4">
+      <p className="text-xl font-semibold">
+        Skin Plan v{latestSkinPlan.version}
+      </p>
+
+      <p className="mt-2 text-sm text-[#5A5553]">
+        Based on the customer&apos;s latest Fresh Consultation.
+      </p>
+      {latestSkinPlan.consultation_id && (
+  <Link
+    href={`/fresh-desk/customers/${id}/consultations/${latestSkinPlan.consultation_id}`}
+    className="mt-4 inline-block text-sm font-semibold text-[#5A5553] hover:text-[#2F2A28]"
+  >
+    View Current Plan →
+  </Link>
+)}
+    </div>
+  ) : (
+    <p className="mt-4 text-sm text-[#5A5553]">
+      No Skin Plan has been created yet.
+    </p>
+  )}
+</div>
 
 {consultationAnswers && consultationAnswers.length > 0 && (
   <div className="mt-8 rounded-2xl border border-[#DAD6DB] bg-[#FFFDFC] p-6">
