@@ -1,6 +1,10 @@
 import "server-only";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
-
+import {
+  desiredOutcomesLabels,
+  primaryMotivationLabels,
+  skinExperienceLabels,
+} from "@/lib/journeyReviewMappings";
 type FreshDeskCustomerPageProps = {
   params: Promise<{ id: string }>;
 };
@@ -37,6 +41,15 @@ export default async function FreshDeskCustomerPage({
       .select("journey, score, role")
       .eq("consultation_id", latestSkinPlan.consultation_id)
       .order("score", { ascending: false })
+  : { data: [] };
+  const { data: consultationAnswers } = latestSkinPlan?.consultation_id
+  ? await supabaseAdmin
+      .from("consultation_answers")
+      .select(
+        "id, question_key, question_text, answer_key, answer_text, answer_keys"
+      )
+      .eq("consultation_id", latestSkinPlan.consultation_id)
+      .order("created_at", { ascending: true })
   : { data: [] };
 const { data: skinPlanProducts } = latestSkinPlan
   ? await supabaseAdmin
@@ -75,6 +88,7 @@ const { data: skinPlanProducts } = latestSkinPlan
             </h1>
 
             <p className="mt-3 text-[#5A5553]">{customer.email}</p>
+
 <p className="mt-6 text-sm font-semibold text-[#908A9B]">
   {skinPlanError
     ? `Skin Plan error: ${skinPlanError.message}`
@@ -82,6 +96,48 @@ const { data: skinPlanProducts } = latestSkinPlan
       ? `Skin Plan v${latestSkinPlan.version}`
       : "No Skin Plan yet"}
 </p>
+
+{consultationAnswers && consultationAnswers.length > 0 && (
+  <div className="mt-8 rounded-2xl border border-[#DAD6DB] bg-[#FFFDFC] p-6">
+    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#908A9B]">
+      Consultation
+    </p>
+
+    <div className="mt-4 space-y-5">
+      {consultationAnswers.map((answer) => {
+        const labels =
+          answer.question_key === "primary_motivation"
+            ? primaryMotivationLabels
+            : answer.question_key === "skin_experience"
+              ? skinExperienceLabels
+              : answer.question_key === "desired_outcomes"
+                ? desiredOutcomesLabels
+                : {};
+
+        const answerValues =
+          answer.answer_keys && answer.answer_keys.length > 0
+            ? answer.answer_keys
+            : answer.answer_key
+              ? [answer.answer_key]
+              : [];
+
+        return (
+          <div key={answer.id}>
+            <p className="font-semibold">
+              {answer.question_text ?? answer.question_key}
+            </p>
+
+            <p className="mt-1 text-sm leading-6 text-[#5A5553]">
+              {answerValues
+                .map((value: string) => labels[value] ?? value)
+                .join(" ")}
+            </p>
+          </div>
+        );
+      })}
+    </div>
+  </div>
+)}
 {consultationResult && (
   <div className="mt-8 rounded-2xl border border-[#DAD6DB] bg-[#FFFDFC] p-6">
     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#908A9B]">
