@@ -26,6 +26,16 @@ export default async function FreshDeskCustomerPage({
   .order("version", { ascending: false })
   .limit(1)
   .maybeSingle();
+  const { data: consultationHistory } = await supabaseAdmin
+  .from("consultations")
+  .select("id, status, consultation_source, completed_at, created_at")
+  .eq("customer_id", id)
+  .order("completed_at", { ascending: false });
+  const { data: skinPlanHistory } = await supabaseAdmin
+  .from("skin_plans")
+  .select("id, consultation_id, version, created_at")
+  .eq("customer_id", id)
+  .order("version", { ascending: false });
   const { data: consultationResult } = latestSkinPlan?.consultation_id
   ? await supabaseAdmin
       .from("consultation_results")
@@ -220,6 +230,52 @@ const { data: skinPlanProducts } = latestSkinPlan
           )}
         </div>
       ))}
+    </div>
+  </div>
+)}
+{consultationHistory && consultationHistory.length > 0 && (
+  <div className="mt-10">
+    <h2 className="text-xl font-semibold">Consultation History</h2>
+
+    <div className="mt-4 space-y-3">
+      {consultationHistory.map((consultation) => {
+        const relatedSkinPlan = skinPlanHistory?.find(
+          (plan) => plan.consultation_id === consultation.id
+        );
+
+        return (
+          <div
+            key={consultation.id}
+            className="rounded-2xl border border-[#DAD6DB] bg-[#FFFDFC] p-5"
+          >
+            <p className="font-semibold">
+              {new Date(
+                consultation.completed_at ?? consultation.created_at
+              ).toLocaleDateString("en-US", {
+                month: "long",
+                day: "numeric",
+                year: "numeric",
+              })}
+            </p>
+
+            <p className="mt-1 text-sm text-[#5A5553]">
+              {consultation.status === "completed"
+                ? "Completed"
+                : consultation.status}
+              {" · "}
+              {consultation.consultation_source === "web"
+                ? "Skin Discovery"
+                : consultation.consultation_source}
+            </p>
+
+            <p className="mt-2 text-sm font-semibold text-[#908A9B]">
+              {relatedSkinPlan
+                ? `Skin Plan v${relatedSkinPlan.version}`
+                : "No Skin Plan"}
+            </p>
+          </div>
+        );
+      })}
     </div>
   </div>
 )}
