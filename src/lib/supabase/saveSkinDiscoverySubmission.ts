@@ -110,6 +110,7 @@ const { data: consultation, error: consultationError } = await supabaseAdmin
     questionnaire_version: submission.experience || "skin-discovery",
     status: "completed",
     consultation_source: "web",
+    experience_id: submission.experience ?? null,
     started_at: submission.createdAt,
     completed_at: submission.createdAt,
   })
