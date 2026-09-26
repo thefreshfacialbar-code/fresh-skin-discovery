@@ -293,10 +293,12 @@ const { data: skinPlanProducts } = latestSkinPlan
     </p>
 
     <p className="mt-2 text-sm font-semibold text-[#908A9B]">
-      {relatedSkinPlan
-        ? `Skin Plan v${relatedSkinPlan.version}`
-        : "No Skin Plan"}
-    </p>
+  {relatedSkinPlan
+    ? relatedSkinPlan.id === latestSkinPlan?.id
+      ? `Current Plan · Skin Plan v${relatedSkinPlan.version}`
+      : `Skin Plan v${relatedSkinPlan.version}`
+    : "No Skin Plan"}
+</p>
   </Link>
 );
         
