@@ -27,6 +27,15 @@ export default async function FreshDeskCustomerPage({
   .order("version", { ascending: false })
   .limit(1)
   .maybeSingle();
+  const { data: latestConsultation } = latestSkinPlan?.consultation_id
+  ? await supabaseAdmin
+      .from("consultations")
+      .select(
+        "id, consultation_source, professional_review_status, professional_reviewed_at"
+      )
+      .eq("id", latestSkinPlan.consultation_id)
+      .maybeSingle()
+  : { data: null };
   const { data: consultationHistory } = await supabaseAdmin
   .from("consultations")
   .select("id, status, consultation_source, completed_at, created_at")
@@ -112,8 +121,10 @@ const { data: skinPlanProducts } = latestSkinPlan
       </p>
 
       <p className="mt-2 text-sm text-[#5A5553]">
-        Based on the customer&apos;s latest Fresh Consultation.
-      </p>
+  {latestConsultation?.professional_review_status === "reviewed"
+    ? "Professionally reviewed and personalized by Fresh Facial Bar."
+    : "Online Skin Discovery results · Professional review not yet completed."}
+</p>
       {latestSkinPlan.consultation_id && (
   <Link
     href={`/fresh-desk/customers/${id}/consultations/${latestSkinPlan.consultation_id}`}
