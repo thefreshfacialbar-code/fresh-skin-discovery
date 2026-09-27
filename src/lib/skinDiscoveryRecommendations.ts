@@ -60,11 +60,16 @@ function getProductRecommendationEngineResult(
       selectedAnswers,
     });
   }
-
+const freshProducts = products?.filter(
+  (product) =>
+    !product.experienceIds ||
+    product.experienceIds.length === 0 ||
+    product.experienceIds.includes("fresh-facial-bar-lash-lounge"),
+);
  return generateProductRecommendation({
   journeyResult: journeyRecommendation,
   selectedAnswers,
-  products,
+  products: freshProducts,
 });
 }
 
