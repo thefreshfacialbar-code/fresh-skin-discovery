@@ -21,6 +21,7 @@ export async function getSupabaseProductCatalog(): Promise<Product[]> {
       recommendation_status,
       product_recommendation_profiles (
       product_category,
+      experience_ids,
         primary_journey,
         supporting_journey,
         recommendation_role,
@@ -63,6 +64,7 @@ export async function getSupabaseProductCatalog(): Promise<Product[]> {
   return [
     {
       id: row.fresh_product_id,
+      experienceIds: profile.experience_ids ?? [],
       name: row.name,
       category: profile.product_category as ProductCategory,
       primaryJourney: profile.primary_journey as JourneyId,

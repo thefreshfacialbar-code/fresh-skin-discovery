@@ -15,6 +15,7 @@ export type ProductUsageType = "daily" | "periodic" | "weekly" | "farmacist-guid
 
 export type Product = {
   id: string;
+  experienceIds?: string[];
   name: string;
   category: ProductCategory;
   primaryJourney: JourneyId;
