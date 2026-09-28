@@ -1,6 +1,7 @@
 import "server-only";
 import Link from "next/link";
 import ProfessionalReviewActions from "@/components/ProfessionalReviewActions";
+import ProductReviewActions from "@/components/ProductReviewActions";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import {
   desiredOutcomesLabels,
@@ -54,15 +55,21 @@ let skinPlanProducts: {
   price_snapshot: number | null;
   recommendation_reason: string | null;
   customer_guidance: string | null;
+  product_id: string | null;
+status: string;
+professional_note: string | null;
+reviewed_at: string | null;
+replaces_skin_plan_product_id: string | null;
 }[] = [];
 
 if (skinPlan?.id) {
   const { data } = await supabaseAdmin
     .from("skin_plan_products")
     .select(
-      "id, routine_step, routine_order, product_name_snapshot, brand_snapshot, price_snapshot, recommendation_reason, customer_guidance"
+     "id, product_id, routine_step, routine_order, product_name_snapshot, brand_snapshot, price_snapshot, recommendation_reason, customer_guidance, status, professional_note, reviewed_at, replaces_skin_plan_product_id"
     )
     .eq("skin_plan_id", skinPlan.id)
+    .neq("status", "replaced")
     .order("routine_order", { ascending: true });
 
   skinPlanProducts = data ?? [];
@@ -256,6 +263,14 @@ if (skinPlan?.id) {
         {product.customer_guidance}
       </p>
     )}
+    {consultation.professional_review_status !== "reviewed" && (
+  <ProductReviewActions
+  productId={product.id}
+  status={product.status}
+  productCatalogId={product.product_id}
+  routineStep={product.routine_step}
+/>
+)}
   </div>
 ))}
       </div>
