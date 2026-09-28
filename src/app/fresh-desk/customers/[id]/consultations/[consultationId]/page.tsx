@@ -1,5 +1,6 @@
 import "server-only";
 import Link from "next/link";
+import ProfessionalReviewActions from "@/components/ProfessionalReviewActions";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import {
   desiredOutcomesLabels,
@@ -20,9 +21,9 @@ export default async function ConsultationDetailPage({
 
   const { data: consultation, error } = await supabaseAdmin
     .from("consultations")
-    .select(
-      "id, customer_id, status, consultation_source, completed_at, created_at"
-    )
+   .select(
+  "id, customer_id, status, consultation_source, completed_at, created_at, professional_review_status, professional_reviewed_at"
+)
     .eq("id", consultationId)
     .eq("customer_id", id)
     .maybeSingle();
@@ -123,7 +124,7 @@ if (skinPlan?.id) {
             </p>
 
             <p className="mt-2 text-sm text-[#5A5553]">
-              {consultation.status === "completed"
+              {consultation.status === "completed"  
                 ? "Completed"
                 : consultation.status}
               {" · "}
@@ -131,6 +132,34 @@ if (skinPlan?.id) {
                 ? "Skin Discovery"
                 : consultation.consultation_source}
             </p>
+            <div className="mt-5 border-t border-[#E8E4E7] pt-4">
+  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#908A9B]">
+    Professional Review
+  </p>
+
+  <p className="mt-2 font-semibold">
+    {consultation.professional_review_status === "reviewed"
+      ? "Reviewed"
+      : "Review Needed"}
+  </p>
+
+  <p className="mt-1 text-sm text-[#5A5553]">
+    {consultation.professional_review_status === "reviewed"
+      ? consultation.professional_reviewed_at
+        ? `Reviewed ${new Date(
+            consultation.professional_reviewed_at
+          ).toLocaleDateString("en-US", {
+            month: "long",
+            day: "numeric",
+            year: "numeric",
+          })}`
+        : "Professionally reviewed and personalized."
+      : "Review the recommended products and personalization suggestions before finalizing this Skin Plan."}
+  </p>
+  {consultation.professional_review_status !== "reviewed" && (
+  <ProfessionalReviewActions consultationId={consultation.id} />
+)}
+</div>
           </div>
           
           {consultationAnswers && consultationAnswers.length > 0 && (
