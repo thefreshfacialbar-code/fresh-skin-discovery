@@ -18,7 +18,12 @@ export default function ProductReviewActions({
   routineStep,
 }: ProductReviewActionsProps) {
   const router = useRouter();
-
+const statusLabel =
+  status === "confirmed"
+    ? "Kept"
+    : status === "removed"
+      ? "Removed"
+      : "Needs Decision";
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 const [isReplacing, setIsReplacing] = useState(false);
@@ -138,8 +143,7 @@ async function replaceProduct(replacementFreshProductId: string) {
       );
     }
 
-    setIsReplacing(false);
-    router.refresh();
+   window.location.reload();
   } catch (error) {
     setError(
       error instanceof Error
@@ -172,7 +176,7 @@ async function replaceProduct(replacementFreshProductId: string) {
         throw new Error(result.error ?? "Could not update this product.");
       }
 
-      router.refresh();
+      window.location.reload();
     } catch (error) {
       setError(
         error instanceof Error
@@ -186,6 +190,9 @@ async function replaceProduct(replacementFreshProductId: string) {
 
   return (
     <div className="mt-3">
+        <p className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-[#908A9B]">
+  Status: {statusLabel}
+</p>
       <div className="flex flex-wrap items-center gap-3">
         <button
           type="button"

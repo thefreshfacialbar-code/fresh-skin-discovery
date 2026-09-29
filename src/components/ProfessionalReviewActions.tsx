@@ -5,14 +5,20 @@ import { useState } from "react";
 
 type ProfessionalReviewActionsProps = {
   consultationId: string;
+  readyToFinalize?: boolean;
+  initialReviewNote?: string | null;
 };
 
 export default function ProfessionalReviewActions({
   consultationId,
+  readyToFinalize = false,
+  initialReviewNote = null,
 }: ProfessionalReviewActionsProps) {
   const router = useRouter();
-
-  const [isReviewing, setIsReviewing] = useState(false);
+const [reviewNote, setReviewNote] = useState(
+  initialReviewNote ?? ""
+);
+  const [isReviewing, setIsReviewing] = useState(readyToFinalize);
   const [isFinalizing, setIsFinalizing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -26,9 +32,10 @@ export default function ProfessionalReviewActions({
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          consultationId,
-        }),
+       body: JSON.stringify({
+  consultationId,
+  professionalReviewNote: reviewNote.trim() || null,
+}),
       });
 
       const result = await response.json();
@@ -60,7 +67,23 @@ export default function ProfessionalReviewActions({
           Review the recommended products and personalization suggestions below.
           Finalizing confirms that this Skin Plan has been professionally reviewed.
         </p>
+<div className="mt-5">
+  <label
+    htmlFor="professional-review-note"
+    className="text-xs font-semibold uppercase tracking-[0.16em] text-[#908A9B]"
+  >
+    Professional Review Notes
+  </label>
 
+  <textarea
+    id="professional-review-note"
+    value={reviewNote}
+    onChange={(event) => setReviewNote(event.target.value)}
+    rows={5}
+    placeholder="Add personalized observations, adjustments, follow-up guidance, or other notes for this Skin Plan..."
+    className="mt-2 w-full rounded-xl border border-[#DAD6DB] bg-[#FFFDFC] px-4 py-3 text-sm leading-6 text-[#2F2A28] outline-none focus:border-[#908A9B]"
+  />
+</div>
         {error && (
           <p className="mt-3 text-sm font-semibold text-red-700">
             {error}

@@ -5,7 +5,10 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const consultationId = body.consultationId;
-
+const professionalReviewNote =
+  typeof body.professionalReviewNote === "string"
+    ? body.professionalReviewNote.trim() || null
+    : null;
     if (!consultationId || typeof consultationId !== "string") {
       return NextResponse.json(
         {
@@ -71,13 +74,14 @@ if ((unreviewedProductCount ?? 0) > 0) {
     const { data, error } = await supabaseAdmin
       .from("consultations")
       .update({
-        professional_review_status: "reviewed",
-        professional_reviewed_at: reviewedAt,
-      })
+  professional_review_status: "reviewed",
+  professional_reviewed_at: reviewedAt,
+  professional_review_note: professionalReviewNote,
+})
       .eq("id", consultationId)
       .select(
-        "id, professional_review_status, professional_reviewed_at"
-      )
+  "id, professional_review_status, professional_reviewed_at, professional_review_note"
+)
       .single();
 
     if (error) {

@@ -12,6 +12,7 @@ type ConsultationDetailPageProps = {
   params: Promise<{
     id: string;
     consultationId: string;
+    professional_review_note: string | null;
   }>;
 };
 
@@ -23,7 +24,7 @@ export default async function ConsultationDetailPage({
   const { data: consultation, error } = await supabaseAdmin
     .from("consultations")
    .select(
-  "id, customer_id, status, consultation_source, completed_at, created_at, professional_review_status, professional_reviewed_at"
+  "id, customer_id, status, consultation_source, completed_at, created_at, professional_review_status, professional_reviewed_at, professional_review_note"
 )
     .eq("id", consultationId)
     .eq("customer_id", id)
@@ -93,6 +94,11 @@ if (skinPlan?.id) {
 
   skinPlanEnhancements = data ?? [];
 }
+const allProductsReviewed =
+  skinPlanProducts.length > 0 &&
+  skinPlanProducts.every(
+    (product) => product.status !== "recommended"
+  );
   return (
     <main className="min-h-screen bg-[#F7F4F2] px-6 py-12 text-[#2F2A28]">
       <div className="mx-auto max-w-3xl">
@@ -139,7 +145,7 @@ if (skinPlan?.id) {
                 ? "Skin Discovery"
                 : consultation.consultation_source}
             </p>
-            <div className="mt-5 border-t border-[#E8E4E7] pt-4">
+           <div className="mt-5 border-t border-[#E8E4E7] pt-4">
   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#908A9B]">
     Professional Review
   </p>
@@ -147,7 +153,9 @@ if (skinPlan?.id) {
   <p className="mt-2 font-semibold">
     {consultation.professional_review_status === "reviewed"
       ? "Reviewed"
-      : "Review Needed"}
+      : allProductsReviewed
+        ? "Ready to Finalize"
+        : "Review Needed"}
   </p>
 
   <p className="mt-1 text-sm text-[#5A5553]">
@@ -163,9 +171,27 @@ if (skinPlan?.id) {
         : "Professionally reviewed and personalized."
       : "Review the recommended products and personalization suggestions before finalizing this Skin Plan."}
   </p>
+
+  {consultation.professional_review_status === "reviewed" &&
+    consultation.professional_review_note && (
+      <div className="mt-4 rounded-xl border border-[#DAD6DB] bg-white p-4">
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#908A9B]">
+          Professional Review Notes
+        </p>
+
+        <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-[#5A5553]">
+          {consultation.professional_review_note}
+        </p>
+      </div>
+    )}
+
   {consultation.professional_review_status !== "reviewed" && (
-  <ProfessionalReviewActions consultationId={consultation.id} />
-)}
+    <ProfessionalReviewActions
+      consultationId={consultation.id}
+      readyToFinalize={allProductsReviewed}
+      initialReviewNote={consultation.professional_review_note}
+    />
+  )}
 </div>
           </div>
           
@@ -264,6 +290,7 @@ if (skinPlan?.id) {
       </p>
     )}
     {consultation.professional_review_status !== "reviewed" && (
+        
   <ProductReviewActions
   productId={product.id}
   status={product.status}
