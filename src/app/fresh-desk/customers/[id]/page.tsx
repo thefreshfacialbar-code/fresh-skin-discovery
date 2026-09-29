@@ -92,6 +92,12 @@ const { data: skinPlanProducts } = latestSkinPlan
   return (
     <main className="min-h-screen bg-[#FAF7F1] px-6 py-10 text-[#302C2A]">
       <div className="mx-auto max-w-6xl">
+        <Link
+  href="/fresh-desk"
+  className="inline-flex items-center text-sm font-semibold text-[#5A5553] transition hover:text-[#2F2A28]"
+>
+  ← Back to Fresh Desk
+</Link>
         <p className="text-sm font-semibold uppercase tracking-[0.22em] text-[#908A9B]">
           Fresh Desk
         </p>
