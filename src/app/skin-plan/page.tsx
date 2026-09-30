@@ -52,14 +52,15 @@ export default async function SkinPlanPage({
   }
 const { data: consultation, error: consultationError } = await supabaseAdmin
   .from("consultations")
-  .select(`
-    id,
-    status,
-    consultation_source,
-    completed_at,
-    professional_review_status,
-    professional_reviewed_at
-  `)
+ .select(`
+  id,
+  customer_id,
+  status,
+  consultation_source,
+  completed_at,
+  professional_review_status,
+  professional_reviewed_at
+`)
   .eq("id", skinPlan.consultation_id)
   .maybeSingle();
 
@@ -77,7 +78,13 @@ if (consultationError || !consultation) {
     </main>
   );
 }
+const { data: customer } = await supabaseAdmin
+  .from("customers")
+  .select("first_name")
+  .eq("id", consultation.customer_id)
+  .maybeSingle();
 
+const customerFirstName = customer?.first_name?.trim() || null;
 if (consultation.professional_review_status !== "reviewed") {
   return (
     <main className="min-h-screen bg-[#FAF7F1] px-5 py-8 text-[#302C2A] sm:px-8">
@@ -145,7 +152,9 @@ if (skinPlanProductsError) {
     className="mt-5 text-4xl leading-tight text-[#302C2A] sm:text-[3rem]"
     style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}
   >
-    Your Personalized Skin Plan
+    {customerFirstName
+  ? `${customerFirstName}'s Personalized Skin Plan`
+  : "Your Personalized Skin Plan"}
   </h1>
 
   <p className="mx-auto mt-5 max-w-3xl text-base leading-8 text-[#5A5553] sm:text-lg">

@@ -47,7 +47,17 @@ export async function POST(request: Request) {
     const { data: replacementProduct, error: replacementError } =
       await supabaseAdmin
         .from("products")
-        .select("id, fresh_product_id, name, brand, price")
+        .select(`
+  id,
+  fresh_product_id,
+  name,
+  brand,
+  price,
+  product_recommendation_profiles (
+    customer_guidance,
+    usage_type
+  )
+`)
         .eq("fresh_product_id", replacementFreshProductId)
         .eq("active", true)
         .eq("recommendable", true)
@@ -77,7 +87,12 @@ export async function POST(request: Request) {
     }
 
     const reviewedAt = new Date().toISOString();
+const relatedProfile =
+  replacementProduct.product_recommendation_profiles;
 
+const replacementProfile = Array.isArray(relatedProfile)
+  ? relatedProfile[0]
+  : relatedProfile;
     const { data: newProduct, error: insertError } = await supabaseAdmin
       .from("skin_plan_products")
       .insert({
@@ -88,7 +103,8 @@ export async function POST(request: Request) {
         timing: originalProduct.timing,
         frequency: originalProduct.frequency,
         recommendation_reason: originalProduct.recommendation_reason,
-        customer_guidance: originalProduct.customer_guidance,
+        customer_guidance: replacementProfile?.customer_guidance ?? null,
+usage_type: replacementProfile?.usage_type ?? null,
         product_name_snapshot: replacementProduct.name,
         brand_snapshot: replacementProduct.brand,
         price_snapshot: replacementProduct.price,

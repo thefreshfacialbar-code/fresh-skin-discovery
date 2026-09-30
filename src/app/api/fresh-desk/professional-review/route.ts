@@ -98,7 +98,7 @@ if ((unreviewedProductCount ?? 0) > 0) {
     }
     const { data: customer, error: customerError } = await supabaseAdmin
   .from("customers")
-  .select("email")
+  .select("email, first_name")
   .eq("id", data.customer_id)
   .maybeSingle();
 
@@ -137,6 +137,7 @@ if (skinPlanTokenError) {
 const emailDelivery = await deliverFinalSkinPlan({
   guestEmail: customer.email,
   accessToken,
+  firstName: customer.first_name?.trim() || undefined,
 });
 
 if (!emailDelivery.success) {

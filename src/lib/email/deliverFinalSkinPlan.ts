@@ -5,6 +5,7 @@ import { createResendEmailProvider } from "@/lib/email/emailProvider";
 type DeliverFinalSkinPlanOptions = {
   guestEmail: string;
   accessToken: string;
+  firstName?: string;
 };
 
 export type FinalSkinPlanDeliveryResult = {
@@ -20,6 +21,7 @@ function readEnv(name: string): string {
 export async function deliverFinalSkinPlan({
   guestEmail,
   accessToken,
+  firstName,
 }: DeliverFinalSkinPlanOptions): Promise<FinalSkinPlanDeliveryResult> {
   const apiKey = readEnv("RESEND_API_KEY");
   const fromEmail = readEnv("SKIN_DISCOVERY_EMAIL_FROM");
@@ -44,15 +46,25 @@ export async function deliverFinalSkinPlan({
 
   const result = await provider.send({
     to: guestEmail,
-    subject: "Your Personalized Skin Plan Is Ready",
+    subject: firstName
+  ? `${firstName}, Your Personalized Skin Plan Is Ready`
+  : "Your Personalized Skin Plan Is Ready",
     html: `
       <div style="font-family: Arial, sans-serif; color: #302C2A; line-height: 1.6;">
         <h1>Your Personalized Skin Plan Is Ready</h1>
 
         <p>
-          Your Skin Discovery has been professionally reviewed and your
-          personalized Fresh Method is ready.
-        </p>
+  ${firstName ? `Hi ${firstName},` : "Hello,"}
+</p>
+
+<p>
+  Your Fresh professional has completed your personalized review and
+  refined your Skin Plan based on your skin goals and routine needs.
+</p>
+
+<p>
+  Your Fresh Method routine is ready to explore.
+</p>
 
         <p>
           <a
@@ -74,14 +86,18 @@ export async function deliverFinalSkinPlan({
       </div>
     `,
     text: [
-      "Your Personalized Skin Plan Is Ready",
-      "",
-      "Your Skin Discovery has been professionally reviewed and your personalized Fresh Method is ready.",
-      "",
-      `View your Skin Plan: ${skinPlanUrl}`,
-      "",
-      "Fresh Facial Bar & Lash Lounge",
-    ].join("\n"),
+  "Your Personalized Skin Plan Is Ready",
+  "",
+  firstName ? `Hi ${firstName},` : "Hello,",
+  "",
+  "Your Fresh professional has completed your personalized review and refined your Skin Plan based on your skin goals and routine needs.",
+  "",
+  "Your Fresh Method routine is ready to explore.",
+  "",
+  `View your Skin Plan: ${skinPlanUrl}`,
+  "",
+  "Fresh Facial Bar & Lash Lounge",
+].join("\n"),
   });
 
   if (!result.ok) {
