@@ -27,6 +27,8 @@ if (!persistence.success) {
 
 const delivery = await deliverSkinDiscoverySubmission(payload.submission);
 
+
+
 return NextResponse.json({
   ok: true,
   delivery,

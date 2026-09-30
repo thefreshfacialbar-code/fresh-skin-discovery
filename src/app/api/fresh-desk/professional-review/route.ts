@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { deliverFinalSkinPlan } from "@/lib/email/deliverFinalSkinPlan";
 
 export async function POST(request: Request) {
   try {
@@ -72,17 +73,17 @@ if ((unreviewedProductCount ?? 0) > 0) {
     const reviewedAt = new Date().toISOString();
 
     const { data, error } = await supabaseAdmin
-      .from("consultations")
-      .update({
-  professional_review_status: "reviewed",
-  professional_reviewed_at: reviewedAt,
-  professional_review_note: professionalReviewNote,
-})
-      .eq("id", consultationId)
-      .select(
-  "id, professional_review_status, professional_reviewed_at, professional_review_note"
-)
-      .single();
+  .from("consultations")
+  .update({
+    professional_review_status: "reviewed",
+    professional_reviewed_at: reviewedAt,
+    professional_review_note: professionalReviewNote,
+  })
+  .eq("id", consultationId)
+  .select(
+    "id, customer_id, professional_review_status, professional_reviewed_at, professional_review_note"
+  )
+  .single();
 
     if (error) {
       console.error("Professional review update failed:", error);
@@ -95,6 +96,23 @@ if ((unreviewedProductCount ?? 0) > 0) {
         { status: 500 }
       );
     }
+    const { data: customer, error: customerError } = await supabaseAdmin
+  .from("customers")
+  .select("email")
+  .eq("id", data.customer_id)
+  .maybeSingle();
+
+if (customerError || !customer?.email) {
+  console.error("Customer email lookup failed:", customerError);
+
+  return NextResponse.json(
+    {
+      success: false,
+      error: "Skin Plan was finalized, but the customer email could not be found.",
+    },
+    { status: 500 }
+  );
+}
 const accessToken = crypto.randomUUID();
 
 const { error: skinPlanTokenError } = await supabaseAdmin
@@ -112,6 +130,25 @@ if (skinPlanTokenError) {
     {
       success: false,
       error: "Skin Plan was finalized, but secure customer access could not be created.",
+    },
+    { status: 500 }
+  );
+}
+const emailDelivery = await deliverFinalSkinPlan({
+  guestEmail: customer.email,
+  accessToken,
+});
+
+if (!emailDelivery.success) {
+  console.error(
+    "Final Skin Plan email delivery failed:",
+    emailDelivery.errorMessage
+  );
+
+  return NextResponse.json(
+    {
+      success: false,
+      error: "Skin Plan was finalized, but the customer email could not be sent.",
     },
     { status: 500 }
   );
