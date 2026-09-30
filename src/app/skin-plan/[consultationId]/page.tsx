@@ -191,7 +191,17 @@ const { data: skinPlan, error: skinPlanError } = await supabaseAdmin
       ? "Daily Essential"
       : product.usage_type === "Weekly"
         ? "Weekly Treatment"
-        : "Periodic Treatment"}
+        : product.usage_type === "Periodic"
+          ? "Periodic Treatment"
+          : product.usage_type === "As Needed"
+            ? "As Needed"
+            : product.usage_type === "Weekly / Periodic"
+              ? "Weekly / Periodic"
+              : product.usage_type === "Daily / As Needed"
+                ? "Daily / As Needed"
+                : product.usage_type === "Mixo Guided"
+                  ? "Mixo Guided"
+                  : product.usage_type}
   </p>
 ) : null}
         {product.customer_guidance ? (
