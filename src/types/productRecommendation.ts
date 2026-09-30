@@ -11,7 +11,14 @@ export type ProductCategory =
   | "Neck & Décolleté"
   | "Sun Protection";
 
-export type ProductUsageType = "daily" | "periodic" | "weekly" | "farmacist-guided";
+export type ProductUsageType =
+  | "Daily"
+  | "Weekly"
+    | "Periodic"
+  | "As Needed"
+  | "Weekly / Periodic"
+  | "Daily / As Needed"
+  | "Mixo Guided";
 
 export type Product = {
   id: string;

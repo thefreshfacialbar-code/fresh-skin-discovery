@@ -349,7 +349,17 @@ const recommendedProductIds = [
 
 const { data: productRows, error: productRowsError } = await supabaseAdmin
   .from("products")
-  .select("id, fresh_product_id, name, brand, price")
+  .select(`
+  id,
+  fresh_product_id,
+  name,
+  brand,
+  price,
+  product_recommendation_profiles (
+    customer_guidance,
+    usage_type
+  )
+`)
   .eq("business_id", business.id)
   .in("fresh_product_id", recommendedProductIds);
 
@@ -388,14 +398,19 @@ if (missingRecommendedProductIds.length > 0) {
 }
 const skinPlanProductRows = recommendedProducts.map((item, index) => {
   const product = productRowByFreshId.get(item.freshProductId)!;
+const relatedProfile = product.product_recommendation_profiles;
 
-  return {
+const profile = Array.isArray(relatedProfile)
+  ? relatedProfile[0]
+  : relatedProfile;
+   return {
     skin_plan_id: skinPlan.id,
     product_id: product.id,
     routine_step: item.routineStep,
     routine_order: index + 1,
     recommendation_reason: null,
-    customer_guidance: null,
+    customer_guidance: profile?.customer_guidance ?? null,
+    usage_type: profile?.usage_type ?? null,
     product_name_snapshot: product.name,
     brand_snapshot: product.brand,
     price_snapshot: product.price,
