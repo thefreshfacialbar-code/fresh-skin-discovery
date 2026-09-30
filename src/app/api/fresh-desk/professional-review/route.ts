@@ -95,7 +95,27 @@ if ((unreviewedProductCount ?? 0) > 0) {
         { status: 500 }
       );
     }
+const accessToken = crypto.randomUUID();
 
+const { error: skinPlanTokenError } = await supabaseAdmin
+  .from("skin_plans")
+  .update({
+    access_token: accessToken,
+  })
+  .eq("consultation_id", consultationId)
+  .is("access_token", null);
+
+if (skinPlanTokenError) {
+  console.error("Skin Plan access token update failed:", skinPlanTokenError);
+
+  return NextResponse.json(
+    {
+      success: false,
+      error: "Skin Plan was finalized, but secure customer access could not be created.",
+    },
+    { status: 500 }
+  );
+}
     return NextResponse.json({
       success: true,
       consultation: data,
