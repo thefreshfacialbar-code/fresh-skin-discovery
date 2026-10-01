@@ -3,6 +3,7 @@ import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { redirect } from "next/navigation";
 import { requireFreshDeskEmployee } from "@/lib/requireFreshDeskEmployee";
 import FreshDeskCustomerSearch from "@/components/FreshDeskCustomerSearch";
+import FreshDeskLogoutButton from "@/components/FreshDeskLogoutButton";
 
 export default async function FreshDeskPage() {
      const employeeSession = await requireFreshDeskEmployee();
@@ -19,12 +20,16 @@ if (!employeeSession) {
     return (
     <main className="min-h-screen bg-[#FAF7F1] px-6 py-10 text-[#302C2A]">
       <div className="mx-auto max-w-6xl">
-        <p className="text-sm font-semibold uppercase tracking-[0.22em] text-[#908A9B]">
-          Fresh Facial Bar
-        </p>
+      <div className="flex items-start justify-between gap-4">
+  <p className="text-sm font-semibold uppercase tracking-[0.22em] text-[#908A9B]">
+    Fresh Facial Bar
+  </p>
 
-        <h1
-          className="mt-3 text-4xl"
+  <FreshDeskLogoutButton />
+</div>
+
+<h1
+  className="mt-3 text-4xl"
           style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}
         >
           Fresh Desk
