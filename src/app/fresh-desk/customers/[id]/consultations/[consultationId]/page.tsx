@@ -1,8 +1,11 @@
 import "server-only";
 import Link from "next/link";
+import { redirect } from "next/navigation";
+
 import ProfessionalReviewActions from "@/components/ProfessionalReviewActions";
 import ProductReviewActions from "@/components/ProductReviewActions";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { requireFreshDeskEmployee } from "@/lib/requireFreshDeskEmployee";
 import {
   desiredOutcomesLabels,
   primaryMotivationLabels,
@@ -19,16 +22,54 @@ type ConsultationDetailPageProps = {
 export default async function ConsultationDetailPage({
   params,
 }: ConsultationDetailPageProps) {
+    const employeeSession = await requireFreshDeskEmployee();
+
+if (!employeeSession) {
+  redirect("/fresh-desk/login");
+}
   const { id, consultationId } = await params;
 
   const { data: consultation, error } = await supabaseAdmin
-    .from("consultations")
-   .select(
-  "id, customer_id, status, consultation_source, completed_at, created_at, professional_review_status, professional_reviewed_at, professional_review_note"
-)
-    .eq("id", consultationId)
-    .eq("customer_id", id)
-    .maybeSingle();
+  .from("consultations")
+  .select(`
+    id,
+    customer_id,
+    status,
+    consultation_source,
+    completed_at,
+    created_at,
+    professional_review_status,
+    professional_reviewed_at,
+    professional_review_note,
+    customers!inner (
+      business_id
+    )
+  `)
+  .eq("id", consultationId)
+  .eq("customer_id", id)
+  .maybeSingle();
+  const consultationCustomer = consultation?.customers?.[0];
+
+if (
+  error ||
+  !consultation ||
+  consultationCustomer?.business_id !== employeeSession.employee.business_id
+) {
+  return (
+    <main className="min-h-screen bg-[#FAF7F1] px-6 py-10 text-[#302C2A]">
+      <div className="mx-auto max-w-6xl">
+        <Link
+          href={`/fresh-desk/customers/${id}`}
+          className="inline-flex items-center text-sm font-semibold text-[#5A5553] transition hover:text-[#2F2A28]"
+        >
+          ← Back to Customer
+        </Link>
+
+        <h1 className="mt-4 text-3xl">Consultation not found</h1>
+      </div>
+    </main>
+  );
+}
 const { data: consultationAnswers } = await supabaseAdmin
   .from("consultation_answers")
   .select(

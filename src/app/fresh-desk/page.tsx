@@ -1,12 +1,21 @@
 import "server-only";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { redirect } from "next/navigation";
+import { requireFreshDeskEmployee } from "@/lib/requireFreshDeskEmployee";
 import FreshDeskCustomerSearch from "@/components/FreshDeskCustomerSearch";
 
 export default async function FreshDeskPage() {
+     const employeeSession = await requireFreshDeskEmployee();
+
+if (!employeeSession) {
+  redirect("/fresh-desk/login");
+}
   const { data: customers, error } = await supabaseAdmin
   .from("customers")
   .select("id, first_name, last_name, email, mobile_phone, created_at")
+  .eq("business_id", employeeSession.employee.business_id)
   .order("created_at", { ascending: false });
+
     return (
     <main className="min-h-screen bg-[#FAF7F1] px-6 py-10 text-[#302C2A]">
       <div className="mx-auto max-w-6xl">

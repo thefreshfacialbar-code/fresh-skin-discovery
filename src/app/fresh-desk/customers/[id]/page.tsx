@@ -1,5 +1,8 @@
 import "server-only";
+import { redirect } from "next/navigation";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { requireFreshDeskEmployee } from "@/lib/requireFreshDeskEmployee";
+
 import Link from "next/link";
 import {
   desiredOutcomesLabels,
@@ -13,13 +16,35 @@ type FreshDeskCustomerPageProps = {
 export default async function FreshDeskCustomerPage({
   params,
 }: FreshDeskCustomerPageProps) {
+    const employeeSession = await requireFreshDeskEmployee();
+
+if (!employeeSession) {
+  redirect("/fresh-desk/login");
+}
   const { id } = await params;
 
   const { data: customer, error } = await supabaseAdmin
     .from("customers")
     .select("id, first_name, last_name, email, created_at")
     .eq("id", id)
+   .eq("business_id", employeeSession.employee.business_id) 
     .single();
+    if (error || !customer) {
+  return (
+    <main className="min-h-screen bg-[#FAF7F1] px-6 py-10 text-[#302C2A]">
+      <div className="mx-auto max-w-6xl">
+        <Link
+          href="/fresh-desk"
+          className="inline-flex items-center text-sm font-semibold text-[#5A5553] transition hover:text-[#2F2A28]"
+        >
+          ← Back to Fresh Desk
+        </Link>
+
+        <h1 className="mt-4 text-3xl">Customer not found</h1>
+      </div>
+    </main>
+  );
+}
     const { data: latestSkinPlan, error: skinPlanError } = await supabaseAdmin
   .from("skin_plans")
   .select("*")

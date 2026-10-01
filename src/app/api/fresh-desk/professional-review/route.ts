@@ -1,9 +1,19 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { requireFreshDeskEmployee } from "@/lib/requireFreshDeskEmployee";
 import { deliverFinalSkinPlan } from "@/lib/email/deliverFinalSkinPlan";
+
 
 export async function POST(request: Request) {
   try {
+        const employeeSession = await requireFreshDeskEmployee();
+
+if (!employeeSession) {
+  return NextResponse.json(
+    { success: false, error: "Unauthorized." },
+    { status: 401 }
+  );
+}
     const body = await request.json();
     const consultationId = body.consultationId;
 const professionalReviewNote =
@@ -17,6 +27,36 @@ const professionalReviewNote =
           error: "Consultation ID is required.",
         },
         { status: 400 }
+      );
+    }
+        const { data: consultationOwnership, error: ownershipError } =
+      await supabaseAdmin
+        .from("consultations")
+        .select(`
+          id,
+          customers!inner (
+            business_id
+          )
+        `)
+        .eq("id", consultationId)
+        .maybeSingle();
+
+    if (ownershipError || !consultationOwnership) {
+      return NextResponse.json(
+        { success: false, error: "Consultation not found." },
+        { status: 404 }
+      );
+    }
+
+    const ownershipCustomer = consultationOwnership.customers[0];
+const consultationBusinessId = ownershipCustomer?.business_id;
+
+    if (
+      consultationBusinessId !== employeeSession.employee.business_id
+    ) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized." },
+        { status: 403 }
       );
     }
 const { data: skinPlan, error: skinPlanError } = await supabaseAdmin

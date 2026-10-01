@@ -1,10 +1,19 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { requireFreshDeskEmployee } from "@/lib/requireFreshDeskEmployee";
 
 const allowedStatuses = ["confirmed", "removed"] as const;
 
 export async function POST(request: Request) {
   try {
+        const employeeSession = await requireFreshDeskEmployee();
+
+if (!employeeSession) {
+  return NextResponse.json(
+    { success: false, error: "Unauthorized." },
+    { status: 401 }
+  );
+}
     const body = await request.json();
 
     const productId = body.productId;
@@ -23,7 +32,40 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
+    const { data: productOwnership, error: ownershipError } =
+      await supabaseAdmin
+        .from("skin_plan_products")
+        .select(`
+          id,
+          skin_plans!inner (
+            consultations!inner (
+              customers!inner (
+                business_id
+              )
+            )
+          )
+        `)
+        .eq("id", productId)
+        .maybeSingle();
 
+    if (ownershipError || !productOwnership) {
+      return NextResponse.json(
+        { success: false, error: "Skin Plan product not found." },
+        { status: 404 }
+      );
+    }
+
+    const skinPlan = productOwnership.skin_plans[0];
+const consultation = skinPlan?.consultations?.[0];
+const customer = consultation?.customers?.[0];
+const productBusinessId = customer?.business_id;
+
+    if (productBusinessId !== employeeSession.employee.business_id) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized." },
+        { status: 403 }
+      );
+    }
     const reviewedAt = new Date().toISOString();
 
     const { data, error } = await supabaseAdmin

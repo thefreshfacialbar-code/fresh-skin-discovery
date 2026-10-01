@@ -1,8 +1,17 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { requireFreshDeskEmployee } from "@/lib/requireFreshDeskEmployee";
 
 export async function POST(request: Request) {
   try {
+       const employeeSession = await requireFreshDeskEmployee();
+
+if (!employeeSession) {
+  return NextResponse.json(
+    { success: false, error: "Unauthorized." },
+    { status: 401 }
+  );
+}
     const body = await request.json();
 
     const skinPlanProductId = body.skinPlanProductId;
@@ -43,7 +52,36 @@ export async function POST(request: Request) {
         { status: 404 }
       );
     }
+    const { data: planOwnership, error: ownershipError } =
+      await supabaseAdmin
+        .from("skin_plans")
+        .select(`
+          consultations!inner (
+            customers!inner (
+              business_id
+            )
+          )
+        `)
+        .eq("id", originalProduct.skin_plan_id)
+        .maybeSingle();
 
+    if (ownershipError || !planOwnership) {
+      return NextResponse.json(
+        { success: false, error: "Skin Plan not found." },
+        { status: 404 }
+      );
+    }
+
+    const consultation = planOwnership.consultations[0];
+    const customer = consultation?.customers?.[0];
+    const productBusinessId = customer?.business_id;
+
+    if (productBusinessId !== employeeSession.employee.business_id) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized." },
+        { status: 403 }
+      );
+    }
     const { data: replacementProduct, error: replacementError } =
       await supabaseAdmin
         .from("products")
