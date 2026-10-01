@@ -72,8 +72,8 @@ export const cgcProductCatalog: Product[] = [
     intensity: 1,
   },
   {
-    id: "tizo-ultra-zinc-non-tinted-spf-40",
-    name: "TiZO Ultra Zinc Non-Tinted SPF 40",
+    id: "tizo-ultra-zinc-non-tinted-sunscreen-face-body-spf-40",
+    name: "TiZO Ultra Zinc Non Tinted Sunscreen Face & Body SPF 40",
     category: "Sun Protection",
     primaryJourney: "calm",
     supportingJourney: "quench",
@@ -180,16 +180,6 @@ export const cgcProductCatalog: Product[] = [
     role: "Brighten",
     guestBenefit: "Supports a more radiant and even-looking complexion.",
     intensity: 2,
-  },
-  {
-    id: "replenish-non-tinted-spf-40",
-    name: "AM Replenish Non-Tinted SPF 40",
-    category: "Sun Protection",
-    primaryJourney: "quench",
-    supportingJourney: "renew",
-    role: "Protect",
-    guestBenefit: "Daily UV protection for a comfortable, hydrated routine.",
-    intensity: 1,
   },
 ];
 
