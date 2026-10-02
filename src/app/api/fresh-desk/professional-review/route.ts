@@ -48,7 +48,10 @@ const professionalReviewNote =
       );
     }
 
-    const ownershipCustomer = consultationOwnership.customers[0];
+ const ownershipCustomer = Array.isArray(consultationOwnership.customers)
+  ? consultationOwnership.customers[0]
+  : consultationOwnership.customers;
+
 const consultationBusinessId = ownershipCustomer?.business_id;
 
     if (
@@ -118,10 +121,11 @@ if ((unreviewedProductCount ?? 0) > 0) {
     professional_review_status: "reviewed",
     professional_reviewed_at: reviewedAt,
     professional_review_note: professionalReviewNote,
+    professional_reviewed_by: employeeSession.employee.id,
   })
   .eq("id", consultationId)
   .select(
-    "id, customer_id, professional_review_status, professional_reviewed_at, professional_review_note"
+  "id, customer_id, professional_review_status, professional_reviewed_at, professional_reviewed_by, professional_review_note"
   )
   .single();
 

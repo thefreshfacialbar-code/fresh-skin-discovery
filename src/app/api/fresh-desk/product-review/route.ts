@@ -55,9 +55,18 @@ if (!employeeSession) {
       );
     }
 
-    const skinPlan = productOwnership.skin_plans[0];
-const consultation = skinPlan?.consultations?.[0];
-const customer = consultation?.customers?.[0];
+const skinPlan = Array.isArray(productOwnership.skin_plans)
+  ? productOwnership.skin_plans[0]
+  : productOwnership.skin_plans;
+
+const consultation = Array.isArray(skinPlan?.consultations)
+  ? skinPlan.consultations[0]
+  : skinPlan?.consultations;
+
+const customer = Array.isArray(consultation?.customers)
+  ? consultation.customers[0]
+  : consultation?.customers;
+
 const productBusinessId = customer?.business_id;
 
     if (productBusinessId !== employeeSession.employee.business_id) {

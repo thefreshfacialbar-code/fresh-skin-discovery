@@ -40,6 +40,7 @@ if (!employeeSession) {
     created_at,
     professional_review_status,
     professional_reviewed_at,
+    professional_reviewed_by,
     professional_review_note,
     customers!inner (
       business_id
@@ -48,7 +49,11 @@ if (!employeeSession) {
   .eq("id", consultationId)
   .eq("customer_id", id)
   .maybeSingle();
-  const consultationCustomer = consultation?.customers?.[0];
+  const relatedCustomers = consultation?.customers;
+
+const consultationCustomer = Array.isArray(relatedCustomers)
+  ? relatedCustomers[0]
+  : relatedCustomers;
 
 if (
   error ||
@@ -70,6 +75,13 @@ if (
     </main>
   );
 }
+const { data: reviewingEmployee } = consultation.professional_reviewed_by
+  ? await supabaseAdmin
+      .from("employees")
+      .select("first_name, last_name")
+      .eq("id", consultation.professional_reviewed_by)
+      .maybeSingle()
+  : { data: null };
 const { data: consultationAnswers } = await supabaseAdmin
   .from("consultation_answers")
   .select(
@@ -212,7 +224,13 @@ const allProductsReviewed =
         : "Professionally reviewed and personalized."
       : "Review the recommended products and personalization suggestions before finalizing this Skin Plan."}
   </p>
-
+{consultation.professional_review_status === "reviewed" &&
+  reviewingEmployee && (
+    <p className="mt-1 text-sm text-[#5A5553]">
+      Reviewed by {reviewingEmployee.first_name}{" "}
+      {reviewingEmployee.last_name}
+    </p>
+  )}
   {consultation.professional_review_status === "reviewed" &&
     consultation.professional_review_note && (
       <div className="mt-4 rounded-xl border border-[#DAD6DB] bg-white p-4">

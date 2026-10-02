@@ -72,9 +72,16 @@ if (!employeeSession) {
       );
     }
 
-    const consultation = planOwnership.consultations[0];
-    const customer = consultation?.customers?.[0];
-    const productBusinessId = customer?.business_id;
+    const ownershipConsultation = Array.isArray(planOwnership.consultations)
+  ? planOwnership.consultations[0]
+  : planOwnership.consultations;
+
+const ownershipCustomer = Array.isArray(ownershipConsultation?.customers)
+  ? ownershipConsultation.customers[0]
+  : ownershipConsultation?.customers;
+
+const planBusinessId = ownershipCustomer?.business_id;
+    const productBusinessId = ownershipCustomer?.business_id;
 
     if (productBusinessId !== employeeSession.employee.business_id) {
       return NextResponse.json(
