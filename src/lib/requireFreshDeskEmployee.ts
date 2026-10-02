@@ -2,6 +2,9 @@ import "server-only";
 
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { createSupabaseServerClient } from "@/lib/supabaseServer";
+export type FreshDeskEmployeeRole =
+  | "owner_admin"
+  | "professional";
 
 export async function requireFreshDeskEmployee() {
   const supabase = await createSupabaseServerClient();
@@ -35,4 +38,20 @@ export async function requireFreshDeskEmployee() {
     user,
     employee,
   };
+}
+export async function requireFreshDeskOwnerAdmin() {
+  const employeeSession = await requireFreshDeskEmployee();
+
+  if (!employeeSession) {
+    return null;
+  }
+
+  if (
+    employeeSession.employee.role !==
+    ("owner_admin" satisfies FreshDeskEmployeeRole)
+  ) {
+    return null;
+  }
+
+  return employeeSession;
 }
