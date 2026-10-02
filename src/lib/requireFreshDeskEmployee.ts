@@ -46,12 +46,5 @@ export async function requireFreshDeskOwnerAdmin() {
     return null;
   }
 
-  if (
-    employeeSession.employee.role !==
-    ("owner_admin" satisfies FreshDeskEmployeeRole)
-  ) {
-    return null;
-  }
-
   return employeeSession;
 }

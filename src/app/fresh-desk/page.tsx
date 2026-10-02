@@ -1,6 +1,7 @@
 import "server-only";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { requireFreshDeskEmployee } from "@/lib/requireFreshDeskEmployee";
 import FreshDeskCustomerSearch from "@/components/FreshDeskCustomerSearch";
 import FreshDeskLogoutButton from "@/components/FreshDeskLogoutButton";
@@ -25,7 +26,31 @@ if (!employeeSession) {
     Fresh Facial Bar
   </p>
 
+  <div className="flex items-center gap-4">
+  <div className="text-right">
+    <p className="text-sm font-semibold text-[#2F2A28]">
+      {employeeSession.employee.first_name}{" "}
+      {employeeSession.employee.last_name}
+    </p>
+
+    <p className="text-xs text-[#908A9B]">
+      {employeeSession.employee.role === "owner_admin"
+        ? "Owner / Admin"
+        : "Professional"}
+    </p>
+  </div>
+
+  {employeeSession.employee.role === "owner_admin" && (
+    <Link
+      href="/fresh-desk/employees"
+      className="rounded-full border border-[#DAD6DB] bg-[#FFFDFC] px-4 py-2 text-sm font-semibold text-[#5A5553] transition hover:bg-[#F4F0EA]"
+    >
+      Employees
+    </Link>
+  )}
+
   <FreshDeskLogoutButton />
+</div>
 </div>
 
 <h1
