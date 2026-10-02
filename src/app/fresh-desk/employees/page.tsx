@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import Link from "next/link";
+import FreshDeskEmployeeInviteForm from "@/components/FreshDeskEmployeeInviteForm";
 import { requireFreshDeskOwnerAdmin } from "@/lib/requireFreshDeskEmployee";
 
 export default async function FreshDeskEmployeesPage() {
@@ -60,6 +61,7 @@ const { data: employees, error } = await supabaseAdmin
         <p className="mt-3 text-[#5A5553]">
           Manage Fresh Desk employee access and roles.
         </p>
+        <FreshDeskEmployeeInviteForm />
         <div className="mt-8 space-y-4">
   {employees && employees.length > 0 ? (
     employees.map((employee) => (
