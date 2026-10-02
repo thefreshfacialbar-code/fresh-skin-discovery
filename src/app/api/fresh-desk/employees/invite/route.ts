@@ -41,8 +41,12 @@ if (!firstName || !lastName || !email || !role) {
     { status: 400 }
   );
 }
+const appUrl =
+  process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+
 const { data: inviteData, error: inviteError } =
   await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
+    redirectTo: `${appUrl}/fresh-desk/setup`,
     data: {
       first_name: firstName,
       last_name: lastName,
