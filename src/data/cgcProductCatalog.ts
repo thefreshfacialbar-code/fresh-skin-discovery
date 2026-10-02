@@ -10,6 +10,7 @@ export const cgcProductCatalog: Product[] = [
     role: "Cleanse",
     guestBenefit: "Cleanses while helping skin feel refreshed, comfortable, and balanced.",
     intensity: 1,
+    usageType: "Daily",
   },
   {
     id: "thirsty-face",
@@ -20,6 +21,7 @@ export const cgcProductCatalog: Product[] = [
     role: "Moisturize",
     guestBenefit: "Delivers lightweight hydration that supports a dewy, comfortable complexion.",
     intensity: 2,
+    usageType: "Daily",
   },
   {
     id: "second-wind",
@@ -40,6 +42,7 @@ export const cgcProductCatalog: Product[] = [
     role: "Treat",
     guestBenefit: "Targets visible dullness and supports a brighter, more even-looking complexion.",
     intensity: 2,
+    usageType: "Daily",
   },
   {
     id: "deep-clean",
@@ -50,6 +53,7 @@ export const cgcProductCatalog: Product[] = [
     role: "Exfoliate/Refine",
     guestBenefit: "Helps smooth texture and refine the look of congestion when the skin can tolerate it.",
     intensity: 3,
+    usageType: "Weekly / Periodic",
   },
   {
     id: "long-night",

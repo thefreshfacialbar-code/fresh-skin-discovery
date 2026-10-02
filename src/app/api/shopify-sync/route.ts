@@ -1,6 +1,26 @@
 import { getShopifyProducts } from "@/lib/shopifyAdmin";
 import { productCatalog } from "@/data/productCatalog";
+import { cgcProductCatalog } from "@/data/cgcProductCatalog";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+const cgcPrivateLabelProductIds = new Set([
+  "clean-slate",
+  "thirsty-face",
+  "second-wind",
+  "zero-in",
+  "deep-clean",
+  "long-night",
+]);
+const shopifyTitleOverrides: Record<string, string> = {
+  "clean-slate": "Clean Slate Soothing & Calming Facial Cleanser",
+  "thirsty-face": "Thirsty Face Hydrating Moisturizer",
+  "second-wind": "Second Wind Firming Moisturizer with ReVita-D",
+  "zero-in": "Zero In Booster Serum",
+  "deep-clean": "Deep Clean Charcoal Exfoliator & Cleanser",
+  "long-night": "Long Night Cucumber Herbal Eye Cream",
+};
+const cgcPrivateLabelProducts = cgcProductCatalog.filter(
+  (product) => cgcPrivateLabelProductIds.has(product.id)
+);
 export async function POST(request: Request) {
       const syncSecret = process.env.SHOPIFY_SYNC_SECRET;
   const providedSecret = request.headers.get("x-shopify-sync-secret");
@@ -33,11 +53,19 @@ if (businessError || !business) {
       .toLowerCase()
       .replace(/[^a-z0-9]/g, "");
 
-  const matches = productCatalog.map((freshProduct) => {
-    const shopifyProduct = shopifyProducts.find(
-      (product) =>
-        normalize(product.title) === normalize(freshProduct.name)
-    );
+  const syncCatalog = [
+  ...productCatalog,
+  ...cgcPrivateLabelProducts,
+];
+
+const matches = syncCatalog.map((freshProduct) => {
+  const shopifyTitle =
+    shopifyTitleOverrides[freshProduct.id] ?? freshProduct.name;
+
+  const shopifyProduct = shopifyProducts.find(
+    (product) =>
+      normalize(product.title) === normalize(shopifyTitle)
+  );
 
     return {
       freshProductId: freshProduct.id,
@@ -241,7 +269,7 @@ if (profileValidationError) {
     { status: 500 }
   );
 }
-const validationMismatches = productCatalog.flatMap(
+const validationMismatches = syncCatalog.flatMap(
   (
     catalogProduct
   ): Array<{
