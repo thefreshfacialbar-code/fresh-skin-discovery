@@ -136,6 +136,22 @@ if (skinPlanProductsError) {
     </main>
   );
 }
+const productIds = skinPlanProducts
+  .map((product) => product.product_id)
+  .filter((productId): productId is string => Boolean(productId));
+  const { data: commerceProducts } = productIds.length
+  ? await supabaseAdmin
+      .from("products")
+      .select("id, product_url")
+      .in("id", productIds)
+  : { data: [] };
+
+const productUrlById = new Map(
+  (commerceProducts ?? []).map((product) => [
+    product.id,
+    product.product_url,
+  ])
+);
   return (
     <main className="min-h-screen bg-[#FAF7F1] px-5 py-8 text-[#302C2A] sm:px-8">
       <div className="mx-auto max-w-6xl">
@@ -184,7 +200,12 @@ if (skinPlanProductsError) {
   </div>
 
   <div className="mt-8 grid gap-5 md:grid-cols-2">
-    {skinPlanProducts.map((product) => (
+    {skinPlanProducts.map((product) => {
+  const productUrl = product.product_id
+    ? productUrlById.get(product.product_id)
+    : null;
+
+  return (
       <div
         key={product.id}
         className="rounded-[2rem] border border-[#DAD6DB] bg-[#FFFDFC] p-6 shadow-[0_12px_30px_rgba(61,52,48,0.04)]"
@@ -233,8 +254,19 @@ if (skinPlanProductsError) {
             {product.customer_guidance}
           </p>
         ) : null}
+        {productUrl ? (
+  <a
+    href={productUrl}
+    target="_blank"
+    rel="noopener noreferrer"
+    className="mt-6 inline-flex rounded-full bg-[#302C2A] px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90"
+  >
+    Shop This Product
+  </a>
+) : null}
       </div>
-    ))}
+  );
+    })}
   </div>
 </section>
       </div>
