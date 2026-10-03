@@ -31,6 +31,8 @@ export type Product = {
   guestBenefit: string;
   intensity: 1 | 2 | 3 | 4;
   usageType?: ProductUsageType;
+  timing?: string[];
+  frequency?: string;
   requiresFarmacistReview?: boolean;
   calmSensitiveCaution?: boolean;
   excluded?: boolean;

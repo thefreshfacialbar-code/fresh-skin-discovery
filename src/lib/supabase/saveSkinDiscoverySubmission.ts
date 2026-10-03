@@ -356,9 +356,11 @@ const { data: productRows, error: productRowsError } = await supabaseAdmin
   brand,
   price,
   product_recommendation_profiles (
-    customer_guidance,
-    usage_type
-  )
+  customer_guidance,
+  usage_type,
+  timing,
+  frequency
+)
 `)
   .eq("business_id", business.id)
   .in("fresh_product_id", recommendedProductIds);
@@ -411,6 +413,8 @@ const profile = Array.isArray(relatedProfile)
     recommendation_reason: null,
     customer_guidance: profile?.customer_guidance ?? null,
     usage_type: profile?.usage_type ?? null,
+    timing: profile?.timing ?? null,
+    frequency: profile?.frequency ?? null,
     product_name_snapshot: product.name,
     brand_snapshot: product.brand,
     price_snapshot: product.price,

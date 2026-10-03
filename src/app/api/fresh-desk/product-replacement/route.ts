@@ -99,9 +99,11 @@ const planBusinessId = ownershipCustomer?.business_id;
   brand,
   price,
   product_recommendation_profiles (
-    customer_guidance,
-    usage_type
-  )
+  customer_guidance,
+  usage_type,
+  timing,
+  frequency
+)
 `)
         .eq("fresh_product_id", replacementFreshProductId)
         .eq("active", true)
@@ -145,11 +147,11 @@ const replacementProfile = Array.isArray(relatedProfile)
         product_id: replacementProduct.id,
         routine_step: originalProduct.routine_step,
         routine_order: originalProduct.routine_order,
-        timing: originalProduct.timing,
-        frequency: originalProduct.frequency,
+        timing: replacementProfile?.timing ?? null,
+        frequency: replacementProfile?.frequency ?? null,
         recommendation_reason: originalProduct.recommendation_reason,
         customer_guidance: replacementProfile?.customer_guidance ?? null,
-usage_type: replacementProfile?.usage_type ?? null,
+        usage_type: replacementProfile?.usage_type ?? null,
         product_name_snapshot: replacementProduct.name,
         brand_snapshot: replacementProduct.brand,
         price_snapshot: replacementProduct.price,

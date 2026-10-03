@@ -28,6 +28,8 @@ export async function getSupabaseProductCatalog(): Promise<Product[]> {
         customer_guidance,
         intensity,
         usage_type,
+        timing,
+        frequency,
         requires_farmacist_review,
         calm_sensitive_caution,
         excluded
@@ -73,9 +75,11 @@ export async function getSupabaseProductCatalog(): Promise<Product[]> {
       guestBenefit: profile.customer_guidance,
       intensity: profile.intensity as 1 | 2 | 3 | 4,
       usageType: profile.usage_type
-        ? (profile.usage_type as ProductUsageType)
-        : undefined,
-      requiresFarmacistReview: profile.requires_farmacist_review,
+  ? (profile.usage_type as ProductUsageType)
+  : undefined,
+        timing: profile.timing ?? undefined,
+        frequency: profile.frequency ?? undefined,
+        requiresFarmacistReview: profile.requires_farmacist_review,
       calmSensitiveCaution: profile.calm_sensitive_caution,
       excluded: profile.excluded,
     },

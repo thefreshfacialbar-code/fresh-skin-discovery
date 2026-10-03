@@ -112,8 +112,8 @@ const { data: skinPlanProducts, error: skinPlanProductsError } =
   await supabaseAdmin
     .from("skin_plan_products")
     .select(
-      "id, product_id, routine_step, routine_order, product_name_snapshot, brand_snapshot, price_snapshot, recommendation_reason, customer_guidance, usage_type, status, professional_note, reviewed_at, replaces_skin_plan_product_id"
-    )
+  "id, product_id, routine_step, routine_order, product_name_snapshot, brand_snapshot, price_snapshot, recommendation_reason, customer_guidance, usage_type, timing, frequency, status, professional_note, reviewed_at, replaces_skin_plan_product_id"
+)
     .eq("skin_plan_id", skinPlan.id)
     .not("status", "in", '("replaced","removed")')
     .order("routine_order", { ascending: true });
@@ -204,7 +204,16 @@ const productUrlById = new Map(
   const productUrl = product.product_id
     ? productUrlById.get(product.product_id)
     : null;
+const timingText = Array.isArray(product.timing)
+  ? product.timing.join(" + ")
+  : null;
 
+const usageInstruction = [
+  timingText,
+  product.frequency,
+]
+  .filter(Boolean)
+  .join(" · ");
   return (
       <div
         key={product.id}
@@ -247,6 +256,11 @@ const productUrlById = new Map(
                 : product.usage_type === "Mixo Guided"
                   ? "Mixo Guided"
                   : product.usage_type}
+  </p>
+) : null}
+{usageInstruction ? (
+  <p className="mt-2 text-sm font-medium text-[#5A5553]">
+    {usageInstruction}
   </p>
 ) : null}
         {product.customer_guidance ? (
