@@ -105,6 +105,13 @@ export type ShopifyProduct = {
   vendor: string;
   productType: string;
   onlineStoreUrl: string | null;
+  metafields: {
+  nodes: Array<{
+    namespace: string;
+    key: string;
+    value: string;
+  }>;
+};
   variants: {
     nodes: Array<{
       id: string;
@@ -115,7 +122,72 @@ export type ShopifyProduct = {
     }>;
   };
 };
+export type ShopifyOrder = {
+  id: string;
+  name: string;
+  createdAt: string;
+  updatedAt: string;
+  email: string | null;
+    phone: string | null;
+  displayFinancialStatus: string | null;
+  displayFulfillmentStatus: string | null;
+  subtotalPriceSet: {
+    shopMoney: {
+      amount: string;
+      currencyCode: string;
+    };
+  } | null;
+  totalTaxSet: {
+    shopMoney: {
+      amount: string;
+      currencyCode: string;
+    };
+  } | null;
+  totalPriceSet: {
+    shopMoney: {
+      amount: string;
+      currencyCode: string;
+    };
+  } | null;
+  customer: {
+    firstName: string | null;
+    lastName: string | null;
+    email: string | null;
+    phone: string | null;
+  } | null;
+  lineItems: {
+    nodes: Array<{
+      id: string;
+      name: string;
+      sku: string | null;
+quantity: number;
+currentQuantity: number;
+originalUnitPriceSet: {
+        shopMoney: {
+          amount: string;
+          currencyCode: string;
+        };
+      };
+      product: {
+        id: string;
+      } | null;
+      variant: {
+        id: string;
+        title: string;
+      } | null;
+    }>;
+  };
+};
 
+type ShopifyOrdersPage = {
+  orders: {
+    nodes: ShopifyOrder[];
+    pageInfo: {
+      hasNextPage: boolean;
+      endCursor: string | null;
+    };
+  };
+};
 export async function getShopifyProducts(): Promise<ShopifyProduct[]> {
   const products: ShopifyProduct[] = [];
   let cursor: string | null = null;
@@ -133,8 +205,17 @@ export async function getShopifyProducts(): Promise<ShopifyProduct[]> {
               handle
               vendor
               productType
-              onlineStoreUrl
-              variants(first: 25) {
+onlineStoreUrl
+
+metafields(first: 25, namespace: "custom") {
+  nodes {
+    namespace
+    key
+    value
+  }
+}
+
+variants(first: 25) {
                 nodes {
                   id
                   title
@@ -164,4 +245,99 @@ export async function getShopifyProducts(): Promise<ShopifyProduct[]> {
 
   return products;
 }
-  
+  export async function getShopifyOrders(): Promise<ShopifyOrder[]> {
+  const orders: ShopifyOrder[] = [];
+  let cursor: string | null = null;
+  let hasNextPage = true;
+
+  while (hasNextPage) {
+    const pageData: ShopifyOrdersPage =
+      await shopifyAdminGraphQL<ShopifyOrdersPage>(
+        `
+          query GetOrders($after: String) {
+            orders(first: 100, after: $after, sortKey: CREATED_AT, reverse: true) {
+              nodes {
+                id
+                name
+                createdAt
+                updatedAt
+                email
+                phone
+                displayFinancialStatus
+                displayFulfillmentStatus
+
+                subtotalPriceSet {
+                  shopMoney {
+                    amount
+                    currencyCode
+                  }
+                }
+
+                totalTaxSet {
+                  shopMoney {
+                    amount
+                    currencyCode
+                  }
+                }
+
+                totalPriceSet {
+                  shopMoney {
+                    amount
+                    currencyCode
+                  }
+                }
+
+                customer {
+                  firstName
+                  lastName
+                  email
+                  phone
+                }
+
+                lineItems(first: 100) {
+                  nodes {
+                    id
+                    name
+                    sku
+quantity
+currentQuantity
+
+originalUnitPriceSet {
+                      shopMoney {
+                        amount
+                        currencyCode
+                      }
+                    }
+
+                    product {
+                      id
+                    }
+
+                    variant {
+                      id
+                      title
+                    }
+                  }
+                }
+              }
+
+              pageInfo {
+                hasNextPage
+                endCursor
+              }
+            }
+          }
+        `,
+        {
+          after: cursor,
+        }
+      );
+
+    orders.push(...pageData.orders.nodes);
+
+    hasNextPage = pageData.orders.pageInfo.hasNextPage;
+    cursor = pageData.orders.pageInfo.endCursor;
+  }
+
+  return orders;
+}
