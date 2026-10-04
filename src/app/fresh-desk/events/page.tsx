@@ -1,6 +1,7 @@
 import "server-only";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { redirect } from "next/navigation";
+import CheckInButton from "./CheckInButton";
 import Link from "next/link";
 
 import { requireFreshDeskEmployee } from "@/lib/requireFreshDeskEmployee";
@@ -241,6 +242,11 @@ const formattedEndTime = formatTime(event.end_time);
                 Checked In: {registration.checked_in_quantity}
               </p>
             </div>
+            {registration.registration_status === "registered" &&
+registration.checked_in_quantity <
+  registration.current_ticket_quantity ? (
+  <CheckInButton registrationId={registration.id} />
+) : null}
           </div>
         </div>
       );
