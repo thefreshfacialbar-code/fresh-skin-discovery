@@ -56,10 +56,42 @@ export default function EmailPreviewPage() {
 
   const previewBaseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
   const guestEmail = renderGuestDiscoveryEmail(sampleSubmission, {
-    logoUrl: `${previewBaseUrl}/ffb-logo.png`,
-    bookingUrl: "",
-    previewMode: true,
-  });
+  logoUrl: `${previewBaseUrl}/ffb-logo.png`,
+  bookingUrl: "",
+  previewMode: true,
+  productCommerce: [
+    {
+      productId: "make-it-melt-cleansing-balm",
+      productUrl: "https://thefreshfacialbar.com/products/make-it-melt-cleansing-balm",
+      shopifyVariantId: "gid://shopify/ProductVariant/11111111111111",
+    },
+    {
+      productId: "watermelonaid",
+      productUrl: "https://thefreshfacialbar.com/products/watermelonaid",
+      shopifyVariantId: "gid://shopify/ProductVariant/22222222222222",
+    },
+    {
+      productId: "three-milk-ageless-sleep-cream",
+      productUrl: "https://thefreshfacialbar.com/products/three-milk-ageless-sleep-cream",
+      shopifyVariantId: "gid://shopify/ProductVariant/33333333333333",
+    },
+    {
+      productId: "am-replenish-non-tinted-spf-40",
+      productUrl: "https://thefreshfacialbar.com/products/am-replenish-non-tinted-spf-40",
+      shopifyVariantId: "gid://shopify/ProductVariant/44444444444444",
+    },
+    {
+      productId: "good-gravity-lifting-milky-spray-serum",
+      productUrl: "https://thefreshfacialbar.com/products/good-gravity-lifting-milky-spray-serum",
+      shopifyVariantId: "gid://shopify/ProductVariant/55555555555555",
+    },
+    {
+      productId: "golden-moon-dip",
+      productUrl: "https://thefreshfacialbar.com/products/golden-moon-dip",
+      shopifyVariantId: "gid://shopify/ProductVariant/66666666666666",
+    },
+  ],
+});
   const teamEmail = renderTeamDiscoveryEmail(sampleSubmission, {
     previewMode: true,
   });

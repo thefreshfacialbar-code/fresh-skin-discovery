@@ -13,6 +13,11 @@ export type GuestEmailConfig = {
   businessPhone?: string;
   locationLabel?: string;
   websiteUrl?: string | null;
+  productCommerce?: Array<{
+  productId: string;
+  productUrl: string | null;
+  shopifyVariantId: string | null;
+}>;
   previewMode?: boolean;
 };
 
@@ -165,15 +170,100 @@ function renderJourneySection(submission: SkinDiscoverySubmission): string {
     ${supportMarkup}
   `;
 }
+function getProductCommerce(
+  productId: string | null | undefined,
+  config: GuestEmailConfig,
+) 
+{
+  if (!productId) return null;
 
+  return (
+    config.productCommerce?.find(
+      (item) => item.productId === productId,
+    ) ?? null
+  );
+}
+function getShopifyVariantNumericId(
+  shopifyVariantId: string | null | undefined,
+): string | null {
+  if (!shopifyVariantId) return null;
+
+  const parts = shopifyVariantId.split("/");
+  const numericId = parts[parts.length - 1];
+
+  return /^\d+$/.test(numericId) ? numericId : null;
+}
+function buildRecommendedProductsCartUrl(
+  submission: SkinDiscoverySubmission,
+  config: GuestEmailConfig,
+): string | null {
+  const featured = submission.productRecommendations.featured;
+
+  const productIds = Array.from(
+    new Set(
+      [
+        featured.cleanse,
+        featured.treat,
+        featured.moisturize,
+        featured.protect,
+        ...submission.productRecommendations.moreFreshPicks,
+      ].filter((productId): productId is string => Boolean(productId)),
+    ),
+  );
+
+  const cartItems = productIds
+    .map((productId) => {
+      const commerce = getProductCommerce(productId, config);
+      const variantId = getShopifyVariantNumericId(
+        commerce?.shopifyVariantId,
+      );
+
+      return variantId ? `${variantId}:1` : null;
+    })
+    .filter((item): item is string => Boolean(item));
+
+  if (cartItems.length === 0) {
+    return null;
+  }
+
+  const productUrl = config.productCommerce?.find(
+    (item) => Boolean(item.productUrl),
+  )?.productUrl;
+
+  if (!productUrl) {
+    return null;
+  }
+
+  try {
+    const storefrontUrl = new URL(productUrl);
+
+    return `${storefrontUrl.origin}/cart/${cartItems.join(",")}`;
+  } catch {
+    return null;
+  }
+}
 function renderProductRow(
   step: string,
   productId: string | null | undefined,
-  experience?: string,
+  experience: string | undefined,
+  config: GuestEmailConfig,
 ): string {
   const product = lookupProduct(productId, experience);
   if (!product) return "";
 
+  const commerce = getProductCommerce(productId, config);
+const productButton = commerce?.productUrl
+  ? `
+      <div style="margin-top: 16px;">
+        <a
+          href="${escapeHtml(commerce.productUrl)}"
+          style="display:inline-block; padding:12px 20px; background:${EMAIL_COLORS.ink}; color:#ffffff; text-decoration:none; border-radius:999px; font-size:12px; letter-spacing:1.5px; font-weight:700; font-family:Arial, Helvetica, sans-serif;"
+        >
+          SHOP THIS PICK
+        </a>
+      </div>
+    `
+  : "";
   return `
     <tr>
       <td style="padding: 0 0 14px;">
@@ -187,6 +277,7 @@ function renderProductRow(
               <div style="margin-top: 10px; font-size: 14px; line-height: 22px; color: ${EMAIL_COLORS.muted}; font-family: Arial, Helvetica, sans-serif;">
                 ${escapeHtml(product.guestBenefit)}
               </div>
+              ${productButton}
             </td>
           </tr>
         </table>
@@ -195,7 +286,10 @@ function renderProductRow(
   `;
 }
 
-function renderFeaturedProducts(submission: SkinDiscoverySubmission): string {
+function renderFeaturedProducts(
+  submission: SkinDiscoverySubmission,
+  config: GuestEmailConfig,
+): string {
   const featuredRows = [
     ["CLEANSE", submission.productRecommendations.featured.cleanse],
     ["TREAT", submission.productRecommendations.featured.treat],
@@ -203,12 +297,34 @@ function renderFeaturedProducts(submission: SkinDiscoverySubmission): string {
     ["PROTECT", submission.productRecommendations.featured.protect],
   ]
     .map(([step, productId]) => renderProductRow(
-      step as string,
-      productId as string | null | undefined,
-      submission.experience,
-    ))
+  step as string,
+  productId as string | null | undefined,
+  submission.experience,
+  config,
+))
     .join("");
+const cartUrl = buildRecommendedProductsCartUrl(
+  submission,
+  config,
+);
 
+const shopAllButton = cartUrl
+  ? `
+      <tr>
+        <td style="padding: 6px 0 24px; text-align:center;">
+          <a
+            href="${escapeHtml(cartUrl)}"
+            style="display:inline-block; padding:14px 26px; background:${EMAIL_COLORS.ink}; color:#ffffff; text-decoration:none; border-radius:999px; font-size:12px; letter-spacing:1.5px; font-weight:700; font-family:Arial, Helvetica, sans-serif;"
+          >
+            SHOP MY FRESH PICKS
+          </a>
+          <div style="margin-top:10px; font-size:12px; line-height:18px; color:${EMAIL_COLORS.muted}; font-family:Arial, Helvetica, sans-serif;">
+            Add your recommended routine to your cart in one click.
+          </div>
+        </td>
+      </tr>
+    `
+  : "";
   return `
     <tr>
       <td style="padding: 0 0 8px;">
@@ -221,16 +337,36 @@ function renderFeaturedProducts(submission: SkinDiscoverySubmission): string {
       </td>
     </tr>
     ${featuredRows}
+    ${shopAllButton}
   `;
 }
 
-function renderMoreFreshPicks(submission: SkinDiscoverySubmission): string {
+function renderMoreFreshPicks(
+  submission: SkinDiscoverySubmission,
+  config: GuestEmailConfig,
+): string {
   if (!submission.productRecommendations.moreFreshPicks.length) return "";
 
   const items = submission.productRecommendations.moreFreshPicks
     .map((productId) => {
       const product = lookupProduct(productId, submission.experience);
       if (!product) return "";
+      const commerce = getProductCommerce(productId, config);
+
+const productButton = commerce?.productUrl
+  ? `
+      <tr>
+        <td style="padding: 0 16px 14px;">
+          <a
+            href="${escapeHtml(commerce.productUrl)}"
+            style="display:inline-block; padding:10px 18px; background:${EMAIL_COLORS.ink}; color:#ffffff; text-decoration:none; border-radius:999px; font-size:11px; letter-spacing:1.5px; font-weight:700; font-family:Arial, Helvetica, sans-serif;"
+          >
+            SHOP THIS PICK
+          </a>
+        </td>
+      </tr>
+    `
+  : "";
       return `
         <tr>
           <td style="padding: 0 0 10px;">
@@ -242,7 +378,7 @@ function renderMoreFreshPicks(submission: SkinDiscoverySubmission): string {
               </tr>
               <tr>
                 <td style="padding: 0 16px 12px; font-size: 13px; line-height: 20px; color: ${EMAIL_COLORS.muted};">
-                  ${escapeHtml(product.guestBenefit)}
+                  ${escapeHtml(product.guestBenefit)}${productButton}
                 </td>
               </tr>
             </table>
@@ -383,7 +519,7 @@ function renderGuestEmailHtml(submission: SkinDiscoverySubmission, config: Guest
             <tr>
               <td style="padding: 0 32px 24px;" class="pad-mobile">
                 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-                  ${renderFeaturedProducts(submission)}
+                  ${renderFeaturedProducts(submission, config)}
                 </table>
               </td>
             </tr>
@@ -392,7 +528,7 @@ function renderGuestEmailHtml(submission: SkinDiscoverySubmission, config: Guest
               <tr>
                 <td style="padding: 0 32px 24px;" class="pad-mobile">
                   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${EMAIL_COLORS.accentSoft}; border:1px solid ${EMAIL_COLORS.border}; border-radius:18px;">
-                    ${renderMoreFreshPicks(submission)}
+                    ${renderMoreFreshPicks(submission, config)}
                   </table>
                 </td>
               </tr>
@@ -535,9 +671,18 @@ function renderGuestEmailText(submission: SkinDiscoverySubmission, config: Guest
   ]) {
     const product = lookupProduct(productId as string | null | undefined, submission.experience);
     if (product) {
-      lines.push(`${step}: ${product.name}`);
-      lines.push(product.guestBenefit);
-    }
+  lines.push(`${step}: ${product.name}`);
+  lines.push(product.guestBenefit);
+
+  const commerce = getProductCommerce(
+    productId as string | null | undefined,
+    config,
+  );
+
+  if (commerce?.productUrl) {
+    lines.push(`Shop this pick: ${commerce.productUrl}`);
+  }
+}
   }
 
   if (submission.productRecommendations.moreFreshPicks.length > 0) {
@@ -546,11 +691,27 @@ function renderGuestEmailText(submission: SkinDiscoverySubmission, config: Guest
     for (const productId of submission.productRecommendations.moreFreshPicks) {
       const product = lookupProduct(productId, submission.experience);
       if (product) {
-        lines.push(`${product.name} - ${product.guestBenefit}`);
-      }
+  lines.push(`${product.name} - ${product.guestBenefit}`);
+
+  const commerce = getProductCommerce(productId, config);
+
+  if (commerce?.productUrl) {
+    lines.push(`Shop this pick: ${commerce.productUrl}`);
+  }
+}
     }
   }
+const cartUrl = buildRecommendedProductsCartUrl(
+  submission,
+  config,
+);
 
+if (cartUrl) {
+  lines.push("");
+  lines.push("SHOP MY FRESH PICKS");
+  lines.push("Add your recommended routine to your cart:");
+  lines.push(cartUrl);
+}
   if (submission.enhancementRecommendations.length > 0) {
     lines.push("");
     lines.push("ENHANCE YOUR JOURNEY");

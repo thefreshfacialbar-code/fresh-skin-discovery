@@ -123,11 +123,16 @@ export function buildSkinDiscoverySubmission(input: unknown): SkinDiscoverySubmi
 export function buildSkinDiscoverySubmission(input: unknown): SkinDiscoverySubmission {
   return buildSubmission(input as SkinDiscoverySubmissionInput);
 }
-
+export type SkinDiscoveryProductCommerce = {
+  productId: string;
+  productUrl: string | null;
+  shopifyVariantId: string | null;
+};
 export type SendSkinDiscoveryEmailsOptions = {
   provider: EmailProvider;
   teamRecipient: string;
   config: SkinDiscoveryEmailConfig;
+  productCommerce?: SkinDiscoveryProductCommerce[];
   disabled?: boolean;
   store?: DeliveryStateStore;
 };
@@ -179,7 +184,10 @@ async function sendSingle(
   }
 }
 
-function toGuestTemplateConfig(config: SkinDiscoveryEmailConfig): GuestEmailConfig {
+function toGuestTemplateConfig(
+  config: SkinDiscoveryEmailConfig,
+  productCommerce?: SkinDiscoveryProductCommerce[],
+): GuestEmailConfig {
   return {
     logoUrl: config.logoUrl,
     bookingUrl: config.bookingUrl,
@@ -189,6 +197,7 @@ function toGuestTemplateConfig(config: SkinDiscoveryEmailConfig): GuestEmailConf
     businessPhone: config.businessPhone,
     locationLabel: config.locationLabel,
     websiteUrl: config.appUrl,
+    productCommerce,
   };
 }
 
@@ -240,7 +249,13 @@ export async function sendSkinDiscoveryEmails(
   const store = options.store;
   const priorState = store ? await store.get(submission.submissionId) : null;
 
-  const guestTemplate = renderGuestDiscoveryEmail(submission, toGuestTemplateConfig(options.config));
+  const guestTemplate = renderGuestDiscoveryEmail(
+  submission,
+  toGuestTemplateConfig(
+    options.config,
+    options.productCommerce,
+  ),
+);
   const teamTemplate = renderTeamDiscoveryEmail(submission, toTeamTemplateConfig(options.config));
 
   const guestDelivery = priorState?.guestDelivered
