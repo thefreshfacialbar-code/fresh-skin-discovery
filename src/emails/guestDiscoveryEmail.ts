@@ -20,7 +20,16 @@ export type GuestEmailConfig = {
 }>;
   previewMode?: boolean;
 };
-
+const GENTLEMENS_EMAIL_COLORS = {
+  cream: "#f2f2f2",
+  paper: "#ffffff",
+  ink: "#545455",
+  muted: "#737373",
+  mutedAlt: "#737373",
+  border: "#A5A6A5",
+  accent: "#545455",
+  accentSoft: "#F1F1F1",
+} as const;
 export type EmailTemplateResult = {
   subject: string;
   preheader: string;
@@ -74,7 +83,11 @@ function lookupProduct(productId: string | null | undefined, experience?: string
 function isCuratedSubmission(submission: SkinDiscoverySubmission): boolean {
   return submission.experience === "gentlemens-corner";
 }
-
+function getEmailColors(submission: SkinDiscoverySubmission) {
+  return isCuratedSubmission(submission)
+    ? GENTLEMENS_EMAIL_COLORS
+    : EMAIL_COLORS;
+}
 function getLogoUrl(submission: SkinDiscoverySubmission, config: GuestEmailConfig): string {
   if (!isCuratedSubmission(submission)) {
     return ensureSafeUrl(config.logoUrl ?? null) ?? "";
@@ -115,12 +128,14 @@ function getBookingHref(config: GuestEmailConfig): string {
 }
 
 function renderJourneySection(submission: SkinDiscoverySubmission): string {
+    const colors = getEmailColors(submission);
+  const isGentlemensCorner = isCuratedSubmission(submission);
   const primaryJourneyCard = (journey: string, description: string, label: string, secondary = false) => `
     <tr>
       <td style="padding: 0 0 14px;">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid ${secondary ? '#d8d0d6' : '#dad6db'}; border-radius: 20px; background:${secondary ? '#fffdfb' : '#fffaf7'}; border-left:4px solid ${secondary ? '#b3a8b6' : '#908A9B'};">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid ${isGentlemensCorner ? colors.border : secondary ? '#d8d0d6' : '#dad6db'}; border-radius: 20px; background:${isGentlemensCorner ? colors.accentSoft : secondary ? '#fffdfb' : '#fffaf7'}; border-left:4px solid ${isGentlemensCorner ? colors.accent : secondary ? '#b3a8b6' : '#908A9B'};">
           <tr>
-            <td style="padding: 18px 20px 8px; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: ${secondary ? '#7d7581' : '#908A9B'}; font-weight: 700; font-family: Arial, Helvetica, sans-serif;">
+            <td style="padding: 18px 20px 8px; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: ${isGentlemensCorner ? colors.accent : secondary ? '#7d7581' : '#908A9B'}; font-weight: 700; font-family: Arial, Helvetica, sans-serif;">
               ${escapeHtml(label)}
             </td>
           </tr>
@@ -248,6 +263,10 @@ function renderProductRow(
   experience: string | undefined,
   config: GuestEmailConfig,
 ): string {
+    const isGentlemensCorner = experience === "gentlemens-corner";
+  const colors = isGentlemensCorner
+    ? GENTLEMENS_EMAIL_COLORS
+    : EMAIL_COLORS;
   const product = lookupProduct(productId, experience);
   if (!product) return "";
 
@@ -257,7 +276,7 @@ const productButton = commerce?.productUrl
       <div style="margin-top: 16px;">
         <a
           href="${escapeHtml(commerce.productUrl)}"
-          style="display:inline-block; padding:12px 20px; background:${EMAIL_COLORS.ink}; color:#ffffff; text-decoration:none; border-radius:999px; font-size:12px; letter-spacing:1.5px; font-weight:700; font-family:Arial, Helvetica, sans-serif;"
+          style="display:inline-block; padding:12px 20px; background:${colors.ink}; color:#ffffff; text-decoration:none; border-radius:999px; font-size:12px; letter-spacing:1.5px; font-weight:700; font-family:Arial, Helvetica, sans-serif;"
         >
           SHOP THIS PICK
         </a>
@@ -267,10 +286,10 @@ const productButton = commerce?.productUrl
   return `
     <tr>
       <td style="padding: 0 0 14px;">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #dad6db; background:#fffdfb; border-radius: 18px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid ${isGentlemensCorner ? colors.border : "#dad6db"}; background:${isGentlemensCorner ? colors.accentSoft : "#fffdfb"}; border-radius: 18px;">
           <tr>
             <td style="padding: 18px 20px;">
-              <div style="font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #908A9B; font-weight: 700; font-family: Arial, Helvetica, sans-serif;">${escapeHtml(step)}</div>
+              <div style="font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: ${isGentlemensCorner ? colors.accent : "#908A9B"}; font-weight: 700; font-family: Arial, Helvetica, sans-serif;">${escapeHtml(step)}</div>
               <div style="margin-top: 8px; font-size: 22px; line-height: 30px; color: ${EMAIL_COLORS.ink}; font-weight: 700; font-family: Georgia, 'Times New Roman', serif;">
                 ${escapeHtml(product.name)}
               </div>
@@ -290,6 +309,7 @@ function renderFeaturedProducts(
   submission: SkinDiscoverySubmission,
   config: GuestEmailConfig,
 ): string {
+    const colors = getEmailColors(submission);
   const featuredRows = [
     ["CLEANSE", submission.productRecommendations.featured.cleanse],
     ["TREAT", submission.productRecommendations.featured.treat],
@@ -314,7 +334,7 @@ const shopAllButton = cartUrl
         <td style="padding: 6px 0 24px; text-align:center;">
           <a
             href="${escapeHtml(cartUrl)}"
-            style="display:inline-block; padding:14px 26px; background:${EMAIL_COLORS.ink}; color:#ffffff; text-decoration:none; border-radius:999px; font-size:12px; letter-spacing:1.5px; font-weight:700; font-family:Arial, Helvetica, sans-serif;"
+            style="display:inline-block; padding:14px 26px; background:${colors.ink}; color:#ffffff; text-decoration:none; border-radius:999px; font-size:12px; letter-spacing:1.5px; font-weight:700; font-family:Arial, Helvetica, sans-serif;"
           >
             SHOP MY FRESH PICKS
           </a>
@@ -328,7 +348,7 @@ const shopAllButton = cartUrl
   return `
     <tr>
       <td style="padding: 0 0 8px;">
-        <div style="font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #908A9B; font-weight: 700; font-family: Arial, Helvetica, sans-serif;">YOUR FRESH PICKS</div>
+        <div style="font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: ${isCuratedSubmission(submission) ? colors.accent : "#908A9B"}; font-weight: 700; font-family: Arial, Helvetica, sans-serif;">YOUR FRESH PICKS</div>
       </td>
     </tr>
     <tr>
@@ -345,6 +365,8 @@ function renderMoreFreshPicks(
   submission: SkinDiscoverySubmission,
   config: GuestEmailConfig,
 ): string {
+    const colors = getEmailColors(submission);
+  const isGentlemensCorner = isCuratedSubmission(submission);
   if (!submission.productRecommendations.moreFreshPicks.length) return "";
 
   const items = submission.productRecommendations.moreFreshPicks
@@ -359,7 +381,7 @@ const productButton = commerce?.productUrl
         <td style="padding: 0 16px 14px;">
           <a
             href="${escapeHtml(commerce.productUrl)}"
-            style="display:inline-block; padding:10px 18px; background:${EMAIL_COLORS.ink}; color:#ffffff; text-decoration:none; border-radius:999px; font-size:11px; letter-spacing:1.5px; font-weight:700; font-family:Arial, Helvetica, sans-serif;"
+            style="display:inline-block; padding:10px 18px; background:${colors.ink}; color:#ffffff; text-decoration:none; border-radius:999px; font-size:11px; letter-spacing:1.5px; font-weight:700; font-family:Arial, Helvetica, sans-serif;"
           >
             SHOP THIS PICK
           </a>
@@ -390,7 +412,7 @@ const productButton = commerce?.productUrl
 
   return `
     <tr>
-      <td style="padding: 16px 16px 8px; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #908A9B; font-weight: 700; font-family: Arial, Helvetica, sans-serif;">A FEW MORE FRESH PICKS</td>
+      <td style="padding: 16px 16px 8px; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: ${isGentlemensCorner ? colors.accent : "#908A9B"}; font-weight: 700; font-family: Arial, Helvetica, sans-serif;">A FEW MORE FRESH PICKS</td>
     </tr>
     <tr>
       <td style="padding: 0 16px 8px;">
@@ -401,6 +423,8 @@ const productButton = commerce?.productUrl
 }
 
 function renderEnhancements(submission: SkinDiscoverySubmission): string {
+    const colors = getEmailColors(submission);
+  const isGentlemensCorner = isCuratedSubmission(submission);
   if (!submission.enhancementRecommendations.length) return "";
 
   const rows = submission.enhancementRecommendations
@@ -415,7 +439,7 @@ function renderEnhancements(submission: SkinDiscoverySubmission): string {
       return `
         <tr>
           <td style="padding: 0 0 12px;">
-            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #dad6db; background:#fffdfb; border-radius: 16px;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"style="border:1px solid ${isGentlemensCorner ? colors.border : "#dad6db"}; background:${isGentlemensCorner ? colors.accentSoft : "#fffdfb"}; border-radius: 16px;">
               <tr>
                 <td style="padding: 14px 18px 8px; font-size: 15px; line-height: 22px; color: ${EMAIL_COLORS.ink}; font-weight: 700; font-family: Georgia, 'Times New Roman', serif;">
                   ${escapeHtml(enhancement.name)}
@@ -436,7 +460,7 @@ function renderEnhancements(submission: SkinDiscoverySubmission): string {
   return `
     <tr>
       <td style="padding: 0 0 8px;">
-        <div style="font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: ${EMAIL_COLORS.mutedAlt}; font-weight: 700;">ENHANCE YOUR JOURNEY</div>
+        <div style="font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: ${isGentlemensCorner ? colors.accent : EMAIL_COLORS.mutedAlt}; font-weight: 700;">ENHANCE YOUR JOURNEY</div>
       </td>
     </tr>
     <tr>
@@ -454,20 +478,21 @@ function renderEnhancements(submission: SkinDiscoverySubmission): string {
 }
 
 function renderGuestEmailHtml(submission: SkinDiscoverySubmission, config: GuestEmailConfig): string {
+  const colors = getEmailColors(submission);
   const firstName = formatName(submission.guest.firstName);
   const bookingHref = getBookingHref(config);
   const logoUrl = getLogoUrl(submission, config);
   const businessName = getEmailBusinessName(submission, config);
   const logoHtml = logoUrl
     ? `<img src="${escapeHtml(logoUrl)}" alt="${escapeHtml(businessName)}" width="180" style="display:block; max-width:180px; width:100%; height:auto; border:0;" />`
-    : `<div style="font-size: 14px; letter-spacing: 2px; text-transform: uppercase; font-weight: 700; color: ${EMAIL_COLORS.ink};">Fresh Facial Bar & Lash Lounge</div>`;
+    : `<div style="font-size: 14px; letter-spacing: 2px; text-transform: uppercase; font-weight: 700; color: ${colors.ink};">Fresh Facial Bar & Lash Lounge</div>`;
 
   const hiddenSubmissionMeta = submission.internal.notes
     ? `<div aria-hidden="true" style="display:none; max-height:0; overflow:hidden; opacity:0;">${escapeHtml(submission.internal.notes)}</div>`
     : "";
 
   const mainHtml = `
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${EMAIL_COLORS.cream};">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${colors.cream};">
       <tr>
         <td align="center" style="padding: 32px 18px;">
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="email-shell" style="max-width: 660px; background:#fffdfc; border:1px solid #e7dfe4; border-radius: 26px; box-shadow: 0 18px 42px rgba(43, 36, 33, 0.08);">
@@ -478,7 +503,7 @@ function renderGuestEmailHtml(submission: SkinDiscoverySubmission, config: Guest
                     <td align="center" style="padding-bottom: 16px;">${logoHtml}</td>
                   </tr>
                   <tr>
-                    <td align="center" style="font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: #7d7581; font-weight: 700; text-align: center; font-family: Arial, Helvetica, sans-serif;">
+                    <td align="center" style="font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: ${isCuratedSubmission(submission) ? colors.mutedAlt : "#7d7581"}; font-weight: 700; text-align: center; font-family: Arial, Helvetica, sans-serif;">
                       FRESH SKIN DISCOVERY
                     </td>
                   </tr>
@@ -527,7 +552,7 @@ function renderGuestEmailHtml(submission: SkinDiscoverySubmission, config: Guest
             ${submission.productRecommendations.moreFreshPicks.length > 0 ? `
               <tr>
                 <td style="padding: 0 32px 24px;" class="pad-mobile">
-                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${EMAIL_COLORS.accentSoft}; border:1px solid ${EMAIL_COLORS.border}; border-radius:18px;">
+                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${colors.accentSoft}; border:1px solid ${colors.border}; border-radius:18px;">
                     ${renderMoreFreshPicks(submission, config)}
                   </table>
                 </td>
@@ -546,7 +571,7 @@ function renderGuestEmailHtml(submission: SkinDiscoverySubmission, config: Guest
 
             <tr>
               <td style="padding: 0 32px 20px;" class="pad-mobile">
-                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${EMAIL_COLORS.accentSoft}; border:1px solid ${EMAIL_COLORS.border}; border-radius:18px;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${colors.accentSoft}; border:1px solid ${colors.border}; border-radius:18px;">
                   <tr>
                     <td style="padding: 20px 20px 10px; font-size: 22px; line-height: 30px; color: ${EMAIL_COLORS.ink}; font-weight: 700; font-family: Georgia, 'Times New Roman', serif;">
                       Your Mixo Takes It From Here
@@ -566,7 +591,7 @@ function renderGuestEmailHtml(submission: SkinDiscoverySubmission, config: Guest
                 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
                   <tr>
                     <td align="center" style="padding: 8px 0 18px;">
-                      <a href="${escapeHtml(bookingHref)}" style="display:inline-block; background:#908A9B; color:#ffffff; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; text-decoration:none; font-weight:700; padding: 18px 32px; border-radius: 999px; min-width: 240px; font-family: Arial, Helvetica, sans-serif; box-shadow: 0 12px 20px rgba(144,138,155,0.18);">
+                      <a href="${escapeHtml(bookingHref)}" style="display:inline-block; background:${colors.accent}; color:#ffffff; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; text-decoration:none; font-weight:700; padding: 18px 32px; border-radius: 999px; min-width: 240px; font-family: Arial, Helvetica, sans-serif; box-shadow: 0 12px 20px rgba(144,138,155,0.18);">
                         CRAFT MY FACIAL →
                       </a>
                     </td>
@@ -610,12 +635,12 @@ function renderGuestEmailHtml(submission: SkinDiscoverySubmission, config: Guest
               <td style="padding: 0 32px 30px;" class="pad-mobile">
                 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-top:1px solid #e8dfe5;">
                   <tr>
-                    <td style="padding-top: 18px; font-size: 12px; line-height: 20px; color: #7d7581; text-align: center; font-family: Arial, Helvetica, sans-serif;">
+                    <td style="padding-top: 18px; font-size: 12px; line-height: 20px; color: ${isCuratedSubmission(submission) ? colors.mutedAlt : "#7d7581"};; text-align: center; font-family: Arial, Helvetica, sans-serif;">
                       ${escapeHtml(businessName)}
                     </td>
                   </tr>
                   <tr>
-                    <td style="padding-top: 12px; font-size: 12px; line-height: 20px; color: #7d7581; text-align: center; font-family: Arial, Helvetica, sans-serif;">
+                    <td style="padding-top: 12px; font-size: 12px; line-height: 20px; color: #7d7color: ${isCuratedSubmission(submission) ? colors.mutedAlt : "#7d7581"};581; text-align: center; font-family: Arial, Helvetica, sans-serif;">
                       Thoughtfully crafted, one step at a time.
                     </td>
                   </tr>
@@ -633,6 +658,7 @@ function renderGuestEmailHtml(submission: SkinDiscoverySubmission, config: Guest
 }
 
 function renderGuestEmailText(submission: SkinDiscoverySubmission, config: GuestEmailConfig): string {
+  const colors = getEmailColors(submission);
   const firstName = formatName(submission.guest.firstName);
   const lines: string[] = [];
   lines.push("Your Skin Discovery Journey is here");
@@ -752,6 +778,7 @@ export function renderGuestDiscoveryEmail(
   submission: SkinDiscoverySubmission,
   config: GuestEmailConfig = {},
 ): EmailTemplateResult {
+  const colors = getEmailColors(submission);
   const normalizedConfig: GuestEmailConfig = {
     businessName: "Fresh Facial Bar & Lash Lounge",
     previewMode: process.env.NODE_ENV !== "production",

@@ -48,7 +48,24 @@ const sampleSubmission: SkinDiscoverySubmission = {
     boulevardTags: ["Skin Discovery", "Journey - Renew", "Journey - Quench"],
   },
 };
-
+const gentlemenSampleSubmission: SkinDiscoverySubmission = {
+  ...sampleSubmission,
+  submissionId: "CGC-2026-0001",
+  experience: "gentlemens-corner",
+  guest: {
+    ...sampleSubmission.guest,
+    firstName: "James",
+  },
+  productRecommendations: {
+    featured: {
+      cleanse: "clean-slate",
+      treat: "zero-in",
+      moisturize: "thirsty-face",
+      protect: "am-replenish-non-tinted-spf-40",
+    },
+    moreFreshPicks: ["deep-clean", "long-night"],
+  },
+};
 export default function EmailPreviewPage() {
   if (process.env.NODE_ENV === "production") {
     notFound();
@@ -92,6 +109,47 @@ export default function EmailPreviewPage() {
     },
   ],
 });
+const gentlemenEmail = renderGuestDiscoveryEmail(
+  gentlemenSampleSubmission,
+  {
+    logoUrl: `${previewBaseUrl}/ffb-logo.png`,
+    websiteUrl: previewBaseUrl,
+    bookingUrl: "",
+    previewMode: true,
+    productCommerce: [
+      {
+        productId: "clean-slate",
+        productUrl: "https://thefreshfacialbar.com/products/clean-slate",
+        shopifyVariantId: "gid://shopify/ProductVariant/71111111111111",
+      },
+      {
+        productId: "zero-in",
+        productUrl: "https://thefreshfacialbar.com/products/zero-in",
+        shopifyVariantId: "gid://shopify/ProductVariant/72222222222222",
+      },
+      {
+        productId: "thirsty-face",
+        productUrl: "https://thefreshfacialbar.com/products/thirsty-face",
+        shopifyVariantId: "gid://shopify/ProductVariant/73333333333333",
+      },
+      {
+        productId: "am-replenish-non-tinted-spf-40",
+        productUrl: "https://thefreshfacialbar.com/products/am-replenish-non-tinted-spf-40",
+        shopifyVariantId: "gid://shopify/ProductVariant/74444444444444",
+      },
+      {
+        productId: "deep-clean",
+        productUrl: "https://thefreshfacialbar.com/products/deep-clean",
+        shopifyVariantId: "gid://shopify/ProductVariant/75555555555555",
+      },
+      {
+        productId: "long-night",
+        productUrl: "https://thefreshfacialbar.com/products/long-night",
+        shopifyVariantId: "gid://shopify/ProductVariant/76666666666666",
+      },
+    ],
+  },
+);
   const teamEmail = renderTeamDiscoveryEmail(sampleSubmission, {
     previewMode: true,
   });
@@ -104,7 +162,19 @@ export default function EmailPreviewPage() {
         <h2 style={{ marginBottom: 12 }}>Guest HTML</h2>
         <iframe title="Guest email preview" srcDoc={guestEmail.html} style={{ width: "100%", minHeight: 1400, border: "1px solid #ddd", background: "white" }} />
       </section>
-
+<section style={{ marginBottom: 36 }}>
+  <h2 style={{ marginBottom: 12 }}>Gentlemen&apos;s Corner Guest HTML</h2>
+  <iframe
+    title="Gentlemen's Corner email preview"
+    srcDoc={gentlemenEmail.html}
+    style={{
+      width: "100%",
+      minHeight: 1400,
+      border: "1px solid #ddd",
+      background: "white",
+    }}
+  />
+</section>
       <section style={{ marginBottom: 36 }}>
         <h2 style={{ marginBottom: 12 }}>Guest Text</h2>
         <pre style={{ whiteSpace: "pre-wrap", background: "#fff", padding: 16, border: "1px solid #ddd" }}>{guestEmail.text}</pre>
