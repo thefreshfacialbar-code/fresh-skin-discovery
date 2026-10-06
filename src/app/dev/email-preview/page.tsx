@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { renderGuestDiscoveryEmail } from "@/emails/guestDiscoveryEmail";
 import { renderTeamDiscoveryEmail } from "@/emails/teamDiscoveryEmail";
+import { renderFinalSkinPlanEmail } from "@/lib/email/deliverFinalSkinPlan";
 import type { SkinDiscoverySubmission } from "@/types/skinDiscoverySubmission";
 
 const sampleSubmission: SkinDiscoverySubmission = {
@@ -150,6 +151,127 @@ const gentlemenEmail = renderGuestDiscoveryEmail(
     ],
   },
 );
+const finalFreshEmail = renderFinalSkinPlanEmail({
+  firstName: "Mila",
+  experience: "fresh-facial-bar-lash-lounge",
+  skinPlanUrl: `${previewBaseUrl}/skin-plan?token=preview-fresh-token`,
+  appUrl: previewBaseUrl,
+  products: [
+    {
+      productId: "make-it-melt-cleansing-balm",
+      routineStep: "Cleanse",
+      routineOrder: 1,
+      productName: "Make It Melt Cleansing Balm",
+      brand: "FarmHouse Fresh",
+      customerGuidance: null,
+      usageType: "daily",
+      timing: "morning-evening",
+      frequency: "daily",
+      productUrl:
+        "https://thefreshfacialbar.com/products/make-it-melt-cleansing-balm",
+      shopifyVariantId:
+        "gid://shopify/ProductVariant/11111111111111",
+    },
+    {
+      productId: "watermelonaid",
+      routineStep: "Treat",
+      routineOrder: 2,
+      productName: "WatermelonAid",
+      brand: "FarmHouse Fresh",
+      customerGuidance: null,
+      usageType: "daily",
+      timing: "morning",
+      frequency: "daily",
+      productUrl:
+        "https://thefreshfacialbar.com/products/watermelonaid",
+      shopifyVariantId:
+        "gid://shopify/ProductVariant/22222222222222",
+    },
+    {
+      productId: "three-milk-ageless-moisturizer",
+      routineStep: "Moisturize",
+      routineOrder: 3,
+      productName: "Three Milk Ageless Moisturizer",
+      brand: "FarmHouse Fresh",
+      customerGuidance: null,
+      usageType: "daily",
+      timing: "morning-evening",
+      frequency: "daily",
+      productUrl:
+        "https://thefreshfacialbar.com/products/three-milk-ageless-moisturizer",
+      shopifyVariantId:
+        "gid://shopify/ProductVariant/33333333333333",
+    },
+    {
+      productId: "am-replenish-non-tinted-spf-40",
+      routineStep: "Protect",
+      routineOrder: 4,
+      productName: "AM Replenish Non-Tinted SPF 40",
+      brand: "TiZO",
+      customerGuidance: null,
+      usageType: "daily",
+      timing: "morning",
+      frequency: "daily",
+      productUrl:
+        "https://thefreshfacialbar.com/products/am-replenish-non-tinted-spf-40",
+      shopifyVariantId:
+        "gid://shopify/ProductVariant/44444444444444",
+    },
+  ],
+});
+const finalGentlemensEmail = renderFinalSkinPlanEmail({
+  firstName: "James",
+  experience: "gentlemens-corner",
+  skinPlanUrl: `${previewBaseUrl}/skin-plan?token=preview-cgc-token`,
+  appUrl: previewBaseUrl,
+  products: [
+    {
+      productId: "zero-in",
+      routineStep: "Treat",
+      routineOrder: 1,
+      productName: "Zero In",
+      brand: "Curated Gentlemen's Corner",
+      customerGuidance: null,
+      usageType: "daily",
+      timing: "morning-evening",
+      frequency: "daily",
+      productUrl:
+        "https://thefreshfacialbar.com/products/zero-in",
+      shopifyVariantId:
+        "gid://shopify/ProductVariant/72222222222222",
+    },
+    {
+      productId: "long-night",
+      routineStep: "Moisturize",
+      routineOrder: 2,
+      productName: "Long Night",
+      brand: "Curated Gentlemen's Corner",
+      customerGuidance: null,
+      usageType: "daily",
+      timing: "evening",
+      frequency: "daily",
+      productUrl:
+        "https://thefreshfacialbar.com/products/long-night",
+      shopifyVariantId:
+        "gid://shopify/ProductVariant/76666666666666",
+    },
+    {
+      productId: "am-replenish-non-tinted-spf-40",
+      routineStep: "Protect",
+      routineOrder: 3,
+      productName: "AM Replenish Non-Tinted SPF 40",
+      brand: "TiZO",
+      customerGuidance: null,
+      usageType: "daily",
+      timing: "morning",
+      frequency: "daily",
+      productUrl:
+        "https://thefreshfacialbar.com/products/am-replenish-non-tinted-spf-40",
+      shopifyVariantId:
+        "gid://shopify/ProductVariant/74444444444444",
+    },
+  ],
+});
   const teamEmail = renderTeamDiscoveryEmail(sampleSubmission, {
     previewMode: true,
   });
@@ -170,6 +292,38 @@ const gentlemenEmail = renderGuestDiscoveryEmail(
     style={{
       width: "100%",
       minHeight: 1400,
+      border: "1px solid #ddd",
+      background: "white",
+    }}
+  />
+</section>
+<section style={{ marginBottom: 36 }}>
+  <h2 style={{ marginBottom: 12 }}>
+    Fresh Final Skin Plan HTML
+  </h2>
+
+  <iframe
+    title="Fresh final Skin Plan email preview"
+    srcDoc={finalFreshEmail.html}
+    style={{
+      width: "100%",
+      minHeight: 1200,
+      border: "1px solid #ddd",
+      background: "white",
+    }}
+  />
+</section>
+<section style={{ marginBottom: 36 }}>
+  <h2 style={{ marginBottom: 12 }}>
+    Gentlemen&apos;s Corner Final Skin Plan HTML
+  </h2>
+
+  <iframe
+    title="Gentlemen's Corner final Skin Plan email preview"
+    srcDoc={finalGentlemensEmail.html}
+    style={{
+      width: "100%",
+      minHeight: 1200,
       border: "1px solid #ddd",
       background: "white",
     }}

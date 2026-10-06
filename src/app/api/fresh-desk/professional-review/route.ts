@@ -33,11 +33,12 @@ const professionalReviewNote =
       await supabaseAdmin
         .from("consultations")
         .select(`
-          id,
-          customers!inner (
-            business_id
-          )
-        `)
+  id,
+  experience_id,
+  customers!inner (
+    business_id
+  )
+`)
         .eq("id", consultationId)
         .maybeSingle();
 
@@ -178,10 +179,97 @@ if (skinPlanTokenError) {
     { status: 500 }
   );
 }
+const { data: finalizedProducts, error: finalizedProductsError } =
+  await supabaseAdmin
+    .from("skin_plan_products")
+    .select(`
+      product_id,
+      routine_step,
+      routine_order,
+      product_name_snapshot,
+      brand_snapshot,
+      customer_guidance,
+      usage_type,
+      timing,
+      frequency
+    `)
+    .eq("skin_plan_id", skinPlan.id)
+    .eq("status", "confirmed")
+    .order("routine_order", { ascending: true });
+
+if (finalizedProductsError) {
+  console.error(
+    "Finalized Skin Plan product lookup failed:",
+    finalizedProductsError
+  );
+
+  return NextResponse.json(
+    {
+      success: false,
+      error:
+        "Skin Plan was finalized, but the finalized products could not be loaded.",
+    },
+    { status: 500 }
+  );
+}
+const finalizedProductIds = (finalizedProducts ?? [])
+  .map((product) => product.product_id)
+  .filter((productId): productId is string => Boolean(productId));
+
+const { data: finalizedProductCommerce, error: finalizedProductCommerceError } =
+  finalizedProductIds.length > 0
+    ? await supabaseAdmin
+        .from("products")
+        .select("id, product_url, shopify_variant_id")
+        .in("id", finalizedProductIds)
+    : { data: [], error: null };
+
+if (finalizedProductCommerceError) {
+  console.error(
+    "Finalized Skin Plan commerce lookup failed:",
+    finalizedProductCommerceError
+  );
+
+  return NextResponse.json(
+    {
+      success: false,
+      error:
+        "Skin Plan was finalized, but the product shopping information could not be loaded.",
+    },
+    { status: 500 }
+  );
+}
+const commerceByProductId = new Map(
+  (finalizedProductCommerce ?? []).map((product) => [
+    product.id,
+    product,
+  ])
+);
+
+const finalEmailProducts = (finalizedProducts ?? []).map((product) => {
+  const commerce = commerceByProductId.get(product.product_id);
+
+  return {
+    productId: product.product_id,
+    routineStep: product.routine_step,
+    routineOrder: product.routine_order,
+    productName: product.product_name_snapshot,
+    brand: product.brand_snapshot,
+    customerGuidance: product.customer_guidance,
+    usageType: product.usage_type,
+    timing: product.timing,
+    frequency: product.frequency,
+    productUrl: commerce?.product_url ?? null,
+    shopifyVariantId: commerce?.shopify_variant_id ?? null,
+  };
+});
+
 const emailDelivery = await deliverFinalSkinPlan({
   guestEmail: customer.email,
   accessToken,
   firstName: customer.first_name?.trim() || undefined,
+  experience: consultationOwnership.experience_id,
+  products: finalEmailProducts,
 });
 
 if (!emailDelivery.success) {
