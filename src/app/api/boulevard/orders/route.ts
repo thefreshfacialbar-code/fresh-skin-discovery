@@ -228,20 +228,21 @@ export async function POST(request: Request) {
                 );
             }
         }
+             
                 const refunds = (order.refunds ?? [])
             .filter((refund: { id?: string }) => refund.id)
             .map(
                 (refund: {
                     id?: string;
                     number?: string;
-                    reason?: string;
-                    reasonText?: string;
+                    refundReason?: string;
+                    refundReasonText?: string;
                     status?: string;
                     summary?: {
-                        amount?: number;
-                        tax?: number;
-                        total?: number;
-                    };
+                    refundAmount?: number;
+                    refundTax?: number;
+                    refundTotal?: number;
+};
                     closedBy?: {
                         id?: string;
                         name?: string;
@@ -250,12 +251,12 @@ export async function POST(request: Request) {
                     boulevard_order_id: savedOrder.id,
                     boulevard_refund_id: refund.id!,
                     boulevard_refund_number: refund.number ?? null,
-                    refund_reason: refund.reason ?? null,
-                    refund_reason_text: refund.reasonText ?? null,
+                    refund_reason: refund.refundReason ?? null,
+                    refund_reason_text: refund.refundReasonText ?? null,
                     refund_status: refund.status ?? null,
-                    amount: refund.summary?.amount ?? null,
-                    tax: refund.summary?.tax ?? null,
-                    total: refund.summary?.total ?? null,
+                    amount: refund.summary?.refundAmount ?? null,
+                    tax: refund.summary?.refundTax ?? null,
+                    total: refund.summary?.refundTotal ?? null,
                     closed_by_id: refund.closedBy?.id ?? null,
                     closed_by_name: refund.closedBy?.name ?? null,
                     updated_at: new Date().toISOString(),
