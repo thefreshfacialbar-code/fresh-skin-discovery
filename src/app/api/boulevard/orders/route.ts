@@ -120,7 +120,7 @@ export async function POST(request: Request) {
                         source_customer_id: boulevardClientId,
                         source_email: order.client?.email?.trim().toLowerCase() ?? null,
                         source_phone: order.client?.mobilePhone?.trim() ?? null,
-                        match_status: "matched",
+                        match_status: "confirmed",
                         match_method: "boulevard_order",
                         match_confidence: 1,
                     },
@@ -238,14 +238,17 @@ export async function POST(request: Request) {
             itemCount: orderItems.length,
         });
     } catch (error) {
-        console.error("Boulevard order webhook error:", error);
+  console.error("Boulevard order webhook error:", error);
 
-        return Response.json(
-            {
-                success: false,
-                error: "Invalid Boulevard order payload.",
-            },
-            { status: 400 }
-        );
-    }
+  const message =
+    error instanceof Error ? error.message : "Unknown Boulevard import error.";
+
+  return Response.json(
+    {
+      success: false,
+      error: message,
+    },
+    { status: 400 }
+  );
+}
 }
