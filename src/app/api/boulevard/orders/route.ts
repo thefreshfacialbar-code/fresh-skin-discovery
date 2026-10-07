@@ -228,6 +228,53 @@ export async function POST(request: Request) {
                 );
             }
         }
+                const refunds = (order.refunds ?? [])
+            .filter((refund: { id?: string }) => refund.id)
+            .map(
+                (refund: {
+                    id?: string;
+                    number?: string;
+                    reason?: string;
+                    reasonText?: string;
+                    status?: string;
+                    summary?: {
+                        amount?: number;
+                        tax?: number;
+                        total?: number;
+                    };
+                    closedBy?: {
+                        id?: string;
+                        name?: string;
+                    };
+                }) => ({
+                    boulevard_order_id: savedOrder.id,
+                    boulevard_refund_id: refund.id!,
+                    boulevard_refund_number: refund.number ?? null,
+                    refund_reason: refund.reason ?? null,
+                    refund_reason_text: refund.reasonText ?? null,
+                    refund_status: refund.status ?? null,
+                    amount: refund.summary?.amount ?? null,
+                    tax: refund.summary?.tax ?? null,
+                    total: refund.summary?.total ?? null,
+                    closed_by_id: refund.closedBy?.id ?? null,
+                    closed_by_name: refund.closedBy?.name ?? null,
+                    updated_at: new Date().toISOString(),
+                })
+            );
+
+        if (refunds.length > 0) {
+            const { error: refundsUpsertError } = await supabaseAdmin
+                .from("boulevard_refunds")
+                .upsert(refunds, {
+                    onConflict: "boulevard_refund_id",
+                });
+
+            if (refundsUpsertError) {
+                throw new Error(
+                    `Could not save Boulevard refunds: ${refundsUpsertError.message}`
+                );
+            }
+        }
         return Response.json({
             success: true,
             received: true,
@@ -236,6 +283,7 @@ export async function POST(request: Request) {
             existingCustomerId,
             savedOrderId: savedOrder.id,
             itemCount: orderItems.length,
+            refundCount: refunds.length,
         });
     } catch (error) {
   console.error("Boulevard order webhook error:", error);
