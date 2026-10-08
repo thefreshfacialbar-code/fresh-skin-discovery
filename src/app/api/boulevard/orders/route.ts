@@ -9,12 +9,22 @@ export async function POST(request: Request) {
         const body = await request.json();
 
         const rawOrder =
-            typeof body.order === "string"
-                ? JSON.parse(body.order)
-                : body.order;
+    typeof body.order === "string"
+        ? JSON.parse(body.order)
+        : body.order;
 
-        const order = rawOrder?.results?.[0];
-
+const order =
+    rawOrder?.results?.[0] ??
+    body.reconciliation_order ??
+    null;
+if (
+    order &&
+    order.refunds &&
+    !Array.isArray(order.refunds) &&
+    typeof order.refunds === "object"
+) {
+    order.refunds = Object.values(order.refunds);
+}
         if (!order?.id) {
             return Response.json(
                 {
@@ -230,7 +240,11 @@ export async function POST(request: Request) {
         }
              
                 const refunds = (order.refunds ?? [])
-            .filter((refund: { id?: string }) => refund.id)
+                .filter(
+        (refund: { id?: string }) =>
+            typeof refund?.id === "string" &&
+            refund.id.startsWith("urn:blvd:OrderRefund:")
+    )
             .map(
                 (refund: {
                     id?: string;
