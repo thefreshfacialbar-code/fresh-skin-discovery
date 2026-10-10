@@ -17,6 +17,7 @@ const order =
     rawOrder?.results?.[0] ??
     body.reconciliation_order ??
     null;
+    const isReconciliation = body.reconciliation_order != null;
 if (
     order &&
     order.refunds &&
@@ -33,7 +34,85 @@ if (
                 },
                 { status: 400 }
             );
-        }
+        }if (isReconciliation) {
+    const { data: existingOrder, error: lookupError } = await supabaseAdmin
+        .from("boulevard_orders")
+        .select("id, customer_id")
+        .eq("business_id", FRESH_BUSINESS_ID)
+        .eq("boulevard_order_id", order.id)
+        .maybeSingle();
+
+    if (lookupError) {
+        throw new Error(
+            `Could not look up Boulevard order: ${lookupError.message}`
+        );
+    }
+    if (!existingOrder) {
+    throw new Error(
+        "Boulevard order must be imported before refund reconciliation."
+    );
+}
+    const refunds = (order.refunds ?? []).filter(
+    (refund: { id?: string }) =>
+        typeof refund?.id === "string" &&
+        refund.id.startsWith("urn:blvd:OrderRefund:")
+);
+const refundRecords = refunds.map((refund: {
+    id: string;
+    number?: string;
+    refundReason?: string;
+    refundReasonText?: string;
+    status?: string;
+    summary?: {
+        refundAmount?: number;
+        refundTax?: number;
+        refundTotal?: number;
+    };
+    closedBy?: {
+        id?: string;
+        name?: string;
+    };
+}) => ({
+    boulevard_order_id: existingOrder.id,
+    boulevard_refund_id: refund.id,
+    boulevard_refund_number: refund.number ?? null,
+    refund_reason: refund.refundReason ?? null,
+    refund_reason_text: refund.refundReasonText ?? null,
+    refund_status: refund.status ?? null,
+    amount: refund.summary?.refundAmount ?? null,
+    tax: refund.summary?.refundTax ?? null,
+    total: refund.summary?.refundTotal ?? null,
+    closed_by_id: refund.closedBy?.id ?? null,
+    closed_by_name: refund.closedBy?.name ?? null,
+    updated_at: new Date().toISOString(),
+}));
+if (refundRecords.length > 0) {
+    const { error: refundsUpsertError } = await supabaseAdmin
+        .from("boulevard_refunds")
+        .upsert(refundRecords, {
+            onConflict: "boulevard_refund_id",
+        });
+
+    if (refundsUpsertError) {
+        throw new Error(
+            `Could not save Boulevard refunds: ${refundsUpsertError.message}`
+        );
+    }
+}
+return Response.json({
+    success: true,
+    received: true,
+    reconciliation: true,
+    boulevardOrderId: order.id,
+    businessId: FRESH_BUSINESS_ID,
+    existingCustomerId: existingOrder.customer_id,
+    savedOrderId: existingOrder.id,
+    itemCount: 0,
+    refundCount: refundRecords.length,
+});
+    
+
+}
         const boulevardClientId = order.client?.id ?? null;
 
         let existingCustomerId: string | null = null;
