@@ -285,7 +285,11 @@ return Response.json({
                         boulevard_line_id: line.id!,
                         boulevard_line_group_id: lineGroup.id ?? null,
 
-                        item_type: line.id!.startsWith("s_") ? "service" : "product",
+                        item_type: line.id!.startsWith("s_")
+    ? "service"
+    : /\bmembership\b/i.test(line.name ?? "")
+      ? "membership"
+      : "product",
 
                         item_name: line.name!,
                         quantity: line.quantity ?? 1,
