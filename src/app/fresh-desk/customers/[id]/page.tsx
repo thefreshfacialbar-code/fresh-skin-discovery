@@ -66,6 +66,36 @@ if (shopifyOrdersError) {
     `Could not load Shopify purchase history: ${shopifyOrdersError.message}`
   );
 }
+const { data: boulevardOrders, error: boulevardOrdersError } =
+  await supabaseAdmin
+    .from("boulevard_orders")
+    .select("*")
+    .eq("customer_id", id)
+    .eq("business_id", employeeSession.employee.business_id)
+    .order("completed_at", { ascending: false });
+
+if (boulevardOrdersError) {
+  throw new Error(
+    `Could not load Boulevard purchase history: ${boulevardOrdersError.message}`
+  );
+}
+const boulevardOrderIds = (boulevardOrders ?? []).map(
+  (order) => order.id
+);
+
+const { data: boulevardOrderItems, error: boulevardOrderItemsError } =
+  boulevardOrderIds.length > 0
+    ? await supabaseAdmin
+        .from("boulevard_order_items")
+        .select("*")
+        .in("boulevard_order_id", boulevardOrderIds)
+    : { data: [], error: null };
+
+if (boulevardOrderItemsError) {
+  throw new Error(
+    `Could not load Boulevard order items: ${boulevardOrderItemsError.message}`
+  );
+}
 const shopifyOrderIds = (shopifyOrders ?? []).map(
   (order) => order.id
 );
@@ -187,6 +217,60 @@ const { data: skinPlanProducts } = latestSkinPlan
             </h1>
 
             <p className="mt-3 text-[#5A5553]">{customer.email}</p>
+            {/* Boulevard Purchase History */}
+<div className="mt-8 rounded-2xl border border-[#DAD6DB] bg-[#FFFDFC] p-6">
+  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#908A9B]">
+    Purchase History
+  </p>
+
+  <h2 className="mt-2 text-xl font-semibold">
+    Boulevard Orders
+  </h2>
+
+  {boulevardOrders && boulevardOrders.length > 0 ? (
+    <div className="mt-5 space-y-3">
+      {boulevardOrders.map((order) => (
+        <div
+          key={order.id}
+          className="rounded-xl border border-[#E6E0E3] bg-white p-4"
+        >
+          <p className="font-semibold">
+            Order #{order.boulevard_order_number}
+          </p>
+
+          {order.completed_at && (
+            <p className="mt-1 text-sm text-[#5A5553]">
+              {new Date(order.completed_at).toLocaleDateString("en-US")}
+            </p>
+          )}
+
+          <div className="mt-3 space-y-2">
+            {(boulevardOrderItems ?? [])
+              .filter((item) => item.boulevard_order_id === order.id)
+              .map((item) => (
+                <div
+                  key={item.id}
+                  className="flex flex-wrap items-center justify-between gap-2 border-t border-[#E6E0E3] pt-2"
+                >
+                  <span className="text-sm">
+                    {item.item_name}
+                  </span>
+
+                  <span className="rounded-full bg-[#F0EBF1] px-3 py-1 text-xs font-semibold capitalize">
+                    {item.item_type}
+                  </span>
+                </div>
+              ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  ) : (
+    <p className="mt-4 text-sm text-[#5A5553]">
+      No Boulevard purchases found.
+    </p>
+  )}
+</div>
 {/* Shopify Purchase History */}
 <div className="mt-8 rounded-2xl border border-[#DAD6DB] bg-[#FFFDFC] p-6">
   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#908A9B]">
