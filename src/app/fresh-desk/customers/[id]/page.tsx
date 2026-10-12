@@ -45,6 +45,54 @@ if (!employeeSession) {
     </main>
   );
 }
+const { data: shopifyOrders, error: shopifyOrdersError } =
+  await supabaseAdmin
+    .from("shopify_orders")
+    .select(`
+      id,
+      shopify_order_number,
+      financial_status,
+      fulfillment_status,
+      total_price,
+      currency,
+      order_created_at
+    `)
+    .eq("customer_id", id)
+    .eq("business_id", employeeSession.employee.business_id)
+    .order("order_created_at", { ascending: false });
+
+if (shopifyOrdersError) {
+  throw new Error(
+    `Could not load Shopify purchase history: ${shopifyOrdersError.message}`
+  );
+}
+const shopifyOrderIds = (shopifyOrders ?? []).map(
+  (order) => order.id
+);
+
+const { data: shopifyOrderItems, error: orderItemsError } =
+  shopifyOrderIds.length > 0
+    ? await supabaseAdmin
+        .from("shopify_order_items")
+        .select(`
+          id,
+          shopify_order_id,
+          product_name,
+          variant_name,
+          quantity,
+          current_quantity,
+          unit_price,
+          total_price,
+          item_type
+        `)
+        .in("shopify_order_id", shopifyOrderIds)
+    : { data: [], error: null };
+
+if (orderItemsError) {
+  throw new Error(
+    `Could not load Shopify order items: ${orderItemsError.message}`
+  );
+}
     const { data: latestSkinPlan, error: skinPlanError } = await supabaseAdmin
   .from("skin_plans")
   .select("*")
@@ -139,7 +187,140 @@ const { data: skinPlanProducts } = latestSkinPlan
             </h1>
 
             <p className="mt-3 text-[#5A5553]">{customer.email}</p>
+{/* Shopify Purchase History */}
+<div className="mt-8 rounded-2xl border border-[#DAD6DB] bg-[#FFFDFC] p-6">
+  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#908A9B]">
+    Purchase History
+  </p>
 
+  <h2 className="mt-2 text-xl font-semibold">
+    Shopify Orders
+  </h2>
+
+  {shopifyOrders && shopifyOrders.length > 0 ? (
+    <div className="mt-5 space-y-3">
+      {shopifyOrders.map((order) => (
+        <div
+          key={order.id}
+          className="rounded-xl border border-[#E6E0E3] bg-white p-4"
+        >
+          <div className="flex items-center justify-between gap-4">
+            <p className="font-semibold">
+              {order.shopify_order_number}
+            </p>
+
+            <span
+              className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                order.financial_status === "PAID"
+                  ? "bg-green-100 text-green-800"
+                  : order.financial_status === "REFUNDED"
+                    ? "bg-red-100 text-red-800"
+                    : "bg-gray-100 text-gray-700"
+              }`}
+            >
+              {order.financial_status ?? "Unknown"}
+            </span>
+          </div>
+
+          <p className="mt-2 text-sm text-[#5A5553]">
+            {order.order_created_at
+              ? new Date(order.order_created_at).toLocaleDateString(
+                  "en-US",
+                  {
+                    month: "long",
+                    day: "numeric",
+                    year: "numeric",
+                  }
+                )
+              : "Date unavailable"}
+          </p>
+
+          <p className="mt-2 text-lg font-semibold">
+            {new Intl.NumberFormat("en-US", {
+              style: "currency",
+              currency: order.currency ?? "USD",
+            }).format(Number(order.total_price ?? 0))}
+          </p>
+
+          {order.fulfillment_status && (
+            <p className="mt-2 text-sm text-[#5A5553]">
+              Fulfillment: {order.fulfillment_status}
+            </p>
+          )}
+          {/* Purchased Products and Event Tickets */}
+{(() => {
+  const items = (shopifyOrderItems ?? []).filter(
+    (item) => item.shopify_order_id === order.id
+  );
+
+  if (items.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="mt-4 border-t border-[#E6E0E3] pt-4">
+      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#908A9B]">
+        Items Purchased
+      </p>
+
+      <div className="mt-3 space-y-3">
+        {items.map((item) => (
+          <div
+            key={item.id}
+            className="flex items-start justify-between gap-4"
+          >
+            <div>
+              <p className="text-sm font-semibold">
+                {item.product_name}
+              </p>
+
+              {item.variant_name &&
+                item.variant_name !== "Default Title" && (
+                  <p className="mt-1 text-xs text-[#5A5553]">
+                    {item.variant_name}
+                  </p>
+                )}
+
+              <p className="mt-1 text-xs text-[#5A5553]">
+                Quantity: {item.quantity}
+              </p>
+
+              {item.item_type === "event" && (
+                <span className="mt-2 inline-block rounded-full bg-[#F1E8D9] px-3 py-1 text-xs font-semibold text-[#6A5540]">
+                  Event Ticket
+                </span>
+              )}
+
+              {item.current_quantity < item.quantity && (
+                <p className="mt-1 text-xs font-semibold text-red-700">
+                  {item.current_quantity === 0
+                    ? "Item removed or refunded"
+                    : `Current quantity: ${item.current_quantity}`}
+                </p>
+              )}
+            </div>
+
+            <p className="whitespace-nowrap text-sm font-semibold">
+              {new Intl.NumberFormat("en-US", {
+                style: "currency",
+                currency: order.currency ?? "USD",
+              }).format(Number(item.total_price ?? 0))}
+            </p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+})()}
+        </div>
+      ))}
+    </div>
+  ) : (
+    <p className="mt-4 text-sm text-[#5A5553]">
+      No Shopify purchases recorded for this customer.
+    </p>
+  )}
+</div>
 <div className="mt-8 rounded-2xl border border-[#DAD6DB] bg-[#FFFDFC] p-6">
   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#908A9B]">
     Current Skin Plan

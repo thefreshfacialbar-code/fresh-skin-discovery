@@ -230,7 +230,74 @@ if (!freshDeskCustomerId && customerPhone) {
 
   freshDeskCustomerId = matchingCustomer?.id ?? null;
 }
+// Create a Fresh Desk customer when no existing match is found.
+if (!freshDeskCustomerId && customerEmail?.trim()) {
+  const normalizedEmail = customerEmail.trim().toLowerCase();
 
+  // Recheck before creating to reduce duplicate creation.
+  const { data: existingCustomer, error: recheckError } =
+    await supabaseAdmin
+      .from("customers")
+      .select("id")
+      .eq("business_id", business.id)
+      .ilike("email", normalizedEmail)
+      .maybeSingle();
+
+  if (recheckError) {
+    throw new Error(
+      `Could not recheck customer for ${order.name}: ${recheckError.message}`
+    );
+  }
+
+  if (existingCustomer) {
+    freshDeskCustomerId = existingCustomer.id;
+  } else {
+    const { data: newCustomer, error: createError } =
+      await supabaseAdmin
+        .from("customers")
+        .insert({
+          business_id: business.id,
+          first_name: order.customer?.firstName ?? null,
+          last_name: order.customer?.lastName ?? null,
+          email: normalizedEmail,
+          mobile_phone: customerPhone,
+          first_interaction_at: order.createdAt,
+          last_interaction_at: order.createdAt,
+          active: true,
+        })
+        .select("id")
+        .single();
+
+    if (createError?.code === "23505") {
+  // Another request may have created this customer.
+  const { data: concurrentCustomer, error: lookupError } =
+    await supabaseAdmin
+      .from("customers")
+      .select("id")
+      .eq("business_id", business.id)
+      .ilike("email", normalizedEmail)
+      .maybeSingle();
+
+  if (lookupError || !concurrentCustomer) {
+    throw new Error(
+      `Could not recover customer for ${order.name}: ${
+        lookupError?.message ?? "Customer not found"
+      }`
+    );
+  }
+
+  freshDeskCustomerId = concurrentCustomer.id;
+} else if (createError || !newCustomer) {
+  throw new Error(
+    `Could not create customer for ${order.name}: ${
+      createError?.message ?? "No customer returned"
+    }`
+  );
+} else {
+  freshDeskCustomerId = newCustomer.id;
+}
+  }
+}
   const { data: importedOrder, error: orderError } = await supabaseAdmin
     .from("shopify_orders")
     .upsert(
