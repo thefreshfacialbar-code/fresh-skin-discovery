@@ -49,6 +49,7 @@ function convertEventTimeTo24Hour(
   return `${String(hour).padStart(2, "0")}:${minute}:00`;
 }
 export async function POST(request: Request) {
+  const testOrderNumber = new URL(request.url).searchParams.get("testOrder");
   const syncSecret = process.env.SHOPIFY_SYNC_SECRET;
   const providedSecret = request.headers.get("x-shopify-sync-secret");
 
@@ -76,6 +77,18 @@ if (businessError || !business) {
 }
   try {
     const orders = await getShopifyOrders();
+    if (
+  testOrderNumber &&
+  !orders.some((order) => order.name === testOrderNumber)
+) {
+  return Response.json(
+    {
+      success: false,
+      error: `Shopify order ${testOrderNumber} was not found.`,
+    },
+    { status: 404 }
+  );
+}
     const products = await getShopifyProducts();
 
 const eventProducts = products
@@ -90,6 +103,7 @@ const eventProducts = products
     variants: product.variants.nodes,
     metafields: product.metafields.nodes,
   }));
+  if (!testOrderNumber) {
   for (const product of products) {
   const eventVariant = product.variants.nodes.find((variant) =>
     variant.sku?.startsWith("EVENT-")
@@ -181,9 +195,12 @@ location_name: getMetafieldValue(
     );
   }
 }
+}
 let importedOrderCount = 0;
 
-for (const order of orders) {
+for (const order of orders.filter(
+  (order) => !testOrderNumber || order.name === testOrderNumber
+)) {
   const customerEmail =
     order.customer?.email ??
     order.email ??
