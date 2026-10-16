@@ -194,8 +194,28 @@ for (const order of orders) {
     order.phone ??
     null;
 let freshDeskCustomerId: string | null = null;
+const shopifyCustomerId =
+  order.customer?.id?.split("/").pop() ?? null;
 
-if (customerEmail) {
+if (shopifyCustomerId) {
+  const { data: identity, error: identityError } =
+    await supabaseAdmin
+      .from("customer_identities")
+      .select("customer_id")
+      .eq("source_system", "shopify")
+      .eq("source_customer_id", shopifyCustomerId)
+      .eq("match_status", "confirmed")
+      .maybeSingle();
+
+  if (identityError) {
+    throw new Error(
+      `Could not match Shopify identity for ${order.name}: ${identityError.message}`
+    );
+  }
+
+  freshDeskCustomerId = identity?.customer_id ?? null;
+}
+if (!freshDeskCustomerId && customerEmail) {
   const { data: matchingCustomer, error: customerError } =
     await supabaseAdmin
       .from("customers")

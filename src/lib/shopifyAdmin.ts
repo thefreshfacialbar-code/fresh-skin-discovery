@@ -150,11 +150,12 @@ export type ShopifyOrder = {
     };
   } | null;
   customer: {
-    firstName: string | null;
-    lastName: string | null;
-    email: string | null;
-    phone: string | null;
-  } | null;
+  id: string;
+  firstName: string | null;
+  lastName: string | null;
+  email: string | null;
+  phone: string | null;
+} | null;
   lineItems: {
     nodes: Array<{
       id: string;
@@ -288,10 +289,11 @@ variants(first: 25) {
                 }
 
                 customer {
-                  firstName
-                  lastName
-                  email
-                  phone
+                id
+                firstName
+                lastName
+                email
+                phone
                 }
 
                 lineItems(first: 100) {
