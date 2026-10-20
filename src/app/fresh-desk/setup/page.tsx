@@ -97,7 +97,7 @@ useEffect(() => {
           </p>
 
           <h1 className="mt-3 text-3xl font-semibold text-neutral-900">
-            Set Up Fresh Desk
+            Set Up Fresh 360
           </h1>
 
           <p className="mt-2 text-sm text-neutral-600">

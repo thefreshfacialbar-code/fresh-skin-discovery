@@ -20,7 +20,7 @@ const { data: employees, error } = await supabaseAdmin
   .order("last_name", { ascending: true })
   .order("first_name", { ascending: true });
   if (error) {
-  console.error("Fresh Desk employee list failed:", error);
+  console.error("Fresh 360 employee list failed:", error);
 
   return (
     <main className="min-h-screen bg-[#F8F5F0] px-6 py-10 text-[#2F2A28]">
@@ -46,7 +46,7 @@ const { data: employees, error } = await supabaseAdmin
   href="/fresh-desk"
   className="mb-6 inline-block text-sm font-semibold text-[#5A5553] hover:underline"
 >
-  ← Back to Fresh Desk
+  ← Back to Fresh 360
 </Link>
         <p className="text-sm font-semibold uppercase tracking-[0.22em] text-[#908A9B]">
           Fresh Facial Bar
@@ -60,7 +60,7 @@ const { data: employees, error } = await supabaseAdmin
         </h1>
 
         <p className="mt-3 text-[#5A5553]">
-          Manage Fresh Desk employee access and roles.
+          Manage Fresh 360 employee access and roles.
         </p>
         <FreshDeskEmployeeInviteForm />
         <div className="mt-8 space-y-4">

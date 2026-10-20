@@ -47,7 +47,7 @@ const { data: events, error: eventsError } = await supabaseAdmin
           href="/fresh-desk"
           className="inline-flex items-center text-sm font-semibold text-[#5A5553] transition hover:text-[#2F2A28]"
         >
-          ← Back to Fresh Desk
+          ← Back to Fresh 360
         </Link>
 
         <p className="mt-8 text-sm font-semibold uppercase tracking-[0.22em] text-[#908A9B]">

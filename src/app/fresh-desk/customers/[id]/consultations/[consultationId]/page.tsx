@@ -162,7 +162,7 @@ const allProductsReviewed =
   ← Back to Customer
 </Link>
         <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#908A9B]">
-          Fresh Desk
+          Fresh 360
         </p>
 
         <h1

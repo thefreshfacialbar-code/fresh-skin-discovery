@@ -44,7 +44,7 @@ export default function FreshDeskLoginPage() {
           </p>
 
           <h1 className="mt-3 text-3xl font-semibold text-neutral-900">
-            Fresh Desk
+            Fresh 360
           </h1>
 
           <p className="mt-2 text-sm text-neutral-600">

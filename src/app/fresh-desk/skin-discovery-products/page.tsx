@@ -66,7 +66,7 @@ const sortedProducts = [...(products ?? [])].sort((a, b) => {
   return (
     <main className="min-h-screen bg-[#F8F5F0] px-6 py-10">
       <Link href="/fresh-desk">
-        ← Back to Fresh Desk
+        ← Back to Fresh 360
       </Link>
 
       <h1 className="mt-8 text-4xl">

@@ -101,7 +101,7 @@ if (shopifyOrdersError) {
   className="mt-3 text-4xl"
           style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}
         >
-          Fresh Desk
+          Fresh 360
         </h1>
 
         <p className="mt-3 text-[#5A5553]">

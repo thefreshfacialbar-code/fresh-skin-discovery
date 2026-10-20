@@ -37,7 +37,7 @@ if (!employeeSession) {
           href="/fresh-desk"
           className="inline-flex items-center text-sm font-semibold text-[#5A5553] transition hover:text-[#2F2A28]"
         >
-          ← Back to Fresh Desk
+          ← Back to Fresh 360
         </Link>
 
         <h1 className="mt-4 text-3xl">Customer not found</h1>
@@ -199,10 +199,10 @@ const { data: skinPlanProducts } = latestSkinPlan
   href="/fresh-desk"
   className="inline-flex items-center text-sm font-semibold text-[#5A5553] transition hover:text-[#2F2A28]"
 >
-  ← Back to Fresh Desk
+  ← Back to Fresh 360
 </Link>
         <p className="text-sm font-semibold uppercase tracking-[0.22em] text-[#908A9B]">
-          Fresh Desk
+          Fresh 360
         </p>
 
    {error || !customer ? (
