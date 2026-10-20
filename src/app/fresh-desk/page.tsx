@@ -68,6 +68,22 @@ if (shopifyOrdersError) {
 >
   Events
 </Link>
+{employeeSession.employee.role === "owner_admin" && (
+  <Link
+    href="/fresh-desk/skin-discovery-products"
+    className="rounded-full border border-[#DAD6DB] bg-[#FFFDFC] px-4 py-2 text-sm font-semibold text-[#5A5553] transition hover:bg-[#F4F0EA]"
+  >
+    Skin Discovery Products
+  </Link>
+)}
+{employeeSession.employee.role === "owner_admin" && (
+  <Link
+    href="/fresh-desk/skin-discovery-products/batch-research"
+    className="rounded-full border border-[#DAD6DB] bg-[#FFFDFC] px-4 py-2 text-sm font-semibold text-[#5A5553] transition hover:bg-[#F4F0EA]"
+  >
+    Manufacturer Batch Research
+  </Link>
+)}
   {employeeSession.employee.role === "owner_admin" && (
     <Link
       href="/fresh-desk/employees"
