@@ -153,15 +153,6 @@ const profile = Array.isArray(rawProfile)
 
       <div>
         <p className="text-xs font-semibold uppercase text-[#77716D]">
-          Manufacturer Category
-        </p>
-        <p className="mt-1">
-          {vendorResearch.vendor_category || "Not provided"}
-        </p>
-      </div>
-
-      <div>
-        <p className="text-xs font-semibold uppercase text-[#77716D]">
           Manufacturer Description
         </p>
         <p className="mt-1 whitespace-pre-wrap text-sm">

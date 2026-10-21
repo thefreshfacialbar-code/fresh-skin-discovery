@@ -31,6 +31,16 @@ console.log("Vendor Lookup Product ID:", productId);
         }
       );
 
+      const contentType = response.headers.get("content-type") ?? "";
+
+      if (!contentType.includes("application/json")) {
+        setResult(
+          `Vendor lookup returned HTTP ${response.status} ` +
+          `(${contentType || "unknown content type"}) instead of JSON.`
+        );
+        return;
+      }
+
       const data = await response.json();
 
       setResult(
@@ -84,6 +94,16 @@ console.log("Vendor Lookup Product ID:", productId);
           }),
         }
       );
+
+      const contentType = response.headers.get("content-type") ?? "";
+
+      if (!contentType.includes("application/json")) {
+        setResult(
+          `Vendor lookup returned HTTP ${response.status} ` +
+          `(${contentType || "unknown content type"}) instead of JSON.`
+        );
+        return;
+      }
 
       const data = await response.json();
 
