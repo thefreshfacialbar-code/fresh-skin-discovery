@@ -13,6 +13,18 @@ export default function ProductVendorLookupTest({
   manufacturerProductId?: string | null;
 }) {
   const [result, setResult] = useState("");
+  const [lookupData, setLookupData] = useState<{
+    success?: boolean;
+    research?: {
+      vendorProductName?: string;
+      vendorDescription?: string;
+      vendorProductUrl?: string;
+      vendorName?: string;
+    } | null;
+    vendor?: {
+      name?: string;
+    };
+  } | null>(null);
   const [loading, setLoading] = useState(false);
 
   async function testLookup() {
@@ -42,6 +54,8 @@ console.log("Vendor Lookup Product ID:", productId);
       }
 
       const data = await response.json();
+
+      setLookupData(response.ok && data.success ? data : null);
 
       setResult(
         JSON.stringify(
@@ -107,6 +121,8 @@ console.log("Vendor Lookup Product ID:", productId);
 
       const data = await response.json();
 
+      setLookupData(response.ok && data.success ? data : null);
+
       setResult(
         JSON.stringify(
           { httpStatus: response.status, ...data },
@@ -144,10 +160,50 @@ console.log("Vendor Lookup Product ID:", productId);
     {loading ? "Resubmitting..." : "Resubmit Research"}
   </button>
 )}
+      {lookupData?.research && (
+        <section className="mt-4 rounded-xl border bg-white p-5">
+          <h3 className="text-lg font-semibold">
+            Manufacturer Lookup Results
+          </h3>
+          <h4 className="mt-5 text-sm font-semibold">
+            Manufacturer Description
+          </h4>
+          <p className="mt-2 whitespace-pre-wrap text-sm leading-6">
+            {lookupData.research.vendorDescription
+              ?.replace(/<[^>]*>/g, " ")
+              .replace(/&amp;/g, "&")
+              .trim() || "No manufacturer description available."}
+          </p>
+          <p className="mt-3 font-semibold">
+            {lookupData.research.vendorProductName || "Unknown product"}
+          </p>
+          <p className="mt-1 text-sm text-[#77716D]">
+            {lookupData.research.vendorName ||
+              lookupData.vendor?.name ||
+              "Unknown manufacturer"}
+          </p>
+          {lookupData.research.vendorProductUrl && (
+            <a
+              href={lookupData.research.vendorProductUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-4 inline-block text-sm font-semibold text-[#6F6578] underline"
+            >
+              View Manufacturer Product
+            </a>
+          )}
+        </section>
+      )}
+
       {result && (
-        <pre className="mt-3 overflow-x-auto rounded-lg bg-white p-4 text-xs">
-          {result}
-        </pre>
+        <details className="mt-3 rounded-lg border bg-white p-4">
+          <summary className="cursor-pointer text-sm font-semibold">
+            Technical Details
+          </summary>
+          <pre className="mt-3 overflow-x-auto whitespace-pre-wrap text-xs">
+            {result}
+          </pre>
+        </details>
       )}
     </div>
   );
