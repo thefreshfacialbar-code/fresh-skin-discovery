@@ -79,6 +79,18 @@ if (boulevardOrdersError) {
     `Could not load Boulevard purchase history: ${boulevardOrdersError.message}`
   );
 }
+const sortedBoulevardOrders = [...(boulevardOrders ?? [])].sort(
+  (a, b) => {
+    const dateA = a.completed_at ?? a.historical_order_date;
+    const dateB = b.completed_at ?? b.historical_order_date;
+
+    return (
+      new Date(dateB ?? 0).getTime() -
+      new Date(dateA ?? 0).getTime()
+    );
+  }
+);
+
 const boulevardOrderIds = (boulevardOrders ?? []).map(
   (order) => order.id
 );
@@ -229,7 +241,7 @@ const { data: skinPlanProducts } = latestSkinPlan
 
   {boulevardOrders && boulevardOrders.length > 0 ? (
     <div className="mt-5 space-y-3">
-      {boulevardOrders.map((order) => (
+      {sortedBoulevardOrders.map((order) => (
         <div
           key={order.id}
           className="rounded-xl border border-[#E6E0E3] bg-white p-4"
@@ -238,9 +250,11 @@ const { data: skinPlanProducts } = latestSkinPlan
             Order #{order.boulevard_order_number}
           </p>
 
-          {order.completed_at && (
+          {(order.completed_at || order.historical_order_date) && (
             <p className="mt-1 text-sm text-[#5A5553]">
-              {new Date(order.completed_at).toLocaleDateString("en-US")}
+              Order Date: {order.historical_order_date && !order.completed_at
+                ? new Date(`${order.historical_order_date}T12:00:00`).toLocaleDateString("en-US")
+                : new Date(order.completed_at).toLocaleDateString("en-US")}
             </p>
           )}
 
