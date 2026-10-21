@@ -4,6 +4,7 @@ import Link from "next/link";
 import FreshDeskEmployeeInviteForm from "@/components/FreshDeskEmployeeInviteForm";
 import { requireFreshDeskOwnerAdmin } from "@/lib/requireFreshDeskEmployee";
 import FreshDeskEmployeeStatusButton from "@/components/FreshDeskEmployeeStatusButton";
+import FreshDeskEmployeeRoleEditor from "@/components/FreshDeskEmployeeRoleEditor";
 
 export default async function FreshDeskEmployeesPage() {
   const employeeSession = await requireFreshDeskOwnerAdmin();
@@ -95,10 +96,16 @@ const { data: employees, error } = await supabaseAdmin
           </span>
         </p>
         {employee.id !== employeeSession.employee.id ? (
-  <FreshDeskEmployeeStatusButton
-    employeeId={employee.id}
-    active={employee.active}
-  />
+  <>
+    <FreshDeskEmployeeRoleEditor
+      employeeId={employee.id}
+      role={employee.role}
+    />
+    <FreshDeskEmployeeStatusButton
+      employeeId={employee.id}
+      active={employee.active}
+    />
+  </>
 ) : null}
       </div>
     ))
