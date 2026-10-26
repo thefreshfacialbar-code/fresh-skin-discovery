@@ -3,8 +3,8 @@ import {
   readStoredEnhancementRecommendation,
   writeEnhancementRecommendationToStorage,
 } from "@/lib/enhancementRecommendationSession";
-import { generateCgcProductRecommendation } from "@/lib/cgcProductRecommendationEngine";
 import { generateProductRecommendation } from "@/lib/productRecommendationEngine";
+
 import {
   readStoredProductRecommendation,
   writeProductRecommendationToStorage,
@@ -15,7 +15,43 @@ import type {
   ProductRecommendationResult,
 } from "@/types/productRecommendation";
 import type { RecommendationResult } from "@/types/recommendation";
+function createRecommendationFingerprint(
+  journeyRecommendation: RecommendationResult,
+  products: Product[],
+): string {
+  const selectedExperience =
+    typeof window !== "undefined"
+      ? window.sessionStorage.getItem("skinDiscoveryExperience")
+      : null;
 
+  return JSON.stringify({
+    selectedExperience:
+      selectedExperience ?? "fresh-facial-bar-lash-lounge",
+    resultType: journeyRecommendation.resultType,
+    primaryJourneys: journeyRecommendation.primaryJourneys,
+    secondaryJourney: journeyRecommendation.secondaryJourney,
+    selectedAnswers: journeyRecommendation.selectedAnswers,
+    products: products
+      .map((product) => ({
+        id: product.id,
+        name: product.name,
+        category: product.category,
+        primaryJourney: product.primaryJourney,
+        supportingJourney: product.supportingJourney,
+        role: product.role,
+        guestBenefit: product.guestBenefit,
+        usageType: product.usageType,
+        timing: product.timing,
+        frequency: product.frequency,
+        intensity: product.intensity,
+        excluded: product.excluded,
+        requiresFarmacistReview: product.requiresFarmacistReview,
+        calmSensitiveCaution: product.calmSensitiveCaution,
+        experienceRecommendations: product.experienceRecommendations,
+      }))
+      .sort((a, b) => a.id.localeCompare(b.id)),
+  });
+}
 function filterBrandSpecificRecommendations(
   enhancementRecommendations: RecommendedEnhancement[],
 ): RecommendedEnhancement[] {
@@ -55,21 +91,35 @@ function getProductRecommendationEngineResult(
     : null;
 
   if (selectedExperience === "gentlemens-corner") {
-    return generateCgcProductRecommendation({
-      journeyResult: journeyRecommendation,
-      selectedAnswers,
-    });
-  }
-const freshProducts = products?.filter(
-  (product) =>
-    !product.experienceIds ||
-    product.experienceIds.length === 0 ||
-    product.experienceIds.includes("fresh-facial-bar-lash-lounge"),
+  const cgcProducts = (products ?? []).filter((product) =>
+    product.experienceRecommendations?.some(
+      (recommendation) =>
+        recommendation.experienceId === "gentlemens-corner" &&
+        recommendation.assigned === true &&
+        recommendation.approvalStatus === "approved",
+    ),
+  );
+
+  return generateProductRecommendation({
+    journeyResult: journeyRecommendation,
+    selectedAnswers,
+    products: cgcProducts,
+    selectedExperience: "gentlemens-corner",
+  });
+}
+const freshProducts = products?.filter((product) =>
+  product.experienceRecommendations?.some(
+    (recommendation) =>
+      recommendation.experienceId === "fresh-facial-bar-lash-lounge" &&
+      recommendation.assigned === true &&
+      recommendation.approvalStatus === "approved",
+  ),
 );
  return generateProductRecommendation({
   journeyResult: journeyRecommendation,
   selectedAnswers,
-  products: freshProducts,
+  selectedExperience: "fresh-facial-bar-lash-lounge",
+  products: freshProducts ?? [],
 });
 }
 
@@ -79,18 +129,33 @@ const freshProducts = products?.filter(
     journeyRecommendation: RecommendationResult,
     products?: Product[],
   ): SkinDiscoveryRecommendationBundle {
-    const storedProductRecommendation = readStoredProductRecommendation();
-    const storedEnhancementRecommendations = readStoredEnhancementRecommendation();
-    const selectedAnswers = readSelectedAnswers(journeyRecommendation);
+    const fingerprint = createRecommendationFingerprint(
+  journeyRecommendation,
+  products ?? [],
+);
 
-    const productRecommendation = storedProductRecommendation ?? getProductRecommendationEngineResult(
+const storedProductRecommendation =
+  readStoredProductRecommendation(fingerprint);
+
+const storedEnhancementRecommendations =
+  readStoredEnhancementRecommendation();
+
+const selectedAnswers = readSelectedAnswers(journeyRecommendation);
+
+const productRecommendation =
+  storedProductRecommendation ??
+  getProductRecommendationEngineResult(
     journeyRecommendation,
     selectedAnswers,
     products,
   );
-    if (!storedProductRecommendation) {
-      writeProductRecommendationToStorage(productRecommendation);
-    }
+
+if (!storedProductRecommendation) {
+  writeProductRecommendationToStorage(
+    productRecommendation,
+    fingerprint,
+  );
+}
 
     const enhancementRecommendations = filterBrandSpecificRecommendations(
       storedEnhancementRecommendations.length > 0

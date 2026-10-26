@@ -96,6 +96,10 @@ export const productCatalog: Product[] = [
   {
     id: "watermelonaid",
     name: "Watermelonaid",
+    eligibilityRules: {
+  version: 1,
+  policy: "renew_quench_hydration",
+},
     category: "Serum & Treatment",
     primaryJourney: "renew",
     supportingJourney: "quench",
@@ -522,6 +526,10 @@ export const productCatalog: Product[] = [
   {
     id: "necks-level-smooth",
     name: "Necks-Level Smooth",
+    eligibilityRules: {
+  version: 1,
+  policy: "renew_targeted",
+},
     category: "Neck & Décolleté",
     primaryJourney: "renew",
     supportingJourney: "quench",

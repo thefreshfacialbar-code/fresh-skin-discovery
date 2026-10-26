@@ -4,7 +4,20 @@ import test from "node:test";
 import { buildSkinDiscoverySubmission } from "@/lib/skinDiscoverySubmission";
 import { readOrCreateSkinDiscoveryRecommendations } from "@/lib/skinDiscoveryRecommendations";
 import type { RecommendationResult } from "@/types/recommendation";
+import { productCatalog } from "@/data/productCatalog";
+import type { Product } from "@/types/productRecommendation";
 
+const approvedFreshProducts: Product[] = productCatalog.map((product) => ({
+  ...product,
+  experienceRecommendations: [
+    {
+      experienceId: "fresh-facial-bar-lash-lounge",
+      assigned: true,
+      approvalStatus: "approved",
+      recommendationPriority: 100,
+    },
+  ],
+}));
 function normalizeForStorageRoundTrip<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
 }
@@ -52,8 +65,15 @@ test("completed submission includes featured product ids when recommendations ar
   });
 
   try {
-    const first = readOrCreateSkinDiscoveryRecommendations(journeyRecommendation);
-    const second = readOrCreateSkinDiscoveryRecommendations(journeyRecommendation);
+   const first = readOrCreateSkinDiscoveryRecommendations(
+  journeyRecommendation,
+  approvedFreshProducts,
+);
+
+const second = readOrCreateSkinDiscoveryRecommendations(
+  journeyRecommendation,
+  approvedFreshProducts,
+);
 
     assert.deepEqual(second.productRecommendation, normalizeForStorageRoundTrip(first.productRecommendation));
     assert.deepEqual(second.enhancementRecommendations, normalizeForStorageRoundTrip(first.enhancementRecommendations));
@@ -88,6 +108,178 @@ test("completed submission includes featured product ids when recommendations ar
     assert.ok(submission.productRecommendations.featured.treat);
     assert.ok(submission.productRecommendations.featured.moisturize);
     assert.ok(submission.productRecommendations.featured.protect);
+  } finally {
+    if (previousWindow === undefined) {
+      Reflect.deleteProperty(globalThis, "window");
+    } else {
+      Object.defineProperty(globalThis, "window", {
+        configurable: true,
+        value: previousWindow,
+      });
+    }
+  }
+});
+test("revoking product approval invalidates cached recommendations", () => {
+  const previousWindow = globalThis.window;
+  const memoryStorage = new MemoryStorage();
+
+  Object.defineProperty(globalThis, "window", {
+    configurable: true,
+    value: { sessionStorage: memoryStorage },
+  });
+
+  try {
+    memoryStorage.setItem(
+      "skinDiscoveryExperience",
+      "fresh-facial-bar-lash-lounge",
+    );
+
+    const first = readOrCreateSkinDiscoveryRecommendations(
+      journeyRecommendation,
+      approvedFreshProducts,
+    );
+
+    const cleanserId = first.productRecommendation.featured.cleanse?.productId;
+    assert.ok(cleanserId);
+
+    const updatedProducts = approvedFreshProducts.map((product) =>
+      product.id === cleanserId
+        ? {
+            ...product,
+            experienceRecommendations: [
+              {
+                experienceId: "fresh-facial-bar-lash-lounge",
+                assigned: true,
+                approvalStatus: "rejected" as const,
+                recommendationPriority: 100 as const,
+              },
+            ],
+          }
+        : product,
+    );
+
+    const second = readOrCreateSkinDiscoveryRecommendations(
+      journeyRecommendation,
+      updatedProducts,
+    );
+
+    assert.notEqual(
+      second.productRecommendation.featured.cleanse?.productId,
+      cleanserId,
+      "A rejected product must not remain recommended from the cache",
+    );
+  } finally {
+    if (previousWindow === undefined) {
+      Reflect.deleteProperty(globalThis, "window");
+    } else {
+      Object.defineProperty(globalThis, "window", {
+        configurable: true,
+        value: previousWindow,
+      });
+    }
+  }
+});
+test("switching experiences invalidates cached recommendations", () => {
+  const previousWindow = globalThis.window;
+  const memoryStorage = new MemoryStorage();
+
+  Object.defineProperty(globalThis, "window", {
+    configurable: true,
+    value: { sessionStorage: memoryStorage },
+  });
+
+  try {
+    memoryStorage.setItem(
+      "skinDiscoveryExperience",
+      "fresh-facial-bar-lash-lounge",
+    );
+
+    const fresh = readOrCreateSkinDiscoveryRecommendations(
+      journeyRecommendation,
+      approvedFreshProducts,
+    );
+
+    assert.ok(fresh.productRecommendation.featured.cleanse?.productId);
+
+    memoryStorage.setItem(
+      "skinDiscoveryExperience",
+      "gentlemens-corner",
+    );
+
+    const cgc = readOrCreateSkinDiscoveryRecommendations(
+      journeyRecommendation,
+      approvedFreshProducts,
+    );
+
+    assert.equal(
+      cgc.productRecommendation.featured.cleanse,
+      null,
+      "Fresh-only products must not be recommended for Gentlemen's Corner",
+    );
+  } finally {
+    if (previousWindow === undefined) {
+      Reflect.deleteProperty(globalThis, "window");
+    } else {
+      Object.defineProperty(globalThis, "window", {
+        configurable: true,
+        value: previousWindow,
+      });
+    }
+  }
+});
+test("changing customer answers invalidates cached recommendations", () => {
+  const previousWindow = globalThis.window;
+  const memoryStorage = new MemoryStorage();
+
+  Object.defineProperty(globalThis, "window", {
+    configurable: true,
+    value: { sessionStorage: memoryStorage },
+  });
+
+  try {
+    memoryStorage.setItem(
+      "skinDiscoveryExperience",
+      "fresh-facial-bar-lash-lounge",
+    );
+
+    readOrCreateSkinDiscoveryRecommendations(
+      journeyRecommendation,
+      approvedFreshProducts,
+    );
+
+    const firstCache = memoryStorage.getItem(
+      "skinDiscoveryProductRecommendations",
+    );
+
+    assert.ok(firstCache);
+
+    const updatedJourney: RecommendationResult = {
+      ...journeyRecommendation,
+      selectedAnswers: {
+        ...journeyRecommendation.selectedAnswers,
+        primaryMotivation: "clear",
+      },
+    };
+
+    readOrCreateSkinDiscoveryRecommendations(
+      updatedJourney,
+      approvedFreshProducts,
+    );
+
+    const secondCache = memoryStorage.getItem(
+      "skinDiscoveryProductRecommendations",
+    );
+
+    assert.ok(secondCache);
+
+    const firstFingerprint = JSON.parse(firstCache).fingerprint;
+    const secondFingerprint = JSON.parse(secondCache).fingerprint;
+
+    assert.notEqual(
+      secondFingerprint,
+      firstFingerprint,
+      "Changing customer answers must invalidate the cached recommendation",
+    );
   } finally {
     if (previousWindow === undefined) {
       Reflect.deleteProperty(globalThis, "window");

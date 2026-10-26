@@ -77,6 +77,7 @@ export default function RecommendationsPage() {
   const router = useRouter();
   const isCurated = getSelectedExperience() === "gentlemens-corner";
   const [isHydrated, setIsHydrated] = useState(false);
+  const [catalogError, setCatalogError] = useState(false);
   const [productRecommendation, setProductRecommendation] = useState<ProductRecommendationResult | null>(null);
   const [enhancementRecommendations, setEnhancementRecommendations] = useState<RecommendedEnhancement[]>([]);
 
@@ -93,11 +94,16 @@ export default function RecommendationsPage() {
 
 try {
   products = await fetchProductCatalog();
+  setCatalogError(false);
 } catch (error) {
   console.error(
-    "Could not load Supabase product catalog. Using fallback catalog.",
+    "Could not load Supabase product catalog.",
     error,
   );
+
+  setCatalogError(true);
+  setIsHydrated(true);
+  return;
 }
 
 const generatedRecommendations =
@@ -136,7 +142,38 @@ const generatedRecommendations =
       </main>
     );
   }
+if (catalogError) {
+  return (
+    <main className="min-h-screen bg-[#FAF7F1] px-5 py-8 text-[#302C2A] sm:px-8 md:py-12">
+      <div className="mx-auto max-w-4xl rounded-[2rem] border border-[#DAD6DB] bg-[#FFFDFC] p-8 text-center shadow-[0_20px_60px_rgba(61,52,48,0.06)] sm:p-12">
+        <h1
+          className="text-4xl leading-tight sm:text-5xl"
+          style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}
+        >
+          Your Fresh Picks are almost ready.
+        </h1>
 
+        <p className="mt-6 text-base leading-8 text-[#5A5553] sm:text-lg">
+          We're having a little trouble loading our skincare collection.
+          Your Skin Discovery answers are still here.
+          Please try again in a moment.
+        </p>
+
+        <button
+          type="button"
+          onClick={() => window.location.reload()}
+          className={`mt-8 inline-flex items-center justify-center rounded-full px-8 py-4 text-sm font-semibold uppercase tracking-[0.16em] text-white ${
+            isCurated
+              ? "bg-[#24201F] hover:bg-[#3B3532]"
+              : "bg-[#908A9B] hover:bg-[#817B8B]"
+          }`}
+        >
+          Try Again
+        </button>
+      </div>
+    </main>
+  );
+}
   if (!productRecommendation) {
     return (
       <main className="min-h-screen bg-[#FAF7F1] px-5 py-8 text-[#302C2A] sm:px-8 md:py-12">

@@ -44,6 +44,7 @@ export default function ContactCapturePage() {
     return readStoredContact() ?? initialContactState;
   });
   const [errors, setErrors] = useState<Partial<Record<keyof SkinDiscoveryContact, string>>>({});
+  const [catalogError, setCatalogError] = useState(false);
 
   const journeySummary = useMemo(() => readJourneySummary(), []);
   const recommendation = useMemo(() => readStoredRecommendation(), []);
@@ -90,11 +91,15 @@ let products;
 
 try {
   products = await fetchProductCatalog();
+  setCatalogError(false);
 } catch (error) {
   console.error(
-    "Could not load Supabase product catalog. Using fallback catalog.",
+    "Could not load Supabase product catalog.",
     error,
   );
+
+  setCatalogError(true);
+  return;
 }
     const {
       productRecommendation,
@@ -242,7 +247,15 @@ try {
             >
               REVEAL MY SKIN JOURNEY →
             </button>
-
+{catalogError && (
+  <p
+    role="alert"
+    className="max-w-lg text-center text-sm leading-6 text-[#7D3F3D]"
+  >
+    We're having trouble loading our skincare collection.
+    Your information is still here. Please try again in a moment.
+  </p>
+)}
             <p className="mt-2 text-center text-base font-medium leading-7 text-[#5A5553] sm:text-lg">
               {isCurated
                 ? "Your Skin Journey + curated routine are waiting on the other side."

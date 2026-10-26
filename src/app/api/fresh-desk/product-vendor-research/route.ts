@@ -193,8 +193,17 @@ let selectedManufacturerResearch: Awaited<
   ReturnType<typeof fetchVendorProduct>
 > | null = null;
 let manufacturerSearchResults = null;
-
-if (product.brand === "FHF") {
+console.log("Manufacturer lookup debug:", {
+  productBrand: product.brand,
+  vendorWebsite: vendor.website_url,
+  searchEnabled:
+    product.brand === "FHF" ||
+    product.brand === "TiZo",
+});
+if (
+  product.brand === "FHF" ||
+  product.brand === "TiZo"
+) {
   try {
     manufacturerSearchResults = await searchVendorProducts(
       vendor.website_url,
@@ -205,7 +214,10 @@ if (product.brand === "FHF") {
   }
 }
 if (hasSelectedManufacturerProduct) {
-  if (product.brand !== "FHF" || !manufacturerSearchResults) {
+  if (
+  !["FHF", "TiZo"].includes(product.brand) ||
+  !manufacturerSearchResults
+) {
     return NextResponse.json(
       {
         success: false,
@@ -235,11 +247,25 @@ if (hasSelectedManufacturerProduct) {
   manufacturerSearchResults
 );
 
-const isEligibleMatch = eligibleMatches.some(
-  (match) =>
-    String(match.manufacturerProductId) ===
-    String(selectedMatch.manufacturerProductId)
-);
+const normalizedBrand = (value: string) =>
+  value.toLowerCase().replace(/[^a-z0-9]/g, "");
+
+const vendorBrand = normalizedBrand(vendor.vendor_name);
+const productBrand = normalizedBrand(product.brand);
+
+const isEligibleMatch =
+  eligibleMatches.some(
+    (match) =>
+      String(match.manufacturerProductId) ===
+      String(selectedMatch.manufacturerProductId)
+  ) ||
+  (
+    productBrand === vendorBrand &&
+    (
+      vendorBrand === "tizo" ||
+      vendorBrand === "sorella"
+    )
+  );
 
 if (!isEligibleMatch) {
   return NextResponse.json(

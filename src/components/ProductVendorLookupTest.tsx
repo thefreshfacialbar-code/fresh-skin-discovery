@@ -15,6 +15,13 @@ export default function ProductVendorLookupTest({
   const [result, setResult] = useState("");
   const [lookupData, setLookupData] = useState<{
     success?: boolean;
+    manufacturerSearchResults?: {
+  manufacturerProductId: string;
+  manufacturerName: string;
+  manufacturerHandle: string;
+  manufacturerBrand: string;
+  manufacturerUrl: string;
+}[] | null;
     research?: {
       vendorProductName?: string;
       vendorDescription?: string;
@@ -26,6 +33,10 @@ export default function ProductVendorLookupTest({
     };
   } | null>(null);
   const [loading, setLoading] = useState(false);
+  const [
+  selectedManufacturerProductId,
+  setSelectedManufacturerProductId,
+] = useState<string>("");
 
   async function testLookup() {
     setLoading(true);
@@ -74,6 +85,53 @@ console.log("Vendor Lookup Product ID:", productId);
       setLoading(false);
     }
   }
+  async function saveSelectedManufacturer() {
+  if (!selectedManufacturerProductId) {
+    setResult("Please select a manufacturer product.");
+    return;
+  }
+
+  setLoading(true);
+  setResult("");
+
+  try {
+    const response = await fetch(
+      "/api/fresh-desk/product-vendor-research",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          productId,
+          manufacturerProductId: selectedManufacturerProductId,
+        }),
+      }
+    );
+
+    const data = await response.json();
+
+    setResult(
+      JSON.stringify(
+        { httpStatus: response.status, ...data },
+        null,
+        2
+      )
+    );
+
+    if (response.ok && data.success) {
+      setLookupData(data);
+    }
+  } catch (error) {
+    setResult(
+      error instanceof Error
+        ? error.message
+        : "Could not save manufacturer research."
+    );
+  } finally {
+    setLoading(false);
+  }
+}
   async function resubmitResearch() {
     if (
       researchStatus !== "rejected" ||
@@ -160,6 +218,54 @@ console.log("Vendor Lookup Product ID:", productId);
     {loading ? "Resubmitting..." : "Resubmit Research"}
   </button>
 )}
+{lookupData?.manufacturerSearchResults &&
+  lookupData.manufacturerSearchResults.length > 0 && (
+    <section className="mt-4 rounded-xl border bg-white p-5">
+      <h3 className="text-lg font-semibold">
+        Select Manufacturer Product
+      </h3>
+
+      <p className="mt-2 text-sm text-[#77716D]">
+        Select the verified manufacturer product that matches
+        your Skin Discovery product.
+      </p>
+
+      <select
+        value={selectedManufacturerProductId}
+        onChange={(event) =>
+          setSelectedManufacturerProductId(event.target.value)
+        }
+        className="mt-4 w-full rounded-lg border border-[#C8BDB3] px-3 py-2 text-sm"
+      >
+        <option value="">
+          Choose a manufacturer product
+        </option>
+
+        {lookupData.manufacturerSearchResults.map((product) => (
+          <option
+            key={product.manufacturerProductId}
+            value={product.manufacturerProductId}
+          >
+            {product.manufacturerName} — {product.manufacturerBrand}
+          </option>
+        ))}
+      </select>
+<button
+  type="button"
+  onClick={saveSelectedManufacturer}
+  disabled={loading || !selectedManufacturerProductId}
+  className="mt-4 rounded-lg bg-[#2F2A28] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+>
+  {loading ? "Saving..." : "Save as Draft Research"}
+</button>
+      {selectedManufacturerProductId && (
+        <p className="mt-3 text-sm text-[#77716D]">
+          Selected manufacturer product ID:{" "}
+          {selectedManufacturerProductId}
+        </p>
+      )}
+    </section>
+  )}
       {lookupData?.research && (
         <section className="mt-4 rounded-xl border bg-white p-5">
           <h3 className="text-lg font-semibold">

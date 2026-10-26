@@ -248,9 +248,15 @@ export function findPotentialVendorProductMatches(
     const normalizedCandidate =
       normalizeVendorProductName(candidate.manufacturerName);
 
-    const brandMatches =
-      normalizeVendorProductName(candidate.manufacturerBrand) ===
-      normalizedVendor;
+    const normalizedCandidateBrand =
+  normalizeVendorProductName(candidate.manufacturerBrand);
+
+const brandMatches =
+  normalizedCandidateBrand === normalizedVendor ||
+  (
+    normalizedVendor === "tizo" &&
+    normalizedCandidateBrand === "tizoskin"
+  );
 
     const nameStartsWithCandidate =
       normalizedCandidate.length >= 8 &&

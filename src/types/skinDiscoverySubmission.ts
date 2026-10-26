@@ -45,6 +45,11 @@ export type SkinDiscoverySubmission = {
   };
 
   enhancementRecommendations: string[];
+  enhancementDetails?: {
+    id: string;
+    name: string;
+    guestBenefit: string | null;
+  }[];
 
   actions: {
     booked: boolean | null;

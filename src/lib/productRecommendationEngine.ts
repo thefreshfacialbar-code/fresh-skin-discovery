@@ -1,4 +1,4 @@
-import { productCatalog, PRODUCT_EXCLUSIONS } from "@/data/productCatalog";
+// Product data and exclusions are supplied by Supabase.
 
 import type {
   Product,
@@ -7,8 +7,10 @@ import type {
   RecommendedProduct,
 } from "@/types/productRecommendation";
 import type { JourneyId, RecommendationResult } from "@/types/recommendation";
+import {
+  evaluateProductEligibility,
+} from "@/lib/productEligibilityPolicies";
 
-export { PRODUCT_EXCLUSIONS };
 
 const FEATURED_SLOT_MAP: Record<"cleanse" | "treat" | "moisturize" | "protect", ProductCategory> = {
   cleanse: "Cleanser",
@@ -18,12 +20,7 @@ const FEATURED_SLOT_MAP: Record<"cleanse" | "treat" | "moisturize" | "protect", 
 };
 
 const TARGETED_TREATMENT_CATEGORIES: ProductCategory[] = ["Serum & Treatment", "Exfoliant", "Mask"];
-const PURIFY_TREATMENT_PRIORITY = new Set([
-  "C of Change Salicylic Peel Pads",
-  "Sanded Ground Mask",
-  "Matcha Purity Mask",
-  "Illumination Fruit Pro Strength Acid Peel Mask",
-]);
+
 
 function isStrongCalmReactive(selectedAnswers: { primaryMotivation: string | null; skinExperience: string[]; desiredOutcomes: string[] }): boolean {
   const answerSet = normalizeSelectedAnswers(selectedAnswers);
@@ -35,7 +32,8 @@ function normalizeSelectedAnswers(selectedAnswers: {
   primaryMotivation: string | null;
   skinExperience: string[];
   desiredOutcomes: string[];
-}) {
+}) 
+{
   const values = [
     selectedAnswers.primaryMotivation,
     ...selectedAnswers.skinExperience,
@@ -44,60 +42,36 @@ function normalizeSelectedAnswers(selectedAnswers: {
 
   return new Set(values);
 }
-
-function hasExplicitAgingSignal(selectedAnswers: { primaryMotivation: string | null; skinExperience: string[]; desiredOutcomes: string[] }): boolean {
-  const answerSet = normalizeSelectedAnswers(selectedAnswers);
-  return [...answerSet].some((answer) => ["aging", "fine-lines-texture", "feel-firmer-smoother"].includes(answer));
-}
-
-function isNecksLevelEligible(
+function isSupabasePolicyEligible(
+  product: Product,
   primaryJourneys: JourneyId[],
   secondaryJourney: JourneyId | null,
-  selectedAnswers: { primaryMotivation: string | null; skinExperience: string[]; desiredOutcomes: string[] },
+  selectedAnswers: {
+    primaryMotivation: string | null;
+    skinExperience: string[];
+    desiredOutcomes: string[];
+  },
 ): boolean {
-  const primarySet = new Set(primaryJourneys);
-
-  if (primarySet.has("renew")) {
+  if (!product.eligibilityRules) {
     return true;
   }
 
-  if (primarySet.has("illuminate") && secondaryJourney === "renew") {
-    return true;
-  }
-
-  if (secondaryJourney === "renew" && hasExplicitAgingSignal(selectedAnswers)) {
-    return true;
-  }
-
-  return false;
+  return evaluateProductEligibility(
+    product.eligibilityRules,
+    {
+      primaryJourneys,
+      secondaryJourney,
+      selectedAnswers: [
+        ...normalizeSelectedAnswers(selectedAnswers),
+      ],
+    }
+  );
 }
 
-function isWatermelonaidEligible(
-  primaryJourneys: JourneyId[],
-  secondaryJourney: JourneyId | null,
-  selectedAnswers: { primaryMotivation: string | null; skinExperience: string[]; desiredOutcomes: string[] },
-): boolean {
-  const answerSet = normalizeSelectedAnswers(selectedAnswers);
-  const primarySet = new Set(primaryJourneys);
-  const hydrationAgingSignals = [
-    "dry-dehydrated",
-    "tight-after-cleansing",
-    "dry-throughout-day",
-    "feel-more-hydrated",
-    "aging",
-    "fine-lines-texture",
-    "feel-firmer-smoother",
-  ];
 
-  if (primarySet.has("calm") || primarySet.has("purify") || primarySet.has("illuminate") || secondaryJourney === "calm" || secondaryJourney === "purify" || secondaryJourney === "illuminate") {
-    return false;
-  }
 
-  const renewQuenchSupported = primarySet.has("renew") || primarySet.has("quench") || secondaryJourney === "renew" || secondaryJourney === "quench";
-  const hasHydrationAgingSignal = [...answerSet].some((answer) => hydrationAgingSignals.includes(answer));
 
-  return renewQuenchSupported && hasHydrationAgingSignal;
-}
+
 
 function createMatchReasons(product: Product, primaryJourneys: JourneyId[], secondaryJourney: JourneyId | null) {
   const reasons: string[] = [];
@@ -176,7 +150,7 @@ function scoreProduct(
   let score = 0;
 
   const primarySet = new Set(primaryJourneys);
-  const strongCalmReactive = isStrongCalmReactive(selectedAnswers);
+ 
 
   if (primarySet.has(product.primaryJourney)) {
     score += 10;
@@ -197,32 +171,14 @@ function scoreProduct(
     score += 3;
   }
 
-  if (primarySet.has("purify") || secondaryJourney === "purify") {
-    if (product.primaryJourney === "purify" || product.supportingJourney === "purify") {
-      score += 10;
-    }
-
-    if (PURIFY_TREATMENT_PRIORITY.has(product.name)) {
-      score += 12;
-    }
-
-    if (product.name === "Illumination Fruit Pro Strength Acid Peel Mask" && !strongCalmReactive) {
-      score += 4;
-    }
-
-    if (product.name === "Watermelonaid") {
-      score -= secondaryJourney === "quench" ? 7 : 14;
-    }
+ if (primarySet.has("purify") || secondaryJourney === "purify") {
+  if (
+    product.primaryJourney === "purify" ||
+    product.supportingJourney === "purify"
+  ) {
+    score += 10;
   }
-
-  if (strongCalmReactive) {
-    if (["C of Change Salicylic Peel Pads", "Illumination Fruit Pro Strength Acid Peel Mask"].includes(product.name)) {
-      score -= 28;
-    }
-    if (product.name === "Sanded Ground Mask") {
-      score -= 12;
-    }
-  }
+}
 
   const hydrationSignals = [
     "dry-dehydrated",
@@ -288,14 +244,35 @@ function scoreProduct(
 
   return score;
 }
+function getExperiencePriority(
+  product: Product,
+  selectedExperience?: string,
+): number {
+  if (!selectedExperience) {
+    return 100;
+  }
 
+  const recommendation = product.experienceRecommendations?.find(
+    (item) =>
+      item.experienceId === selectedExperience &&
+      item.assigned === true &&
+      item.approvalStatus === "approved",
+  );
+
+  return recommendation?.recommendationPriority ?? 100;
+}
 function pickFeaturedProduct(
   slot: "cleanse" | "treat" | "moisturize" | "protect",
   eligible: Product[],
   selectedIds: Set<string>,
   primaryJourneys: JourneyId[],
   secondaryJourney: JourneyId | null,
-  selectedAnswers: { primaryMotivation: string | null; skinExperience: string[]; desiredOutcomes: string[] },
+  selectedAnswers: {
+    primaryMotivation: string | null;
+    skinExperience: string[];
+    desiredOutcomes: string[];
+  },
+  selectedExperience?: string,
 ): RecommendedProduct | null {
   const category = FEATURED_SLOT_MAP[slot];
   const answerSet = normalizeSelectedAnswers(selectedAnswers);
@@ -303,7 +280,9 @@ function pickFeaturedProduct(
     if (selectedIds.has(product.id)) {
       return false;
     }
-
+if (product.featuredEligible === false) {
+  return false;
+}
     if (slot === "treat") {
       if (!TARGETED_TREATMENT_CATEGORIES.includes(product.category)) {
         return false;
@@ -318,73 +297,98 @@ function pickFeaturedProduct(
     if (product.requiresFarmacistReview && slot !== "treat") {
       return false;
     }
-    return !PRODUCT_EXCLUSIONS.includes(product.name);
+    return product.excluded !== true;
   });
 
   if (slot === "treat") {
-    const strongCalmReactive = isStrongCalmReactive(selectedAnswers);
-    const calmContext = primaryJourneys.includes("calm") || secondaryJourney === "calm";
-    const purifyContext = primaryJourneys.includes("purify") || secondaryJourney === "purify";
+  const strongCalmReactive = isStrongCalmReactive(selectedAnswers);
+  const calmContext =
+    primaryJourneys.includes("calm") ||
+    secondaryJourney === "calm";
 
-    if (strongCalmReactive) {
-      pool = pool.filter(
-        (product) =>
-          !["C of Change Salicylic Peel Pads", "Illumination Fruit Pro Strength Acid Peel Mask"].includes(product.name),
-      );
-    }
+  const purifyContext =
+    primaryJourneys.includes("purify") ||
+    secondaryJourney === "purify";
 
-    if (calmContext) {
-      pool = pool.filter((product) => {
-        const calmFriendlyNames = new Set(["Green Fixer Calming Elixir", "Cactus Cloudsilk Serum", "Matcha Purity Mask"]);
-        return calmFriendlyNames.has(product.name) || product.primaryJourney === "calm" || product.supportingJourney === "calm";
-      });
-    }
-
-    if (purifyContext) {
-      pool = pool.filter((product) => product.name !== "Watermelonaid");
-    }
-
-    pool = pool.filter((product) => {
-      if (product.name === "Watermelonaid") {
-        return isWatermelonaidEligible(primaryJourneys, secondaryJourney, selectedAnswers);
-      }
-
-      if (product.name === "Necks-Level Smooth") {
-        return isNecksLevelEligible(primaryJourneys, secondaryJourney, selectedAnswers);
-      }
-
-      return true;
-    });
+  if (strongCalmReactive) {
+    pool = pool.filter(
+      (product) =>
+        product.intensity <= 2 &&
+        product.calmSensitiveCaution !== true
+    );
   }
 
+  
+
+  pool = pool.filter((product) => {
+    if (
+      !isSupabasePolicyEligible(
+        product,
+        primaryJourneys,
+        secondaryJourney,
+        selectedAnswers
+      )
+    ) {
+      return false;
+    }
+
+    // Preserve existing product-specific safeguards.
+    
+
+    
+
+    return true;
+  });
+}
   if (slot === "protect") {
-    pool = pool.filter((product) => product.category === "Sun Protection");
+  pool = pool.filter(
+    (product) => product.category === "Sun Protection",
+  );
 
-    const strongCalm = [...answerSet].some((answer) => ["sensitive", "easily-irritated", "reacts-to-products", "feel-calmer"].includes(answer));
-    if (strongCalm) {
-      pool = pool.filter((product) => product.name === "TiZO Ultra Zinc Non Tinted Sunscreen Face & Body SPF 40");
-    } else {
-      const quenchPrimary = primaryJourneys.includes("quench") || secondaryJourney === "quench";
-      if (quenchPrimary) {
-        pool = pool.filter((product) => product.name === "AM Replenish Non Tinted SPF 40");
-      } else {
-        pool = pool.filter((product) =>
-          product.name === "Tizo Primer/Sunscreen Non-Tinted SPF 40" ||
-          product.name === "TiZO Ultra Zinc Non Tinted Sunscreen Face & Body SPF 40",
-        );
-      }
-    }
+  const strongCalm = [...answerSet].some((answer) =>
+    [
+      "sensitive",
+      "easily-irritated",
+      "reacts-to-products",
+      "feel-calmer",
+    ].includes(answer),
+  );
+
+  if (strongCalm) {
+    pool = pool.filter(
+      (product) =>
+        product.intensity <= 2 &&
+        product.calmSensitiveCaution !== true,
+    );
   }
+}
 
   if (pool.length === 0) {
     return null;
   }
 
-  const ranked = [...pool].sort((left, right) => {
-    const a = scoreProduct(left, primaryJourneys, secondaryJourney, selectedAnswers);
-    const b = scoreProduct(right, primaryJourneys, secondaryJourney, selectedAnswers);
-    return b - a;
-  });
+  const scored = pool.map((product) => ({
+  product,
+  score: scoreProduct(
+    product,
+    primaryJourneys,
+    secondaryJourney,
+    selectedAnswers,
+  ),
+}));
+
+const highestScore = Math.max(...scored.map((item) => item.score));
+
+const ranked = scored
+  .filter((item) => highestScore - item.score <= 2)
+  .sort((left, right) => {
+    const priorityDifference =
+      getExperiencePriority(right.product, selectedExperience) -
+      getExperiencePriority(left.product, selectedExperience);
+
+    return priorityDifference || right.score - left.score;
+  })
+  .map((item) => item.product);
 
   const winner = ranked[0];
   selectedIds.add(winner.id);
@@ -407,6 +411,7 @@ function buildMoreFreshPicks(
   primaryJourneys: JourneyId[],
   secondaryJourney: JourneyId | null,
   selectedAnswers: { primaryMotivation: string | null; skinExperience: string[]; desiredOutcomes: string[] },
+  selectedExperience?: string,
 ): RecommendedProduct[] {
   const optionalCategories: ProductCategory[] = [
     "Tonic",
@@ -422,43 +427,112 @@ function buildMoreFreshPicks(
 
   const pool = [...eligible]
     .filter((product) => !selectedIds.has(product.id))
-    .filter((product) => !PRODUCT_EXCLUSIONS.includes(product.name))
-    .filter((product) => {
-      if (product.name === "Necks-Level Smooth") {
-        return isNecksLevelEligible(primaryJourneys, secondaryJourney, selectedAnswers);
-      }
-
-      if (product.name === "Watermelonaid") {
-        return isWatermelonaidEligible(primaryJourneys, secondaryJourney, selectedAnswers);
-      }
-
+    .filter((product) => product.excluded !== true)
+      .filter((product) => {
+    if (!isStrongCalmReactive(selectedAnswers)) {
       return true;
-    })
+    }
+
+    return (
+      product.intensity <= 2 &&
+      product.calmSensitiveCaution !== true
+    );
+  })
+    .filter((product) => {
+  if (
+    !isSupabasePolicyEligible(
+      product,
+      primaryJourneys,
+      secondaryJourney,
+      selectedAnswers
+    )
+  ) {
+    return false;
+  }
+
+  // Preserve existing product-specific safeguards during migration.
+  
+
+  
+
+  return true;
+})
     .sort((left, right) => {
-      const a = scoreProduct(left, primaryJourneys, secondaryJourney, selectedAnswers);
-      const b = scoreProduct(right, primaryJourneys, secondaryJourney, selectedAnswers);
-      return b - a;
-    });
+  const leftScore = scoreProduct(
+    left,
+    primaryJourneys,
+    secondaryJourney,
+    selectedAnswers,
+  );
+
+  const rightScore = scoreProduct(
+    right,
+    primaryJourneys,
+    secondaryJourney,
+    selectedAnswers,
+  );
+
+  return rightScore - leftScore;
+});
 
   for (const category of optionalCategories) {
-    const product = pool.find((candidate) => {
-      if (candidate.category !== category) {
-        return false;
-      }
-      if (seenCategories.has(category) && category !== "Sun Protection") {
-        return false;
-      }
-      if (candidate.name === "TiZO Lip Protection") {
-        return false;
-      }
-      if (selectedIds.has(candidate.id)) {
-        return false;
-      }
-      if (candidate.category === "Sun Protection" && candidate.name === "TiZO Lip Protection") {
-        return false;
-      }
-      return true;
-    });
+    const categoryCandidates = pool.filter((candidate) => {
+  if (candidate.category !== category) return false;
+  if (seenCategories.has(category) && category !== "Sun Protection") {
+    return false;
+  }
+  
+  if (selectedIds.has(candidate.id)) return false;
+  return true;
+});
+
+const highestScore =
+  categoryCandidates.length > 0
+    ? Math.max(
+        ...categoryCandidates.map((candidate) =>
+          scoreProduct(
+            candidate,
+            primaryJourneys,
+            secondaryJourney,
+            selectedAnswers,
+          ),
+        ),
+      )
+    : -Infinity;
+
+const product = categoryCandidates
+  .filter(
+    (candidate) =>
+      highestScore -
+        scoreProduct(
+          candidate,
+          primaryJourneys,
+          secondaryJourney,
+          selectedAnswers,
+        ) <= 2,
+  )
+  .sort((left, right) => {
+    const priorityDifference =
+      getExperiencePriority(right, selectedExperience) -
+      getExperiencePriority(left, selectedExperience);
+
+    if (priorityDifference !== 0) return priorityDifference;
+
+    return (
+      scoreProduct(
+        right,
+        primaryJourneys,
+        secondaryJourney,
+        selectedAnswers,
+      ) -
+      scoreProduct(
+        left,
+        primaryJourneys,
+        secondaryJourney,
+        selectedAnswers,
+      )
+    );
+  })[0];
 
     if (!product) {
       continue;
@@ -489,7 +563,8 @@ function buildMoreFreshPicks(
 export function generateProductRecommendation({
   journeyResult,
   selectedAnswers,
-  products = productCatalog,
+  products,
+  selectedExperience,
 }: {
   journeyResult: RecommendationResult;
   selectedAnswers: {
@@ -497,7 +572,8 @@ export function generateProductRecommendation({
     skinExperience: string[];
     desiredOutcomes: string[];
   };
-  products?: Product[];
+    products: Product[];
+  selectedExperience?: string;
 }): ProductRecommendationResult {
   const primaryJourneys = journeyResult.primaryJourneys ?? [];
   const secondaryJourney = journeyResult.secondaryJourney ?? null;
@@ -521,24 +597,25 @@ export function generateProductRecommendation({
   }
 
   const allEligible = products.filter(
-    (product) => !PRODUCT_EXCLUSIONS.includes(product.name) && !product.excluded,
-  );
+  (product) => product.excluded !== true,
+);
 
   const selectedIds = new Set<string>();
   const featured = {
-    cleanse: pickFeaturedProduct("cleanse", allEligible, selectedIds, primaryJourneys, secondaryJourney, selectedAnswers),
-    treat: pickFeaturedProduct("treat", allEligible, selectedIds, primaryJourneys, secondaryJourney, selectedAnswers),
-    moisturize: pickFeaturedProduct("moisturize", allEligible, selectedIds, primaryJourneys, secondaryJourney, selectedAnswers),
-    protect: pickFeaturedProduct("protect", allEligible, selectedIds, primaryJourneys, secondaryJourney, selectedAnswers),
+    cleanse: pickFeaturedProduct("cleanse", allEligible, selectedIds, primaryJourneys, secondaryJourney, selectedAnswers, selectedExperience,),
+    treat: pickFeaturedProduct("treat", allEligible, selectedIds, primaryJourneys, secondaryJourney, selectedAnswers, selectedExperience),
+    moisturize: pickFeaturedProduct("moisturize", allEligible, selectedIds, primaryJourneys, secondaryJourney, selectedAnswers, selectedExperience),
+    protect: pickFeaturedProduct("protect", allEligible, selectedIds, primaryJourneys, secondaryJourney, selectedAnswers, selectedExperience),
   };
 
   const moreFreshPicks = buildMoreFreshPicks(
-    allEligible,
-    selectedIds,
-    primaryJourneys,
-    secondaryJourney,
-    selectedAnswers,
-  );
+  allEligible,
+  selectedIds,
+  primaryJourneys,
+  secondaryJourney,
+  selectedAnswers,
+  selectedExperience,
+);
 
   const modifiers = addModifierSignals(selectedAnswers);
 
@@ -554,4 +631,4 @@ export function generateProductRecommendation({
   };
 }
 
-export const PRODUCT_EXCLUSIONS_SET = new Set(PRODUCT_EXCLUSIONS);
+

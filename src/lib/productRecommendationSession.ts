@@ -2,14 +2,17 @@ import { readStoredRecommendation } from "@/lib/recommendationSession";
 import type { ProductRecommendationResult } from "@/types/productRecommendation";
 
 const STORAGE_KEY = "skinDiscoveryProductRecommendations";
-const STORAGE_VERSION = 1;
+const STORAGE_VERSION = 2;
 
 type StoredProductRecommendation = {
   version: number;
+  fingerprint: string;
   result: ProductRecommendationResult;
 };
 
-export function readStoredProductRecommendation(): ProductRecommendationResult | null {
+export function readStoredProductRecommendation(
+  expectedFingerprint: string,
+): ProductRecommendationResult | null {
   if (typeof window === "undefined") {
     return null;
   }
@@ -24,13 +27,15 @@ try {
   const parsed = JSON.parse(rawValue) as StoredProductRecommendation;
 
   if (
-    !parsed ||
-    typeof parsed !== "object" ||
-    parsed.version !== STORAGE_VERSION ||
-    !parsed.result
-  ) {
-    return null;
-  }
+  !parsed ||
+  typeof parsed !== "object" ||
+  parsed.version !== STORAGE_VERSION ||
+  typeof parsed.fingerprint !== "string" ||
+  parsed.fingerprint !== expectedFingerprint ||
+  !parsed.result
+) {
+  return null;
+}
 
   return parsed.result;
 } catch {
@@ -38,13 +43,17 @@ try {
 }
 }
 
-export function writeProductRecommendationToStorage(result: ProductRecommendationResult) {
+export function writeProductRecommendationToStorage(
+  result: ProductRecommendationResult,
+  fingerprint: string,
+) {
   if (typeof window === "undefined") {
     return;
   }
 
   const storedRecommendation: StoredProductRecommendation = {
     version: STORAGE_VERSION,
+    fingerprint,
     result,
   };
 

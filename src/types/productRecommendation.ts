@@ -1,4 +1,7 @@
 import type { JourneyId } from "@/types/recommendation";
+import type {
+  ProductEligibilityRules,
+} from "@/lib/productEligibilityPolicies";
 
 export type ProductCategory =
   | "Cleanser"
@@ -23,6 +26,16 @@ export type ProductUsageType =
 export type Product = {
   id: string;
   experienceIds?: string[];
+
+  eligibilityRules?: ProductEligibilityRules | null;
+featuredEligible?: boolean;
+  experienceRecommendations?: {
+    experienceId: string;
+    assigned: boolean;
+    approvalStatus: "pending" | "approved" | "rejected";
+    recommendationPriority: 80 | 100 | 120;
+  }[];
+
   name: string;
   category: ProductCategory;
   primaryJourney: JourneyId;

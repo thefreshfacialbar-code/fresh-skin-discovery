@@ -8,6 +8,9 @@ import type {
 } from "@/types/productRecommendation";
 
 import type { JourneyId } from "@/types/recommendation";
+import {
+  isProductEligibilityRules,
+} from "@/lib/productEligibilityPolicies";
 
 export async function getSupabaseProductCatalog(): Promise<Product[]> {
   const { data, error } = await supabaseAdmin
@@ -32,7 +35,15 @@ export async function getSupabaseProductCatalog(): Promise<Product[]> {
         frequency,
         requires_farmacist_review,
         calm_sensitive_caution,
-        excluded
+        featured_eligible,
+        excluded,
+        eligibility_rules
+      ),
+      product_experience_recommendations (
+        experience_id,
+        assigned,
+        approval_status,
+        recommendation_priority
       )
     `)
     .eq("active", true)
@@ -65,8 +76,45 @@ export async function getSupabaseProductCatalog(): Promise<Product[]> {
 
   return [
     {
-      id: row.fresh_product_id,
+            id: row.fresh_product_id,
       experienceIds: profile.experience_ids ?? [],
+
+      eligibilityRules: (() => {
+  const rules = profile.eligibility_rules;
+
+  // Existing products may legitimately have no policy configured.
+  if (
+    rules == null ||
+    (typeof rules === "object" &&
+      !Array.isArray(rules) &&
+      Object.keys(rules).length === 0)
+  ) {
+    return undefined;
+  }
+
+  // A nonempty but invalid policy must never be ignored.
+  if (!isProductEligibilityRules(rules)) {
+    throw new Error(
+      `Invalid eligibility rules for product ${row.fresh_product_id}`
+    );
+  }
+
+  return rules;
+})(),
+      experienceRecommendations: (
+  row.product_experience_recommendations ?? []
+).map((recommendation) => ({
+  experienceId: recommendation.experience_id,
+  assigned: recommendation.assigned,
+  approvalStatus: recommendation.approval_status as
+    | "pending"
+    | "approved"
+    | "rejected",
+  recommendationPriority: recommendation.recommendation_priority as
+    | 80
+    | 100
+    | 120,
+})),
       name: row.name,
       category: profile.product_category as ProductCategory,
       primaryJourney: profile.primary_journey as JourneyId,
@@ -80,8 +128,9 @@ export async function getSupabaseProductCatalog(): Promise<Product[]> {
         timing: profile.timing ?? undefined,
         frequency: profile.frequency ?? undefined,
         requiresFarmacistReview: profile.requires_farmacist_review,
-      calmSensitiveCaution: profile.calm_sensitive_caution,
-      excluded: profile.excluded,
+calmSensitiveCaution: profile.calm_sensitive_caution,
+featuredEligible: profile.featured_eligible,
+excluded: profile.excluded,
     },
   ];
 });

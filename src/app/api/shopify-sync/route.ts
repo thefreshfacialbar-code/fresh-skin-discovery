@@ -109,7 +109,6 @@ for (const product of matched) {
     active: true,
     in_stock: product.inStock,
     recommendable: true,
-    recommendation_status: "approved",
     updated_at: new Date().toISOString(),
   };
 
@@ -206,22 +205,19 @@ const profileRecord = {
     );
   }
 
-  if (existingProfile) {
-    const { error: profileUpdateError } = await supabaseAdmin
-      .from("product_recommendation_profiles")
-      .update(profileRecord)
-      .eq("id", existingProfile.id);
+ if (existingProfile) {
+  // Existing recommendation profiles are managed through
+  // Fresh Desk's Draft -> Review -> Approve -> Publish workflow.
+  // Shopify sync must not overwrite professionally managed settings.
 
-    if (profileUpdateError) {
-      return Response.json(
-        {
-          error: `Could not update recommendation profile: ${product.freshProductName}`,
-          details: profileUpdateError.message,
-        },
-        { status: 500 }
-      );
-    }
-  } else {
+  syncResults.push({
+    action: "recommendation_profile_preserved",
+    product: {
+      id: savedProductId,
+      name: product.freshProductName,
+    },
+  });
+} else {
     const { error: profileInsertError } = await supabaseAdmin
       .from("product_recommendation_profiles")
       .insert(profileRecord);
