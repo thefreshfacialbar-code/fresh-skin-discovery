@@ -1,3 +1,4 @@
+import { isRecommendationActive } from "@/lib/productActivationPolicy";
 // Product data and exclusions are supplied by Supabase.
 
 import type {
@@ -596,9 +597,12 @@ export function generateProductRecommendation({
     };
   }
 
-  const allEligible = products.filter(
-  (product) => product.excluded !== true,
-);
+  // A global disable blocks every experience and recommendation surface.
+  // For an experience-specific request, a published, assigned and enabled
+  // experience record is required. The same pool feeds Featured and Fresh Picks.
+  const allEligible = products.filter((product) =>
+    isRecommendationActive(product, selectedExperience),
+  );
 
   const selectedIds = new Set<string>();
   const featured = {

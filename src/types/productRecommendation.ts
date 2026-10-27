@@ -28,10 +28,12 @@ export type Product = {
   experienceIds?: string[];
 
   eligibilityRules?: ProductEligibilityRules | null;
-featuredEligible?: boolean;
+  featuredEligible?: boolean;
+  recommendationEnabled?: boolean;
   experienceRecommendations?: {
     experienceId: string;
     assigned: boolean;
+    enabled?: boolean;
     approvalStatus: "pending" | "approved" | "rejected";
     recommendationPriority: 80 | 100 | 120;
   }[];

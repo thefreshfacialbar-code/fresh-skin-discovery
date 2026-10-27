@@ -60,7 +60,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         success: false,
-        error: "Unable to publish recommendation draft. Verify that the draft and manufacturer research are approved and the draft has not already been published.",
+        error: "Unable to publish recommendation draft. Verify that the complete product draft is approved, valid, and not already published.",
       },
       { status: 409 }
     );

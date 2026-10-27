@@ -53,6 +53,8 @@ export async function POST(request: Request) {
   intensity,
   eligibilityRules,
   featuredEligible,
+  experienceAssignments,
+  manufacturerResearch,
 } = body as Record<string, unknown>;
 
   const valid =
@@ -102,6 +104,54 @@ if (
     { status: 400 }
   );
 }
+  // Optional experience configuration is staged, never written live here.
+  const validExperienceIds = [
+    "fresh-facial-bar-lash-lounge",
+    "gentlemens-corner",
+  ];
+  if (experienceAssignments !== undefined && (
+    !Array.isArray(experienceAssignments) ||
+    experienceAssignments.length !== 2 ||
+    new Set(experienceAssignments.map((v) =>
+      v && typeof v === "object" && !Array.isArray(v)
+        ? (v as Record<string, unknown>).experience_id : null
+    )).size !== 2 ||
+    !experienceAssignments.every((item) => {
+      if (!item || typeof item !== "object" || Array.isArray(item)) return false;
+      const row = item as Record<string, unknown>;
+      return typeof row.experience_id === "string" &&
+        validExperienceIds.includes(row.experience_id) &&
+        typeof row.assigned === "boolean" &&
+        Number.isInteger(row.recommendation_priority) &&
+        (row.recommendation_priority as number) >= 0 &&
+        (row.recommendation_priority as number) <= 10000;
+    })
+  )) {
+    return NextResponse.json(
+      { success: false, error: "Invalid experience assignments" },
+      { status: 400 }
+    );
+  }
+
+  // Manufacturer research is staged with the same immutable approval lifecycle.
+  const allowedResearchFields = new Set(["research_source", "vendor_product_name", "vendor_product_id", "vendor_product_url", "vendor_category", "vendor_description", "professional_description", "key_ingredients", "skin_benefits", "suitable_skin_types", "skin_concerns", "application_instructions", "usage_frequency", "precautions", "routine_step", "internal_notes", "primary_journey", "supporting_journey", "recommendation_role", "intensity", "skin_benefit_codes", "suitable_skin_type_codes", "skin_concern_codes", "application_timing"]);
+  if (manufacturerResearch !== undefined && (
+    !manufacturerResearch || typeof manufacturerResearch !== "object" ||
+    Array.isArray(manufacturerResearch) ||
+    JSON.stringify(manufacturerResearch).length > 30000 ||
+    !Object.entries(manufacturerResearch).every(([key, value]) =>
+      allowedResearchFields.has(key) && (
+        value === null ||
+        (typeof value === "string" && value.length <= 8000) ||
+        (key === "intensity" && Number.isInteger(value) && (value as number) >= 1 && (value as number) <= 4) ||
+        (["skin_benefit_codes", "suitable_skin_type_codes", "skin_concern_codes", "application_timing"].includes(key) &&
+          Array.isArray(value) && value.length <= 30 && value.every((v) => typeof v === "string" && v.length <= 100))
+      )
+    )
+  )) {
+    return NextResponse.json({ success: false, error: "Invalid manufacturer research" }, { status: 400 });
+  }
+
   // Confirm that the profile belongs to the specified product.
   const { data: profile, error: profileError } =
     await supabaseAdmin
@@ -156,12 +206,16 @@ if (
 
 const proposedSettings = {
   ...existingSettings,
+  ...(manufacturerResearch !== undefined ? { manufacturer_research: manufacturerResearch } : {}),
   product_category: productCategory,
   primary_journey: primaryJourney,
   supporting_journey:
     supportingJourney === "" ? null : supportingJourney,
   recommendation_role: recommendationRole,
   intensity,
+  ...(experienceAssignments !== undefined
+    ? { experience_assignments: experienceAssignments }
+    : {}),
     ...(eligibilityRules !== undefined
     ? { eligibility_rules: eligibilityRules }
     : {}),
@@ -175,6 +229,19 @@ if (existingDraft?.review_status === "pending_review") {
     {
       success: false,
       error: "This recommendation draft is pending review and cannot be edited.",
+      draftId: existingDraft.id,
+    },
+    { status: 409 }
+  );
+}
+
+// An approved draft is immutable until published. Do not attempt an insert:
+// the database allows only one unpublished open draft per profile.
+if (existingDraft?.review_status === "approved") {
+  return NextResponse.json(
+    {
+      success: false,
+      error: "An approved draft is awaiting publication. Publish it before creating another draft.",
       draftId: existingDraft.id,
     },
     { status: 409 }

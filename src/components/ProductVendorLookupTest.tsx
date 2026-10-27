@@ -121,83 +121,33 @@ console.log("Vendor Lookup Product ID:", productId);
 
     if (response.ok && data.success) {
       setLookupData(data);
+      if (data.research) {
+        window.dispatchEvent(new CustomEvent("freshdesk:stage-manufacturer-research", {
+          detail: {
+            productId,
+            research: {
+              research_source: "manufacturer_website",
+              vendor_product_name: data.research.vendorProductName ?? null,
+              vendor_product_id: selectedManufacturerProductId,
+              vendor_product_url: data.research.vendorProductUrl ?? null,
+              vendor_category: data.research.vendorCategory ?? null,
+              vendor_description: data.research.vendorDescription ?? null,
+            },
+          },
+        }));
+        setResult("Manufacturer research staged. Scroll down and select Save Draft to save it with the complete product configuration.");
+      }
     }
   } catch (error) {
     setResult(
       error instanceof Error
         ? error.message
-        : "Could not save manufacturer research."
+        : "Could not retrieve manufacturer research."
     );
   } finally {
     setLoading(false);
   }
 }
-  async function resubmitResearch() {
-    if (
-      researchStatus !== "rejected" ||
-      !manufacturerProductId
-    ) {
-      setResult("Only rejected research can be resubmitted.");
-      return;
-    }
-
-    if (
-      !window.confirm(
-        "Resubmit this manufacturer match for professional review?"
-      )
-    ) {
-      return;
-    }
-
-    setLoading(true);
-    setResult("");
-
-    try {
-      const response = await fetch(
-        "/api/fresh-desk/product-vendor-research",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            productId,
-            manufacturerProductId,
-          }),
-        }
-      );
-
-      const contentType = response.headers.get("content-type") ?? "";
-
-      if (!contentType.includes("application/json")) {
-        setResult(
-          `Vendor lookup returned HTTP ${response.status} ` +
-          `(${contentType || "unknown content type"}) instead of JSON.`
-        );
-        return;
-      }
-
-      const data = await response.json();
-
-      setLookupData(response.ok && data.success ? data : null);
-
-      setResult(
-        JSON.stringify(
-          { httpStatus: response.status, ...data },
-          null,
-          2
-        )
-      );
-    } catch (error) {
-      setResult(
-        error instanceof Error
-          ? error.message
-          : "Research resubmission failed."
-      );
-    } finally {
-      setLoading(false);
-    }
-  }
   return (
     <div className="mt-5">
       <button
@@ -208,16 +158,6 @@ console.log("Vendor Lookup Product ID:", productId);
       >
         {loading ? "Testing..." : "Test Vendor Lookup"}
       </button>
-{researchStatus === "rejected" && manufacturerProductId && (
-  <button
-    type="button"
-    onClick={resubmitResearch}
-    disabled={loading}
-    className="ml-3 rounded-lg border border-[#C8BDB3] px-4 py-2 text-sm font-semibold text-[#2F2A28] disabled:opacity-50"
-  >
-    {loading ? "Resubmitting..." : "Resubmit Research"}
-  </button>
-)}
 {lookupData?.manufacturerSearchResults &&
   lookupData.manufacturerSearchResults.length > 0 && (
     <section className="mt-4 rounded-xl border bg-white p-5">
@@ -256,7 +196,7 @@ console.log("Vendor Lookup Product ID:", productId);
   disabled={loading || !selectedManufacturerProductId}
   className="mt-4 rounded-lg bg-[#2F2A28] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
 >
-  {loading ? "Saving..." : "Save as Draft Research"}
+  {loading ? "Looking up..." : "Stage in Product Draft"}
 </button>
       {selectedManufacturerProductId && (
         <p className="mt-3 text-sm text-[#77716D]">

@@ -2,14 +2,10 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { requireFreshDeskOwnerAdmin } from "@/lib/requireFreshDeskEmployee";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
-import ProductExperienceAssignment from "@/components/ProductExperienceAssignment";
-import ProductExperienceApproval from "@/components/ProductExperienceApproval";
-import ProductExperiencePriority from "@/components/ProductExperiencePriority";
 import ProductVendorLookupTest from "@/components/ProductVendorLookupTest";
-import ProductVendorResearchReview from "@/components/ProductVendorResearchReview";
-import ProductManualResearch from "@/components/ProductManualResearch"; 
 import ProductRecommendationSettings from "@/components/ProductRecommendationSettings";
 import ProductRecommendationReview from "@/components/ProductRecommendationReview";
+import ProductRecommendationActivation from "@/components/ProductRecommendationActivation";
 type ProductDetailPageProps = {
   params: Promise<{ id: string }>;
 };
@@ -43,6 +39,7 @@ const { data: product, error } = await supabaseAdmin
     intensity,
     eligibility_rules,
     featured_eligible,
+    recommendation_enabled,
     recommendation_priority,
     professional_notes,
     customer_guidance,
@@ -62,6 +59,7 @@ const { data: product, error } = await supabaseAdmin
   product_experience_recommendations (
     experience_id,
     assigned,
+    enabled,
     approval_status,
     recommendation_priority,
     reviewed_at
@@ -145,21 +143,6 @@ if (vendorResearchError) {
     vendorResearchError.message
   );
 }
-console.log("TiZO manufacturer research debug:", {
-  productId,
-  vendorResearch,
-  vendorResearchError,
-});
-const { data: researchDiagnostic, error: researchDiagnosticError } =
-  await supabaseAdmin
-    .from("product_vendor_research")
-    .select("id, product_id, research_status")
-    .eq("product_id", productId);
-
-console.log("Manufacturer research diagnostic:", {
-  researchDiagnostic,
-  researchDiagnosticError,
-});
 const rawProfile = product?.product_recommendation_profiles;
 
 const profile = Array.isArray(rawProfile)
@@ -197,15 +180,10 @@ const profile = Array.isArray(rawProfile)
   manufacturerProductId={vendorResearch?.vendor_product_id ?? null}
 />
 )}
-<ProductManualResearch
-  productId={productId}
-  productName={product?.name ?? "Unknown Product"}
-  existingResearch={vendorResearch}
-/>
 <section className="mt-8 rounded-xl border border-[#E5DED6] bg-white p-6">
   <h2 className="text-xl font-semibold">
   {vendorResearch?.research_source === "manual"
-    ? "Manual Product Research — Saved Record"
+    ? "Manual Product Research — Published Record"
     : "Manufacturer Research"}
 </h2>
 
@@ -247,7 +225,7 @@ const profile = Array.isArray(rawProfile)
 )}
       <div>
         <p className="text-xs font-semibold uppercase text-[#77716D]">
-          Review Status
+          Research Record Status
         </p>
         <p className="mt-1 capitalize">
           {vendorResearch.research_status}
@@ -297,18 +275,11 @@ const profile = Array.isArray(rawProfile)
 
     {vendorResearch.research_status === "approved" && (
       <p className="mt-3 text-xs font-semibold text-green-700">
-        Professionally Reviewed & Approved
+        Previously Approved Research Record
       </p>
     )}
   </div>
 )}
-    <ProductVendorResearchReview
-  researchId={vendorResearch.id}
-  status={vendorResearch.research_status}
-  initialProfessionalDescription={
-    vendorResearch.professional_description
-  }
-/>
     </div>
   )}
 </section>
@@ -412,9 +383,67 @@ const profile = Array.isArray(rawProfile)
    </div>
 
   {profile && (
+    <ProductRecommendationActivation
+      productId={productId}
+      enabled={profile.recommendation_enabled !== false}
+      experiences={[
+        "fresh-facial-bar-lash-lounge",
+        "gentlemens-corner",
+      ].map((experienceId) => {
+        const record = product?.product_experience_recommendations?.find(
+          (item) => item.experience_id === experienceId
+        );
+        return {
+          experienceId,
+          assigned: record?.assigned === true,
+          enabled: record?.enabled !== false,
+        };
+      })}
+    />
+  )}
+  {profile && (
   <ProductRecommendationSettings
     productId={productId}
     profile={profile}
+    manufacturerResearch={vendorResearch ? {
+      research_source: vendorResearch.research_source,
+      vendor_product_name: vendorResearch.vendor_product_name,
+      vendor_product_id: vendorResearch.vendor_product_id,
+      vendor_product_url: vendorResearch.vendor_product_url,
+      vendor_category: vendorResearch.vendor_category,
+      vendor_description: vendorResearch.vendor_description,
+      professional_description: vendorResearch.professional_description,
+      key_ingredients: vendorResearch.key_ingredients,
+      skin_benefits: vendorResearch.skin_benefits,
+      suitable_skin_types: vendorResearch.suitable_skin_types,
+      skin_concerns: vendorResearch.skin_concerns,
+      application_instructions: vendorResearch.application_instructions,
+      usage_frequency: vendorResearch.usage_frequency,
+      precautions: vendorResearch.precautions,
+      routine_step: vendorResearch.routine_step,
+      internal_notes: vendorResearch.internal_notes,
+      primary_journey: vendorResearch.primary_journey,
+      supporting_journey: vendorResearch.supporting_journey,
+      recommendation_role: vendorResearch.recommendation_role,
+      intensity: vendorResearch.intensity,
+      skin_benefit_codes: vendorResearch.skin_benefit_codes,
+      suitable_skin_type_codes: vendorResearch.suitable_skin_type_codes,
+      skin_concern_codes: vendorResearch.skin_concern_codes,
+      application_timing: vendorResearch.application_timing,
+    } : null}
+    experienceAssignments={[
+      "fresh-facial-bar-lash-lounge",
+      "gentlemens-corner",
+    ].map((experienceId) => {
+      const existing = product?.product_experience_recommendations?.find(
+        (record) => record.experience_id === experienceId
+      );
+      return {
+        experience_id: experienceId,
+        assigned: existing?.assigned ?? false,
+        recommendation_priority: existing?.recommendation_priority ?? 100,
+      };
+    })}
     draft={
       recommendationDraft &&
       recommendationDraft.profile_id === profile.id
@@ -436,6 +465,12 @@ const profile = Array.isArray(rawProfile)
         | "renew_quench_hydration";
     } | null;
     featured_eligible: boolean;
+    manufacturer_research?: Record<string, string | number | string[] | null>;
+    experience_assignments?: {
+      experience_id: string;
+      assigned: boolean;
+      recommendation_priority: number;
+    }[];
   },
           }
         : null
@@ -454,7 +489,7 @@ const profile = Array.isArray(rawProfile)
     </p>
 
     <p className="mt-3 text-sm font-medium">
-      Review Status:{" "}
+      Research Record Status:{" "}
       <span className="capitalize">
         {recommendationDraft.review_status.replaceAll("_", " ")}
       </span>
@@ -502,70 +537,7 @@ const profile = Array.isArray(rawProfile)
 )}
 </section>
 
-<section className="mt-8 grid gap-6 md:grid-cols-2">
-  {[
-    {
-      id: "fresh-facial-bar-lash-lounge",
-      name: "Fresh Facial Bar & Lash Lounge",
-    },
-    {
-      id: "gentlemens-corner",
-      name: "Gentlemen's Corner",
-    },
-  ].map((experience) => {
-    const experienceSettings =
-  product?.product_experience_recommendations?.find(
-    (record) => record.experience_id === experience.id
-  );
 
-const assigned = experienceSettings?.assigned ?? false;
-
-    return (
-      <div
-        key={experience.id}
-        className="rounded-2xl border border-[#E5DFD8] bg-white p-6"
-      >
-        <h2 className="text-xl font-semibold">
-          {experience.name}
-        </h2>
-
-        <p className="mt-3 text-sm text-[#77716D]">
-          Assignment: {assigned ? "Assigned" : "Not assigned"}
-        </p>
-<ProductExperienceAssignment
-  key={experience.id}
-  productId={productId}
-  experienceId={experience.id}
-  experienceName={experience.name}
-  assigned={assigned}
-/>
-        <p className="mt-2 text-sm text-[#77716D]">
-  Professional Approval:{" "}
-  {experienceSettings?.approval_status ?? "Not reviewed"}
-</p>
-
-<p className="mt-2 text-sm text-[#77716D]">
-  Experience Priority:{" "}
-  {experienceSettings?.recommendation_priority ?? "Not assigned"}
-</p>
-{assigned && experienceSettings && (
-  <ProductExperienceApproval
-    productId={productId}
-    experienceId={experience.id}
-    approvalStatus={experienceSettings.approval_status}
-  />
-)}
-{assigned && experienceSettings && (
-  <ProductExperiencePriority
-    productId={productId}
-    experienceId={experience.id}
-    priority={experienceSettings.recommendation_priority}
-  />
-)}
-      </div>
-    );
-  })}
-</section>
       </div>
     </main>
   );

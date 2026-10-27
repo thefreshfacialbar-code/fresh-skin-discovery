@@ -36,12 +36,14 @@ export async function getSupabaseProductCatalog(): Promise<Product[]> {
         requires_farmacist_review,
         calm_sensitive_caution,
         featured_eligible,
+        recommendation_enabled,
         excluded,
         eligibility_rules
       ),
       product_experience_recommendations (
         experience_id,
         assigned,
+        enabled,
         approval_status,
         recommendation_priority
       )
@@ -106,6 +108,7 @@ export async function getSupabaseProductCatalog(): Promise<Product[]> {
 ).map((recommendation) => ({
   experienceId: recommendation.experience_id,
   assigned: recommendation.assigned,
+  enabled: recommendation.enabled,
   approvalStatus: recommendation.approval_status as
     | "pending"
     | "approved"
@@ -130,6 +133,7 @@ export async function getSupabaseProductCatalog(): Promise<Product[]> {
         requiresFarmacistReview: profile.requires_farmacist_review,
 calmSensitiveCaution: profile.calm_sensitive_caution,
 featuredEligible: profile.featured_eligible,
+recommendationEnabled: profile.recommendation_enabled,
 excluded: profile.excluded,
     },
   ];

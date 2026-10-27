@@ -479,61 +479,8 @@ if (!research && manufacturerSearchResults) {
   }
 }
 }
-    if (research) {
-    const { data: existingResearch, error: lookupError } =
-        await supabaseAdmin
-        .from("product_vendor_research")
-        .select("research_status")
-        .eq("product_id", product.id)
-        .maybeSingle();
-
-    if (lookupError) {
-        return NextResponse.json(
-        { success: false, error: "Could not check research status." },
-        { status: 500 }
-        );
-    }
-
-    if (existingResearch?.research_status === "approved") {
-        return NextResponse.json(
-        {
-            success: false,
-            error: "Approved research cannot be overwritten automatically.",
-        },
-        { status: 409 }
-        );
-    }
-
-
-    const { error: saveError } = await supabaseAdmin
-        .from("product_vendor_research")
-        .upsert(
-        {
-            product_id: product.id,
-            vendor_product_name: research.vendorProductName,
-            vendor_product_id: research.vendorProductId,
-            vendor_product_url: research.vendorProductUrl,
-            vendor_category: research.vendorCategory,
-            vendor_description: research.vendorDescription,
-professional_description: null,
-rejection_reason: null,
-research_status: "draft",
-            researched_at: new Date().toISOString(),
-            reviewed_at: null,
-            updated_at: new Date().toISOString(),
-        },
-        { onConflict: "product_id" }
-        );
-
-    if (saveError) {
-        console.error("Vendor research save failed:", saveError);
-
-        return NextResponse.json(
-        { success: false, error: "Could not save vendor research." },
-        { status: 500 }
-        );
-    }
-    }
+    // Lookup is read-only. The client stages research in the unified draft;
+    // only the approved Publish transaction may modify product_vendor_research.
 
 const potentialManufacturerMatches = manufacturerSearchResults
   ? findPotentialVendorProductMatches(
