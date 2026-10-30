@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { requireFreshDeskOwnerAdmin } from "@/lib/requireFreshDeskEmployee";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const EXPERIENCES = new Set(["fresh-facial-bar-lash-lounge", "gentlemens-corner"]);
 
 // Operational kill switches are deliberately independent of the approval draft.
