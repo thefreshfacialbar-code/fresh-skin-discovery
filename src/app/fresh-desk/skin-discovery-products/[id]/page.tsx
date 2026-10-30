@@ -477,6 +477,77 @@ const profile = Array.isArray(rawProfile)
     }
   />
 )}
+  {product && (
+    <div className="mt-6 rounded-xl border border-[#D9D1E2] bg-white p-5">
+      <h3 className="text-lg font-semibold text-[#302C2A]">
+        Live Recommendation Status
+      </h3>
+
+      <p className="mt-1 text-sm text-[#706A76]">
+        Current published eligibility in Skin Discovery.
+        Saving a new draft does not remove existing live recommendations.
+      </p>
+
+      <div className="mt-4 space-y-3">
+        {[
+          {
+            id: "fresh-facial-bar-lash-lounge",
+            label: "Fresh Facial Bar & Lash Lounge",
+          },
+          {
+            id: "gentlemens-corner",
+            label: "Gentlemen's Corner",
+          },
+        ].map((experience) => {
+          const assignment =
+            product.product_experience_recommendations?.find(
+              (record) => record.experience_id === experience.id
+            );
+
+          const active =
+            product.active === true &&
+            product.recommendable === true &&
+            product.recommendation_status === "approved" &&
+            profile?.recommendation_enabled !== false &&
+            profile?.excluded !== true &&
+            assignment?.assigned === true &&
+            assignment?.enabled === true &&
+            assignment?.approval_status === "approved";
+
+          const status = active
+            ? "Active"
+            : assignment?.assigned !== true
+              ? "Not Assigned"
+              : assignment.approval_status !== "approved"
+                ? "Pending Approval"
+                : "Inactive";
+
+          return (
+            <div
+              key={experience.id}
+              className="flex items-center justify-between gap-4 rounded-lg border border-[#E8E2EC] p-3"
+            >
+              <span className="text-sm font-medium text-[#302C2A]">
+                {experience.label}
+              </span>
+
+              <span
+                className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                  active
+                    ? "bg-green-100 text-green-800"
+                    : status === "Pending Approval"
+                      ? "bg-amber-100 text-amber-800"
+                      : "bg-gray-100 text-gray-700"
+                }`}
+              >
+                {status}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  )}
   {recommendationDraft && (
   <div className="mt-6 rounded-xl border border-[#D9D1E2] bg-[#F8F5FA] p-5">
     <h3 className="text-lg font-semibold text-[#302C2A]">
@@ -506,19 +577,75 @@ const profile = Array.isArray(rawProfile)
     : field.replaceAll("_", " ")}
 </p>
 
-<p className="mt-1 text-[#302C2A]">
-  {field === "eligibility_rules"
-    ? value !== null &&
-      typeof value === "object" &&
-      !Array.isArray(value) &&
-      "policy" in value &&
-      typeof value.policy === "string"
+<div className="mt-1 text-[#302C2A]">
+  {field === "eligibility_rules" ? (
+    value !== null &&
+    typeof value === "object" &&
+    !Array.isArray(value) &&
+    "policy" in value &&
+    typeof value.policy === "string"
       ? value.policy.replaceAll("_", " ")
       : "Invalid or missing policy"
-    : value == null
-      ? "Not assigned"
-      : String(value)}
-</p>
+  ) : field === "experience_assignments" && Array.isArray(value) ? (
+    <div className="space-y-2">
+      {value.map((assignment, index) => {
+        if (
+          assignment === null ||
+          typeof assignment !== "object" ||
+          Array.isArray(assignment)
+        ) {
+          return null;
+        }
+
+        const item = assignment as Record<string, unknown>;
+
+        return (
+          <div key={index}>
+            <span className="font-medium">
+              {item.experience_id === "fresh-facial-bar-lash-lounge"
+                ? "Fresh Facial Bar"
+                : item.experience_id === "gentlemens-corner"
+                  ? "Gentlemen's Corner"
+                  : String(item.experience_id ?? "Unknown experience")}
+            </span>
+            {" — "}
+            {item.assigned === true ? "Assigned" : "Not assigned"}
+            {" · Priority "}
+            {String(item.recommendation_priority ?? "N/A")}
+          </div>
+        );
+      })}
+    </div>
+  ) : field === "manufacturer_research" &&
+    value !== null &&
+    typeof value === "object" &&
+    !Array.isArray(value) ? (
+    <div className="space-y-1">
+      {Object.entries(value).map(([key, researchValue]) => {
+        if (researchValue === null || researchValue === "") {
+          return null;
+        }
+
+        return (
+          <div key={key}>
+            <span className="font-medium">
+              {key.replaceAll("_", " ")}:
+            </span>{" "}
+            {typeof researchValue === "object"
+              ? JSON.stringify(researchValue)
+              : String(researchValue)}
+          </div>
+        );
+      })}
+    </div>
+  ) : value == null ? (
+    "Not assigned"
+  ) : typeof value === "object" ? (
+    JSON.stringify(value)
+  ) : (
+    String(value)
+  )}
+</div>
         </div>
       ))}
        </div>
