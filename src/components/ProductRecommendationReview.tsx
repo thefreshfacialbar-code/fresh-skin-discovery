@@ -80,7 +80,7 @@ async function handleReject() {
   }
 }
 async function handleApprove() {
-  if (reviewStatus !== "pending_review" || !researchApproved) {
+  if (reviewStatus !== "pending_review" || reviewing) {
     return;
   }
 
@@ -136,7 +136,7 @@ async function handleApprove() {
   }
 }
 async function handlePublish() {
-  if (reviewStatus !== "approved" || !researchApproved || reviewing) {
+  if (reviewStatus !== "approved" || reviewing) {
     return;
   }
 
@@ -258,12 +258,7 @@ async function handlePublish() {
     <button
   type="button"
   onClick={handleApprove}
-  disabled={reviewing || !researchApproved}
-  title={
-    !researchApproved
-      ? "Manufacturer research must be approved first."
-      : "Approve recommendation draft"
-  }
+  disabled={reviewing}
   className="ml-3 rounded-lg bg-[#302C2A] px-4 py-2 text-sm font-medium text-white hover:bg-[#4A4440] disabled:cursor-not-allowed disabled:opacity-40"
 >
   {reviewing ? "Processing..." : "Approve Draft"}
@@ -275,12 +270,7 @@ async function handlePublish() {
     <button
       type="button"
       onClick={handlePublish}
-      disabled={reviewing || !researchApproved}
-      title={
-        !researchApproved
-          ? "Manufacturer research must be approved before publication."
-          : "Publish approved recommendation settings"
-      }
+      disabled={reviewing}
       className="rounded-lg bg-[#6F6578] px-5 py-2 text-sm font-semibold text-white hover:bg-[#5D5366] disabled:cursor-not-allowed disabled:opacity-40"
     >
       {reviewing

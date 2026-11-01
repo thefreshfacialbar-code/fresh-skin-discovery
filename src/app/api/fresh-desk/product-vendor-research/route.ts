@@ -131,7 +131,10 @@ let verifiedCandidateResearch: Awaited<
 > | null = null;
 let candidateVerification = null;
 
-if (product.brand === "FHF" && candidateHandle) {
+if (
+  ["FHF", "Sorella Apothecary"].includes(product.brand) &&
+  candidateHandle
+) {
   try {
     const candidate = await fetchVendorProduct(
       vendor.website_url,
@@ -154,6 +157,7 @@ const normalizeProductName = (value: string) =>
   value
     .toLowerCase()
     .replace(/[®™©]/g, "")
+    .replace(/\s*[-–—]\s*\d+(?:\.\d+)?\s*(?:fl\.?\s*)?oz\.?\s*$/i, "")
     .replace(/\b(serum|moisturizer|cleanser|mask)\b$/i, "")
     .replace(/[^a-z0-9]/g, "");
 
@@ -197,12 +201,10 @@ console.log("Manufacturer lookup debug:", {
   productBrand: product.brand,
   vendorWebsite: vendor.website_url,
   searchEnabled:
-    product.brand === "FHF" ||
-    product.brand === "TiZo",
+  ["FHF", "TiZo", "Sorella Apothecary"].includes(product.brand),
 });
 if (
-  product.brand === "FHF" ||
-  product.brand === "TiZo"
+  ["FHF", "TiZo", "Sorella Apothecary"].includes(product.brand)
 ) {
   try {
     manufacturerSearchResults = await searchVendorProducts(
@@ -215,9 +217,9 @@ if (
 }
 if (hasSelectedManufacturerProduct) {
   if (
-  !["FHF", "TiZo"].includes(product.brand) ||
-  !manufacturerSearchResults
-) {
+    !["FHF", "TiZo", "Sorella Apothecary"].includes(product.brand) ||
+    !manufacturerSearchResults
+  ) {
     return NextResponse.json(
       {
         success: false,
@@ -263,7 +265,9 @@ const isEligibleMatch =
     productBrand === vendorBrand &&
     (
       vendorBrand === "tizo" ||
-      vendorBrand === "sorella"
+    vendorBrand === "sorella" ||
+    vendorBrand === "sorella apothecary" ||
+    vendorBrand === "sorellaapothecary"
     )
   );
 
@@ -277,11 +281,18 @@ if (!isEligibleMatch) {
     { status: 400 }
   );
 }
+
   try {
-  const selectedProduct = await fetchVendorProduct(
-    vendor.website_url,
-    selectedMatch.manufacturerHandle
-  );
+  const selectedProduct =
+    verifiedCandidateResearch &&
+    String(verifiedCandidateResearch.vendorProductId) ===
+      String(selectedMatch.manufacturerProductId) &&
+    candidateHandle === selectedMatch.manufacturerHandle
+      ? verifiedCandidateResearch
+      : await fetchVendorProduct(
+          vendor.website_url,
+          selectedMatch.manufacturerHandle
+        );
 
   if (
     String(selectedProduct.vendorProductId) !==

@@ -1,4 +1,7 @@
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
 
+const execFileAsync = promisify(execFile);
 type VendorProductData = {
   id: number;
   title: string;
@@ -34,6 +37,29 @@ export async function fetchVendorProduct(
   const productUrl =
     `${baseUrl.origin}/products/${productHandle}`;
 
+  let product: VendorProductData;
+
+if (baseUrl.hostname === "sorellaapothecary.com") {
+  const { stdout } = await execFileAsync(
+    "curl",
+    [
+      "--http1.1",
+      "--fail",
+      "--silent",
+      "--show-error",
+      "--max-time", "10",
+      "--max-filesize", "1048576",
+      "--max-redirs", "0",
+      `${productUrl}.js`,
+    ],
+    {
+      timeout: 12000,
+      maxBuffer: 1048576,
+    }
+  );
+
+  product = JSON.parse(stdout) as VendorProductData;
+} else {
   const response = await fetch(`${productUrl}.js`, {
     method: "GET",
     redirect: "error",
@@ -50,8 +76,9 @@ export async function fetchVendorProduct(
     );
   }
 
-  const product =
-    (await response.json()) as VendorProductData;
+  product = (await response.json()) as VendorProductData;
+}
+
 
   if (
     !product ||

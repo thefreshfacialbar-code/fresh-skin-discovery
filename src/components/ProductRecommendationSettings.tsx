@@ -23,6 +23,7 @@ import {
 
 type RecommendationProfile = {
   id: string;
+  customer_guidance: string | null;
   product_category: string | null;
   primary_journey: string | null;
   supporting_journey: string | null;
@@ -38,7 +39,8 @@ type RecommendationDraft = {
   id: string;
   review_status: string;
   proposed_settings: Partial<{
-    product_category: string | null;
+  customer_guidance: string | null;
+  product_category: string | null;
     primary_journey: string | null;
     supporting_journey: string | null;
     recommendation_role: string | null;
@@ -80,7 +82,11 @@ export default function ProductRecommendationSettings({
   const isPendingReview = draft?.review_status === "pending_review";
 const isApproved = draft?.review_status === "approved";
 const isReadOnly = isPendingReview || isApproved;
-
+const [customerGuidance, setCustomerGuidance] = useState(
+  draft?.proposed_settings.customer_guidance ??
+    profile.customer_guidance ??
+    ""
+);
   const [category, setCategory] = useState(
   draft?.proposed_settings.product_category ??
     profile.product_category ??
@@ -183,6 +189,7 @@ async function handleSave() {
         },
         body: JSON.stringify({
           productId,
+          customerGuidance,
           profileId: profile.id,
           productCategory: category,
           primaryJourney,
@@ -359,6 +366,32 @@ async function handleSubmitForReview() {
           ))}
         </div>
       </section>
+            <div className="mt-5 rounded-lg border border-[#E5DFD8] bg-white p-4">
+        <label
+          htmlFor="customer-guidance"
+          className="block text-sm font-semibold text-[#302C2A]"
+        >
+          Customer Guidance
+        </label>
+
+        <p className="mt-1 text-xs text-[#77716D]">
+          Describe the product's benefits and how it supports the
+          customer's skincare routine. This guidance appears in
+          Skin Discovery recommendations.
+        </p>
+
+        <textarea
+          id="customer-guidance"
+          className="mt-3 w-full rounded-lg border border-[#E5DFD8] p-3 text-sm"
+          rows={4}
+          maxLength={2000}
+            required
+          disabled={isReadOnly}
+          value={customerGuidance}
+          onChange={(e) => setCustomerGuidance(e.target.value)}
+          placeholder="Example: Helps replenish moisture and support a smoother, more comfortable complexion."
+        />
+      </div>
       <div className="mt-5 grid gap-4 sm:grid-cols-2">
         <label className="text-sm">
           Product Category

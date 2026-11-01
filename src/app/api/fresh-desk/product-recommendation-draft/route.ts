@@ -46,6 +46,7 @@ export async function POST(request: Request) {
   const {
   productId,
   profileId,
+  customerGuidance,
   productCategory,
   primaryJourney,
   supportingJourney,
@@ -80,6 +81,19 @@ export async function POST(request: Request) {
       { status: 400 }
     );
   }
+  if (
+  typeof customerGuidance !== "string" ||
+  customerGuidance.trim().length === 0 ||
+  customerGuidance.trim().length > 2000
+) {
+  return NextResponse.json(
+    {
+      success: false,
+      error: "Customer guidance is required and must be 2000 characters or fewer.",
+    },
+    { status: 400 }
+  );
+}
 if (
   eligibilityRules !== undefined &&
   !isProductEligibilityRules(eligibilityRules)
@@ -206,6 +220,7 @@ if (
 
 const proposedSettings = {
   ...existingSettings,
+  customer_guidance: customerGuidance,
   ...(manufacturerResearch !== undefined ? { manufacturer_research: manufacturerResearch } : {}),
   product_category: productCategory,
   primary_journey: primaryJourney,
