@@ -18,6 +18,18 @@ export type GuestEmailConfig = {
   productUrl: string | null;
   shopifyVariantId: string | null;
 }>;
+  savedProducts?: Array<{
+    productId: string;
+    name: string;
+    description: string;
+    routineStep: string;
+    routineOrder: number;
+  }>;
+  savedEnhancements?: Array<{
+  id: string;
+  name: string;
+  description: string | null;
+}>;
   previewMode?: boolean;
 };
 const GENTLEMENS_EMAIL_COLORS = {
@@ -71,14 +83,42 @@ function formatName(value: string | null | undefined): string {
   return cleaned ? cleaned : "friend";
 }
 
-function lookupProduct(productId: string | null | undefined, experience?: string) {
+
+function lookupProduct(
+  productId: string | null | undefined,
+  experience?: string,
+  savedProducts?: GuestEmailConfig["savedProducts"],
+) {
   if (!productId) return null;
-  if (experience === "gentlemens-corner") {
-    return cgcProductLookup.get(productId) ?? productLookup.get(productId) ?? null;
+
+  if (savedProducts) {
+    const savedProduct = savedProducts.find(
+      (product) => product.productId === productId,
+    );
+
+    if (!savedProduct) return null;
+
+    return {
+      name: savedProduct.name,
+      guestBenefit: savedProduct.description,
+    };
   }
 
-  return productLookup.get(productId) ?? cgcProductLookup.get(productId) ?? null;
+  if (experience === "gentlemens-corner") {
+    return (
+      cgcProductLookup.get(productId) ??
+      productLookup.get(productId) ??
+      null
+    );
+  }
+
+  return (
+    productLookup.get(productId) ??
+    cgcProductLookup.get(productId) ??
+    null
+  );
 }
+
 
 function isCuratedSubmission(submission: SkinDiscoverySubmission): boolean {
   return submission.experience === "gentlemens-corner";
@@ -267,7 +307,11 @@ function renderProductRow(
   const colors = isGentlemensCorner
     ? GENTLEMENS_EMAIL_COLORS
     : EMAIL_COLORS;
-  const product = lookupProduct(productId, experience);
+  const product = lookupProduct(
+  productId,
+  experience,
+  config.savedProducts,
+);
   if (!product) return "";
 
   const commerce = getProductCommerce(productId, config);
@@ -371,7 +415,11 @@ function renderMoreFreshPicks(
 
   const items = submission.productRecommendations.moreFreshPicks
     .map((productId) => {
-      const product = lookupProduct(productId, submission.experience);
+      const product = lookupProduct(
+  productId,
+  submission.experience,
+  config.savedProducts,
+);
       if (!product) return "";
       const commerce = getProductCommerce(productId, config);
 
@@ -422,15 +470,30 @@ const productButton = commerce?.productUrl
   `;
 }
 
-function renderEnhancements(submission: SkinDiscoverySubmission): string {
+function renderEnhancements(
+  submission: SkinDiscoverySubmission,
+  config: GuestEmailConfig,
+): string {
     const colors = getEmailColors(submission);
   const isGentlemensCorner = isCuratedSubmission(submission);
   if (!submission.enhancementRecommendations.length) return "";
 
   const rows = submission.enhancementRecommendations
     .map((enhancementId) => {
-      const enhancement = lookupEnhancement(enhancementId);
-      if (!enhancement) return "";
+      const savedEnhancement = config.savedEnhancements?.find(
+  (item) => item.id === enhancementId,
+);
+
+const enhancement = config.savedEnhancements
+  ? savedEnhancement
+    ? {
+        name: savedEnhancement.name,
+        guestBenefit: savedEnhancement.description ?? "",
+      }
+    : null
+  : lookupEnhancement(enhancementId);
+
+if (!enhancement) return "";
 
       const note = enhancement.name === "FarmHouse Fresh Peel"
         ? "Your Mixo can determine which peel, if any, best complements your Journey."
@@ -540,7 +603,15 @@ function renderGuestEmailHtml(submission: SkinDiscoverySubmission, config: Guest
                 </table>
               </td>
             </tr>
-
+<tr>
+  <td style="padding: 0 32px 20px; text-align: center;" class="pad-mobile">
+    <div style="font-size: 14px; line-height: 22px; color: ${colors.muted}; font-family: Arial, Helvetica, sans-serif;">
+      Your personalized product recommendations are a starting point.
+      Your Mixo will review them with your skin's needs in mind before
+      finalizing your Skin Plan.
+    </div>
+  </td>
+</tr>
             <tr>
               <td style="padding: 0 32px 24px;" class="pad-mobile">
                 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
@@ -563,7 +634,7 @@ function renderGuestEmailHtml(submission: SkinDiscoverySubmission, config: Guest
               <tr>
                 <td style="padding: 0 32px 24px;" class="pad-mobile">
                   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-                    ${renderEnhancements(submission)}
+                    ${renderEnhancements(submission, config)}
                   </table>
                 </td>
               </tr>
@@ -689,13 +760,22 @@ function renderGuestEmailText(submission: SkinDiscoverySubmission, config: Guest
   lines.push("");
   lines.push("YOUR FRESH PICKS");
   lines.push("Thoughtfully selected around what you shared with us.");
+  lines.push("YOUR PERSONALIZED SKINCARE RECOMMENDATIONS");
+lines.push(
+  "These product recommendations are a starting point. Your Mixo will review them with your skin's needs in mind before finalizing your Skin Plan."
+);
+lines.push("");
   for (const [step, productId] of [
     ["CLEANSE", submission.productRecommendations.featured.cleanse],
     ["TREAT", submission.productRecommendations.featured.treat],
     ["MOISTURIZE", submission.productRecommendations.featured.moisturize],
     ["PROTECT", submission.productRecommendations.featured.protect],
   ]) {
-    const product = lookupProduct(productId as string | null | undefined, submission.experience);
+    const product = lookupProduct(
+  productId as string | null | undefined,
+  submission.experience,
+  config.savedProducts,
+);
     if (product) {
   lines.push(`${step}: ${product.name}`);
   lines.push(product.guestBenefit);
@@ -715,7 +795,11 @@ function renderGuestEmailText(submission: SkinDiscoverySubmission, config: Guest
     lines.push("");
     lines.push("A FEW MORE FRESH PICKS");
     for (const productId of submission.productRecommendations.moreFreshPicks) {
-      const product = lookupProduct(productId, submission.experience);
+      const product = lookupProduct(
+  productId,
+  submission.experience,
+  config.savedProducts,
+);
       if (product) {
   lines.push(`${product.name} - ${product.guestBenefit}`);
 
@@ -743,11 +827,23 @@ if (cartUrl) {
     lines.push("ENHANCE YOUR JOURNEY");
     lines.push("Worth Considering");
     for (const enhancementId of submission.enhancementRecommendations) {
-      const enhancement = lookupEnhancement(enhancementId);
-      if (enhancement) {
-        lines.push(`${enhancement.name} - ${enhancement.guestBenefit}`);
-      }
-    }
+  const savedEnhancement = config.savedEnhancements?.find(
+    (item) => item.id === enhancementId,
+  );
+
+  const enhancement = config.savedEnhancements
+    ? savedEnhancement
+      ? {
+          name: savedEnhancement.name,
+          guestBenefit: savedEnhancement.description ?? "",
+        }
+      : null
+    : lookupEnhancement(enhancementId);
+
+  if (enhancement) {
+    lines.push(`${enhancement.name} - ${enhancement.guestBenefit}`);
+  }
+}
     lines.push("Your Mixo can help determine whether these Enhancements make sense for your custom facial.");
   }
 

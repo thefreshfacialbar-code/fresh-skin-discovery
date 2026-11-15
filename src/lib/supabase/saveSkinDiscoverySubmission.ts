@@ -46,10 +46,27 @@ export async function saveSkinDiscoverySubmission(
 
     const result = data as SaveSkinDiscoveryResult;
 
-    if (result.success !== true) {
+      if (result.success !== true) {
       return {
         success: false,
         error: result.error ?? "Skin Discovery persistence failed.",
+      };
+    }
+
+    if (
+      !result.businessId ||
+      !result.consultationId ||
+      !result.skinPlanId
+    ) {
+      console.error(
+        "Skin Discovery persistence returned missing saved IDs:",
+        result,
+      );
+
+      return {
+        success: false,
+        error:
+          "Skin Discovery save could not be verified because required IDs are missing.",
       };
     }
 

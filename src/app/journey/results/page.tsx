@@ -273,8 +273,29 @@ export default function ResultsPage() {
       },
       body: JSON.stringify({ submission }),
       keepalive: true,
-    }).catch(() => {
-      window.sessionStorage.removeItem(attemptKey);
+        }).then(async (response) => {
+      if (response.ok) {
+        return;
+      }
+
+      const result = await response.json().catch(() => null);
+
+      if (result?.persistence?.success === true) {
+        console.warn(
+          "Skin Discovery was saved, but email delivery needs attention.",
+        );
+        return;
+      }
+
+      console.error(
+        "Skin Discovery submission could not be confirmed.",
+        result,
+      );
+    }).catch((error) => {
+      console.error(
+        "Skin Discovery request outcome could not be confirmed.",
+        error,
+      );
     });
   }, []);
 

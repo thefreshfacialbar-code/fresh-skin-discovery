@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { loadSkinDiscoveryEmailData } from "@/lib/email/loadSkinDiscoveryEmailData";
 import type { SkinDiscoverySubmission } from "@/types/skinDiscoverySubmission";
 import { createResendEmailProvider, type SkinDiscoveryDeliveryResult } from "@/lib/email/emailProvider";
 import {
@@ -86,7 +87,7 @@ function buildSendOptionsFromEnv(): Pick<
 
   return {
     provider: createResendEmailProvider({
-      apiKey,
+      apiKey: apiKey || "re_disabled_no_api_key",
       fromEmail,
       replyTo: readEnv("SKIN_DISCOVERY_REPLY_TO") || undefined,
     }),
@@ -99,6 +100,10 @@ function buildSendOptionsFromEnv(): Pick<
 
 export async function deliverSkinDiscoverySubmission(
   submission: unknown,
+  savedIds: {
+    consultationId?: string;
+    skinPlanId?: string;
+  },
 ): Promise<SkinDiscoveryDeliveryResult> {
   const envOptions = buildSendOptionsFromEnv();
   const validation = validateSkinDiscoverySubmission(submission);
@@ -106,13 +111,177 @@ export async function deliverSkinDiscoverySubmission(
   if (!validation.valid) {
     return sendSkinDiscoveryEmails(submission, envOptions);
   }
+  if (!savedIds.consultationId || !savedIds.skinPlanId) {
+    throw new Error(
+      "Saved consultation and Skin Plan IDs are required for email delivery.",
+    );
+  }
 
-  const productCommerce = await loadProductCommerce(
-    validation.submission,
+  const savedEmailData = await loadSkinDiscoveryEmailData({
+    consultationId: savedIds.consultationId,
+    skinPlanId: savedIds.skinPlanId,
+  });
+    if (
+    validation.submission.submissionId !==
+    savedEmailData.submissionId
+  ) {
+    throw new Error(
+      "Skin Discovery submission ID does not match the saved consultation.",
+    );
+  }
+    if (
+    validation.submission.guest.email.trim().toLowerCase() !==
+    savedEmailData.guest.email.trim().toLowerCase()
+  ) {
+    throw new Error(
+      "Skin Discovery guest email does not match the saved customer.",
+    );
+  }
+    const savedProducts = savedEmailData.products.map((product) => ({
+    productId: product.productId,
+    name: product.name,
+    description: product.description,
+    routineStep: product.routineStep,
+    routineOrder: product.routineOrder,
+  }));
+    const savedProductCommerce = savedEmailData.products.map((product) => ({
+    productId: product.productId,
+    productUrl: product.productUrl,
+    shopifyVariantId: product.shopifyVariantId,
+  }));
+    const savedFeaturedProducts = {
+    cleanse:
+      savedEmailData.products.find(
+        (product) => product.routineStep === "cleanse",
+      )?.productId ?? null,
+
+    treat:
+      savedEmailData.products.find(
+        (product) => product.routineStep === "treat",
+      )?.productId ?? null,
+
+    moisturize:
+      savedEmailData.products.find(
+        (product) => product.routineStep === "moisturize",
+      )?.productId ?? null,
+
+    protect:
+      savedEmailData.products.find(
+        (product) => product.routineStep === "protect",
+      )?.productId ?? null,
+  };
+    const savedFreshPicks = savedEmailData.products
+    .filter((product) => product.routineStep === "fresh-pick")
+    .map((product) => product.productId);
+    const savedEnhancements = savedEmailData.enhancements.map(
+  (enhancement) => ({
+    id: enhancement.id,
+    name: enhancement.name,
+    description: enhancement.description,
+  }),
+);
+const savedJourneyScores =
+  {} as SkinDiscoverySubmission["journey"]["scores"];
+
+const expectedJourneys = [
+  "quench",
+  "calm",
+  "purify",
+  "illuminate",
+  "renew",
+] as const;
+
+for (const journey of expectedJourneys) {
+  const matches = savedEmailData.journey.scores.filter(
+    (item) => item.journey === journey,
   );
 
-  return sendSkinDiscoveryEmails(submission, {
-    ...envOptions,
-    productCommerce,
-  });
+  if (
+    matches.length !== 1 ||
+    !Number.isFinite(matches[0].score)
+  ) {
+    throw new Error(
+      `Saved Skin Discovery score is missing or invalid: ${journey}`,
+    );
+  }
+
+  savedJourneyScores[journey] = matches[0].score;
+}
+
+if (savedEmailData.journey.scores.length !== expectedJourneys.length) {
+  throw new Error(
+    "Saved Skin Discovery contains unexpected or duplicate journey scores.",
+  );
+}
+const savedResultType = savedEmailData.journey.resultSummary
+  ?.match(/Result type:\s*([a-z-]+)/i)?.[1];
+
+if (
+  savedResultType !== "single-primary" &&
+  savedResultType !== "dual-primary"
+) {
+  throw new Error(
+    "Saved Skin Discovery result type is missing or invalid.",
+  );
+}
+
+const savedPrimaryJourneys =
+  savedResultType === "dual-primary"
+    ? [
+        savedEmailData.journey.primary,
+        savedEmailData.journey.secondary,
+      ]
+    : [savedEmailData.journey.primary];
+
+if (
+  savedPrimaryJourneys.some((journey) => !journey) ||
+  new Set(savedPrimaryJourneys).size !== savedPrimaryJourneys.length
+) {
+  throw new Error(
+    "Saved Skin Discovery primary journeys are missing or invalid.",
+  );
+}
+      const savedSubmission: SkinDiscoverySubmission = {
+    ...validation.submission,
+    guest: {
+      ...validation.submission.guest,
+      firstName: savedEmailData.guest.firstName,
+      lastName: savedEmailData.guest.lastName,
+      email: savedEmailData.guest.email,
+    },
+       journey: {
+  ...validation.submission.journey,
+  scores: savedJourneyScores,
+  resultType: savedResultType,
+  primaryJourneys:
+    savedPrimaryJourneys as SkinDiscoverySubmission["journey"]["primaryJourneys"],
+  secondaryJourney:
+    savedResultType === "dual-primary"
+      ? null
+      : (savedEmailData.journey.secondary as SkinDiscoverySubmission["journey"]["secondaryJourney"]),
+},
+    productRecommendations: {
+      featured: savedFeaturedProducts,
+      moreFreshPicks: savedFreshPicks,
+    },
+    enhancementRecommendations: savedEnhancements.map(
+  (enhancement) => enhancement.id,
+),
+enhancementDetails: savedEnhancements.map((enhancement) => ({
+  id: enhancement.id,
+  name: enhancement.name,
+  guestBenefit: enhancement.description,
+})),
+  };
+ return sendSkinDiscoveryEmails(savedSubmission, {
+  ...envOptions,
+  savedDeliveryContext: {
+    businessId: savedEmailData.businessId,
+    consultationId: savedEmailData.consultationId,
+    skinPlanId: savedEmailData.skinPlanId,
+  },
+  productCommerce: savedProductCommerce,
+  savedProducts,
+  savedEnhancements,
+});
 }

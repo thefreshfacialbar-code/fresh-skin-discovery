@@ -20,14 +20,62 @@ export async function POST(request: Request) {
 
 if (!persistence.success) {
   console.error(
-    "Skin Discovery completed, but Customer 360 persistence failed:",
+    "Skin Discovery persistence failed:",
     persistence.error
+  );
+
+  return NextResponse.json(
+    {
+      ok: false,
+      error: "Skin Discovery could not be saved. Email delivery was not attempted.",
+      persistence,
+    },
+    { status: 500 }
   );
 }
 
-const delivery = await deliverSkinDiscoverySubmission(payload.submission);
+let delivery;
+
+try {
+  delivery = await deliverSkinDiscoverySubmission(
+    payload.submission,
+    {
+      consultationId: persistence.consultationId,
+      skinPlanId: persistence.skinPlanId,
+    },
+  );
+} catch (error) {
+  console.error(
+    "Skin Discovery saved, but email delivery encountered an error:",
+    error,
+  );
+
+  return NextResponse.json(
+    {
+      ok: false,
+      persistence,
+      delivery: null,
+      error:
+        "Skin Discovery was saved successfully, but email delivery could not be completed or verified.",
+    },
+    { status: 500 },
+  );
+}
 
 
+
+if (!delivery.overallSuccess) {
+  return NextResponse.json(
+    {
+      ok: false,
+      persistence,
+      delivery,
+      error:
+        "Skin Discovery was saved successfully, but email delivery was not fully completed.",
+    },
+    { status: 502 },
+  );
+}
 
 return NextResponse.json({
   ok: true,
