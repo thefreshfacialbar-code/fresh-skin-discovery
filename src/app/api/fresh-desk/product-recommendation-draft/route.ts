@@ -52,6 +52,10 @@ export async function POST(request: Request) {
   supportingJourney,
   recommendationRole,
   intensity,
+  usageType,
+  frequency,
+  timing,
+  requiresMixoGuidance,
   eligibilityRules,
   featuredEligible,
   experienceAssignments,
@@ -81,6 +85,44 @@ export async function POST(request: Request) {
       { status: 400 }
     );
   }
+  const validUsageTypes = ["Daily", "Periodic", "As Needed"];
+
+const validFrequencies = [
+  "Once Daily",
+  "Twice Daily",
+  "Once Weekly",
+  "1–2x per Week",
+  "2–3x per Week",
+  "As Needed",
+  "Reapply as Directed",
+  "Per Mixo Guidance",
+];
+
+const validTimingOptions = ["AM", "PM", "During Treatment"];
+
+const validRoutineSettings =
+  typeof usageType === "string" &&
+  (usageType === "" || validUsageTypes.includes(usageType)) &&
+  typeof frequency === "string" &&
+  (frequency === "" || validFrequencies.includes(frequency)) &&
+  Array.isArray(timing) &&
+  timing.every(
+    (value) =>
+      typeof value === "string" &&
+      validTimingOptions.includes(value)
+  ) &&
+  new Set(timing).size === timing.length &&
+  typeof requiresMixoGuidance === "boolean";
+
+if (!validRoutineSettings) {
+  return NextResponse.json(
+    {
+      success: false,
+      error: "Invalid routine and usage settings",
+    },
+    { status: 400 }
+  );
+}
   if (
   typeof customerGuidance !== "string" ||
   customerGuidance.trim().length === 0 ||
@@ -228,6 +270,10 @@ const proposedSettings = {
     supportingJourney === "" ? null : supportingJourney,
   recommendation_role: recommendationRole,
   intensity,
+  usage_type: usageType === "" ? null : usageType,
+  frequency: frequency === "" ? null : frequency,
+  timing,
+  requires_farmacist_review: requiresMixoGuidance,
   ...(experienceAssignments !== undefined
     ? { experience_assignments: experienceAssignments }
     : {}),

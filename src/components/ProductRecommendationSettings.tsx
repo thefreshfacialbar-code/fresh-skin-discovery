@@ -29,6 +29,10 @@ type RecommendationProfile = {
   supporting_journey: string | null;
   recommendation_role: string | null;
   intensity: number | null;
+  usage_type: string | null;
+  frequency: string | null;
+  timing: string[] | null;
+  requires_farmacist_review: boolean;
   eligibility_rules: ProductEligibilityRules | null;
   featured_eligible: boolean;
 };
@@ -45,6 +49,10 @@ type RecommendationDraft = {
     supporting_journey: string | null;
     recommendation_role: string | null;
     intensity: number | null;
+    usage_type: string | null;
+    frequency: string | null;
+    timing: string[] | null;
+    requires_farmacist_review: boolean;
     eligibility_rules: ProductEligibilityRules | null;
     featured_eligible: boolean;
     experience_assignments: ExperienceAssignment[];
@@ -117,6 +125,58 @@ const [intensity, setIntensity] = useState(
       profile.intensity ??
       1
   )
+);
+const [usageType, setUsageType] = useState(() => {
+  const existingUsageType =
+  draft?.proposed_settings.usage_type !== undefined
+    ? (draft.proposed_settings.usage_type ?? "")
+    : (profile.usage_type ?? "");
+
+  if (
+    existingUsageType === "Weekly" ||
+    existingUsageType === "Weekly / Periodic" ||
+    existingUsageType === "Mixo Guided"
+  ) {
+    return "Periodic";
+  }
+
+  return existingUsageType;
+});
+
+const [frequency, setFrequency] = useState(() => {
+  const existingFrequency =
+  draft?.proposed_settings.frequency !== undefined
+    ? (draft.proposed_settings.frequency ?? "")
+    : (profile.frequency ?? "");
+
+  if (existingFrequency === "2–3x per week") {
+    return "2–3x per Week";
+  }
+
+  if (existingFrequency === "Mixo Guidance") {
+    return "Per Mixo Guidance";
+  }
+
+  return existingFrequency;
+});
+
+const [timing, setTiming] = useState<string[]>(() => {
+  const existingTiming =
+  draft?.proposed_settings.timing !== undefined
+    ? (draft.proposed_settings.timing ?? [])
+    : (profile.timing ?? []);
+
+  return [...new Set(existingTiming.map((value) => {
+    if (value === "Morning") return "AM";
+    if (value === "Evening") return "PM";
+    return value;
+  }))];
+});
+
+const [requiresMixoGuidance, setRequiresMixoGuidance] = useState(
+  draft?.proposed_settings.requires_farmacist_review ??
+    profile.requires_farmacist_review ??
+    false
 );
 const initialEligibilityRules =
   draft?.proposed_settings?.eligibility_rules ??
@@ -196,6 +256,10 @@ async function handleSave() {
           supportingJourney,
           recommendationRole: role,
           intensity: Number(intensity),
+          usageType,
+          frequency,
+          timing,
+          requiresMixoGuidance,
           featuredEligible,
           experienceAssignments: assignments,
           manufacturerResearch: research,
@@ -477,7 +541,95 @@ async function handleSubmitForReview() {
             ))}
                     </select>
         </label>
+<section className="mt-5 rounded-lg border border-[#E5DFD8] bg-white p-4">
+  <h4 className="font-semibold">Routine & Usage Settings</h4>
 
+  <p className="mt-1 text-sm text-[#77716D]">
+    Configure how this product is recommended and used in a
+    customer's Fresh Method routine.
+  </p>
+
+  <div className="mt-4 grid gap-4 sm:grid-cols-2">
+    <label className="text-sm font-medium">
+      Usage Type
+      <select
+        className="mt-1 w-full rounded-lg border p-2"
+        disabled={isReadOnly}
+        value={usageType}
+        onChange={(e) => setUsageType(e.target.value)}
+      >
+        <option value="">Select usage type</option>
+        {["Daily", "Periodic", "As Needed"].map((value) => (
+          <option key={value} value={value}>
+            {value}
+          </option>
+        ))}
+      </select>
+    </label>
+
+    <label className="text-sm font-medium">
+      Frequency
+      <select
+        className="mt-1 w-full rounded-lg border p-2"
+        disabled={isReadOnly}
+        value={frequency}
+        onChange={(e) => setFrequency(e.target.value)}
+      >
+        <option value="">Select frequency</option>
+        {[
+          "Once Daily",
+          "Twice Daily",
+          "Once Weekly",
+          "1–2x per Week",
+          "2–3x per Week",
+          "As Needed",
+          "Reapply as Directed",
+          "Per Mixo Guidance",
+        ].map((value) => (
+          <option key={value} value={value}>
+            {value}
+          </option>
+        ))}
+      </select>
+    </label>
+  </div>
+
+  <fieldset
+    className="mt-4 rounded-lg border p-3"
+    disabled={isReadOnly}
+  >
+    <legend className="px-1 text-sm font-medium">Timing</legend>
+
+    <div className="flex flex-wrap gap-4">
+      {["AM", "PM", "During Treatment"].map((value) => (
+        <label key={value} className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={timing.includes(value)}
+            onChange={(e) =>
+              setTiming((current) =>
+                e.target.checked
+                  ? [...current, value]
+                  : current.filter((item) => item !== value)
+              )
+            }
+          />
+          {value}
+        </label>
+      ))}
+    </div>
+  </fieldset>
+
+  <label className="mt-4 flex items-center gap-2 text-sm font-medium">
+    <input
+      type="checkbox"
+      disabled={isReadOnly}
+      checked={requiresMixoGuidance}
+      onChange={(e) => setRequiresMixoGuidance(e.target.checked)}
+    />
+    Mixo Guidance Required
+  </label>
+</section>
         <div className="space-y-2">
           <label
             htmlFor="eligibility-policy"
