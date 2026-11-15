@@ -979,3 +979,124 @@ test("Supabase Watermelonaid policy allows qualifying Renew and Quench consultat
     product.id
   );
 });
+test("Mixo-guided treatment requires professional review", () => {
+  const product = {
+    ...productCatalog[0],
+    id: "mixo-guided-treatment-test",
+    name: "Mixo Guided Treatment Test",
+    category: "Serum & Treatment" as const,
+    primaryJourney: "renew" as const,
+    supportingJourney: "quench" as const,
+    intensity: 2 as const,
+    excluded: false,
+    featuredEligible: true,
+    requiresFarmacistReview: true,
+    calmSensitiveCaution: false,
+    eligibilityRules: undefined,
+  };
+
+  const result = generateProductRecommendation({
+    products: [product],
+    journeyResult: buildJourneyResult(),
+    selectedAnswers: {
+      primaryMotivation: "aging",
+      skinExperience: ["fine-lines-texture"],
+      desiredOutcomes: ["feel-firmer-smoother"],
+    },
+  });
+
+  assert.equal(
+    result.featured.treat?.productId,
+    product.id
+  );
+
+  assert.equal(
+    result.featured.treat?.farmacistReviewRecommended,
+    true
+  );
+});
+test("Mixo-guided products are excluded from non-treatment featured slots", () => {
+  const categories = [
+    "Cleanser",
+    "Moisturizer",
+    "Sun Protection",
+  ] as const;
+
+  for (const category of categories) {
+    const product = {
+      ...productCatalog[0],
+      id: `mixo-restricted-${category}`,
+      name: `Mixo Restricted ${category}`,
+      category,
+      primaryJourney: "renew" as const,
+      supportingJourney: "quench" as const,
+      intensity: 2 as const,
+      excluded: false,
+      featuredEligible: true,
+      requiresFarmacistReview: true,
+      calmSensitiveCaution: false,
+      eligibilityRules: undefined,
+    };
+
+    const result = generateProductRecommendation({
+      products: [product],
+      journeyResult: buildJourneyResult(),
+      selectedAnswers: {
+        primaryMotivation: "aging",
+        skinExperience: ["fine-lines-texture"],
+        desiredOutcomes: ["feel-firmer-smoother"],
+      },
+    });
+
+    assert.equal(
+      Object.values(result.featured).some(
+        (item) => item?.productId === product.id
+      ),
+      false,
+      `Mixo-guided ${category} should not be featured`
+    );
+  }
+});
+test("High-intensity Mixo-guided treatments are excluded for reactive skin", () => {
+  const product = {
+    ...productCatalog[0],
+    id: "mixo-reactive-skin-test",
+    name: "Mixo Reactive Skin Test",
+    category: "Serum & Treatment" as const,
+    primaryJourney: "calm" as const,
+    supportingJourney: "renew" as const,
+    intensity: 4 as const,
+    excluded: false,
+    featuredEligible: true,
+    requiresFarmacistReview: true,
+    calmSensitiveCaution: true,
+    eligibilityRules: undefined,
+  };
+
+  const result = generateProductRecommendation({
+    products: [product],
+    journeyResult: buildJourneyResult({
+      primaryJourneys: ["calm"],
+      secondaryJourney: null,
+    }),
+    selectedAnswers: {
+      primaryMotivation: "sensitive",
+      skinExperience: ["easily-irritated"],
+      desiredOutcomes: ["feel-calmer"],
+    },
+  });
+
+  assert.equal(
+    Object.values(result.featured).some(
+      (item) => item?.productId === product.id
+    ),
+    false
+  );
+
+  assert.equal(
+    result.moreFreshPicks.some(
+      (item) => item.productId === product.id
+    ),
+    false
+  );
+});
