@@ -1,6 +1,4 @@
 import { enhancementCatalog } from "@/data/enhancementCatalog";
-import { cgcProductCatalog } from "@/data/cgcProductCatalog";
-import { productCatalog } from "@/data/productCatalog";
 import { EMAIL_BASE_CSS, EMAIL_COLORS, ensureSafeUrl, escapeHtml } from "@/emails/emailStyles";
 import type { SkinDiscoverySubmission } from "@/types/skinDiscoverySubmission";
 
@@ -49,8 +47,6 @@ export type EmailTemplateResult = {
   text: string;
 };
 
-const productLookup = new Map(productCatalog.map((product) => [product.id, product]));
-const cgcProductLookup = new Map(cgcProductCatalog.map((product) => [product.id, product]));
 const enhancementLookup = new Map(enhancementCatalog.map((enhancement) => [enhancement.id, enhancement]));
 
 const journeyDescriptions: Record<string, string> = {
@@ -86,37 +82,21 @@ function formatName(value: string | null | undefined): string {
 
 function lookupProduct(
   productId: string | null | undefined,
-  experience?: string,
+  _experience?: string,
   savedProducts?: GuestEmailConfig["savedProducts"],
 ) {
-  if (!productId) return null;
+  if (!productId || !savedProducts) return null;
 
-  if (savedProducts) {
-    const savedProduct = savedProducts.find(
-      (product) => product.productId === productId,
-    );
-
-    if (!savedProduct) return null;
-
-    return {
-      name: savedProduct.name,
-      guestBenefit: savedProduct.description,
-    };
-  }
-
-  if (experience === "gentlemens-corner") {
-    return (
-      cgcProductLookup.get(productId) ??
-      productLookup.get(productId) ??
-      null
-    );
-  }
-
-  return (
-    productLookup.get(productId) ??
-    cgcProductLookup.get(productId) ??
-    null
+  const savedProduct = savedProducts.find(
+    (product) => product.productId === productId,
   );
+
+  if (!savedProduct) return null;
+
+  return {
+    name: savedProduct.name,
+    guestBenefit: savedProduct.description,
+  };
 }
 
 

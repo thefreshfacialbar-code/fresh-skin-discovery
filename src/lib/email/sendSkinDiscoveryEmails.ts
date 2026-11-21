@@ -334,12 +334,18 @@ function toGuestTemplateConfig(
   };
 }
 
-function toTeamTemplateConfig(config: SkinDiscoveryEmailConfig): TeamEmailConfig {
+function toTeamTemplateConfig(
+  config: SkinDiscoveryEmailConfig,
+  savedProducts?: TeamEmailConfig["savedProducts"],
+  savedEnhancements?: TeamEmailConfig["savedEnhancements"],
+): TeamEmailConfig {
   return {
     businessName: config.businessName,
     businessEmail: config.businessEmail,
     businessPhone: config.businessPhone,
     locationLabel: config.locationLabel,
+    savedProducts,
+    savedEnhancements,
   };
 }
 
@@ -393,7 +399,14 @@ export async function sendSkinDiscoveryEmails(
     options.savedEnhancements,
   ),
 );
-  const teamTemplate = renderTeamDiscoveryEmail(submission, toTeamTemplateConfig(options.config));
+  const teamTemplate = renderTeamDiscoveryEmail(
+    submission,
+    toTeamTemplateConfig(
+      options.config,
+      options.savedProducts,
+      options.savedEnhancements,
+  ),
+);
 
     const guestMessage = {
     to: submission.guest.email,

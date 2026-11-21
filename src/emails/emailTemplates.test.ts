@@ -6,7 +6,71 @@ import assert from "node:assert/strict";
 import { renderGuestDiscoveryEmail } from "@/emails/guestDiscoveryEmail";
 import { renderTeamDiscoveryEmail } from "@/emails/teamDiscoveryEmail";
 import type { SkinDiscoverySubmission } from "@/types/skinDiscoverySubmission";
-
+const savedProducts = [
+  {
+    productId: "make-it-melt-cleansing-balm",
+    name: "Make It Melt Cleansing Balm",
+    description: "Gently removes makeup and impurities.",
+    routineStep: "cleanse",
+    routineOrder: 1,
+  },
+  {
+    productId: "watermelonaid",
+    name: "Watermelonaid",
+    description: "Helps refresh and replenish skin.",
+    routineStep: "treat",
+    routineOrder: 2,
+  },
+  {
+    productId: "three-milk-ageless-sleep-cream",
+    name: "Three Milk Ageless Sleep Cream",
+    description: "Supports overnight moisture and comfort.",
+    routineStep: "moisturize",
+    routineOrder: 3,
+  },
+  {
+    productId: "am-replenish-non-tinted-spf-40",
+    name: "AM Replenish Non Tinted SPF 40",
+    description: "Provides daily sun protection.",
+    routineStep: "protect",
+    routineOrder: 4,
+  },
+  {
+    productId: "good-gravity-lifting-milky-spray-serum",
+    name: "Good Gravity Lifting Milky Spray Serum",
+    description: "Supports smoother-looking skin.",
+    routineStep: "fresh-pick",
+    routineOrder: 5,
+  },
+  {
+    productId: "golden-moon-dip",
+    name: "Golden Moon Dip",
+    description: "Helps nourish and soften skin.",
+    routineStep: "fresh-pick",
+    routineOrder: 6,
+  },
+  {
+  productId: "clean-slate",
+  name: "Clean Slate",
+  description: "Helps cleanse and refresh the skin.",
+  routineStep: "cleanse",
+  routineOrder: 1,
+},
+{
+  productId: "zero-in",
+  name: "Zero In",
+  description: "Helps improve the appearance of targeted skin concerns.",
+  routineStep: "treat",
+  routineOrder: 2,
+},
+{
+  productId: "second-wind",
+  name: "Second Wind",
+  description: "Helps hydrate and restore skin comfort.",
+  routineStep: "moisturize",
+  routineOrder: 3,
+},
+];
 const baseSubmission: SkinDiscoverySubmission = {
   submissionId: "SUB-TEST-01",
   createdAt: "2026-08-16T10:15:00.000Z",
@@ -54,7 +118,7 @@ const baseSubmission: SkinDiscoverySubmission = {
 };
 
 test("guest email renders first name and primary journey and uses clean copy", () => {
-  const guestEmail = renderGuestDiscoveryEmail(baseSubmission, { previewMode: true, bookingUrl: "https://example.com/book" });
+  const guestEmail = renderGuestDiscoveryEmail(baseSubmission, { previewMode: true, bookingUrl: "https://example.com/book", savedProducts   });
 
   assert.match(guestEmail.html, /Mila &lt;script&gt;alert\(1\)&lt;\/script&gt;/i);
   assert.match(guestEmail.html, /Your Skin Discovery Journey is here/i);
@@ -70,7 +134,7 @@ test("guest email renders first name and primary journey and uses clean copy", (
 });
 
 test("guest email renders supporting journey and more picks section when present", () => {
-  const guestEmail = renderGuestDiscoveryEmail(baseSubmission, { previewMode: true, bookingUrl: "https://example.com/book" });
+  const guestEmail = renderGuestDiscoveryEmail(baseSubmission, { previewMode: true, bookingUrl: "https://example.com/book", savedProducts });
 
   assert.match(guestEmail.html, /SUPPORTING YOUR JOURNEY/i);
   assert.match(guestEmail.html, /A FEW MORE FRESH PICKS/i);
@@ -85,7 +149,7 @@ test("guest email renders supporting journey and more picks section when present
 });
 
 test("guest email renders all four featured slots including protect and keeps the CTA hierarchy intact", () => {
-  const guestEmail = renderGuestDiscoveryEmail(baseSubmission, { previewMode: true, bookingUrl: "https://example.com/book" });
+  const guestEmail = renderGuestDiscoveryEmail(baseSubmission, { previewMode: true, bookingUrl: "https://example.com/book", savedProducts });
 
   assert.match(guestEmail.html, /CLEANSE/i);
   assert.match(guestEmail.html, /TREAT/i);
@@ -117,10 +181,13 @@ test("Curated submission renders all stored CGC core products and uses the full 
     previewMode: true,
     bookingUrl: "https://example.com/book",
     logoUrl: "https://example.com/ffb-logo.png",
+    savedProducts,
   });
-  const teamEmail = renderTeamDiscoveryEmail(curatedSubmission);
+  const teamEmail = renderTeamDiscoveryEmail(curatedSubmission, {
+  savedProducts,
+});
 
-  for (const productName of ["Clean Slate", "Zero In", "Second Wind", "AM Replenish Non-Tinted SPF 40"]) {
+  for (const productName of ["Clean Slate", "Zero In", "Second Wind", "AM Replenish Non Tinted SPF 40"]) {
     assert.match(guestEmail.html, new RegExp(productName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"));
     assert.match(guestEmail.text, new RegExp(productName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"));
     assert.match(teamEmail.html, new RegExp(productName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"));
@@ -136,6 +203,7 @@ test("Fresh submission keeps the existing Fresh logo and product email behavior"
     previewMode: true,
     bookingUrl: "https://example.com/book",
     logoUrl: "https://example.com/ffb-logo.png",
+    savedProducts,
   });
 
   assert.match(guestEmail.html, /https:\/\/example\.com\/ffb-logo\.png/i);
@@ -183,9 +251,9 @@ test("team email includes all submission discoverable fields and action statuses
   assert.match(teamEmail.html, /MORE FRESH PICKS/i);
   assert.match(teamEmail.html, /RECOMMENDED ENHANCEMENTS/i);
   assert.match(teamEmail.html, /BOULEVARD/i);
-  assert.match(teamEmail.html, /Boulevard sync: Not yet connected/i);
-  assert.match(teamEmail.html, /Booked\?: Not yet known/i);
-  assert.match(teamEmail.html, /Membership Interest: Not yet known/i);
+  assert.match(teamEmail.html, /Skin Discovery<br\s*\/>Journey - Renew/i);
+  assert.match(teamEmail.html, /Journey - Quench/i);
+  assert.doesNotMatch(teamEmail.html, /Membership Interest: Not yet known/i);
   assert.match(teamEmail.html, /CUSTOM FACIAL DIRECTION/i);
   assert.doesNotMatch(teamEmail.html, /internalScore|internal score/i);
 });
@@ -215,8 +283,10 @@ test("guest and team emails use the exact stored TiZO protect product and no fab
     },
   };
 
-  const guestEmail = renderGuestDiscoveryEmail(submission, { previewMode: true, bookingUrl: "https://example.com/book" });
-  const teamEmail = renderTeamDiscoveryEmail(submission);
+  const guestEmail = renderGuestDiscoveryEmail(submission, { previewMode: true, bookingUrl: "https://example.com/book", savedProducts });
+  const teamEmail = renderTeamDiscoveryEmail(submission, {
+  savedProducts,
+});
 
   assert.match(guestEmail.html, new RegExp(storedProtectName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"));
   assert.match(teamEmail.html, new RegExp(storedProtectName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"));
@@ -251,7 +321,7 @@ test("guest and team emails use the exact stored TiZO protect product and no fab
 });
 
 test("both guest and team emails produce readable plain text without markup", () => {
-  const guestEmail = renderGuestDiscoveryEmail(baseSubmission, { previewMode: true, bookingUrl: "https://example.com/book" });
+  const guestEmail = renderGuestDiscoveryEmail(baseSubmission, { previewMode: true, bookingUrl: "https://example.com/book", savedProducts });
   const teamEmail = renderTeamDiscoveryEmail(baseSubmission);
 
   assert.match(guestEmail.text, /Your Skin Discovery Journey is here/i);
@@ -261,4 +331,14 @@ test("both guest and team emails produce readable plain text without markup", ()
   assert.match(teamEmail.text, /NEW SKIN DISCOVERY/i);
   assert.match(teamEmail.text, /FEATURED FRESH PICKS/i);
   assert.doesNotMatch(teamEmail.text, /<html|<table|<div/i);
+});
+test("guest email does not fall back to hardcoded product catalogs", () => {
+  const guestEmail = renderGuestDiscoveryEmail(baseSubmission, {
+    previewMode: true,
+    bookingUrl: "https://example.com/book",
+  });
+
+  assert.doesNotMatch(guestEmail.html, /Make It Melt Cleansing Balm/i);
+  assert.doesNotMatch(guestEmail.html, /Watermelonaid/i);
+  assert.doesNotMatch(guestEmail.html, /Three Milk Ageless Sleep Cream/i);
 });

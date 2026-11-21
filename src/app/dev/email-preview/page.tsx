@@ -3,6 +3,7 @@ import { renderGuestDiscoveryEmail } from "@/emails/guestDiscoveryEmail";
 import { renderTeamDiscoveryEmail } from "@/emails/teamDiscoveryEmail";
 import { renderFinalSkinPlanEmail } from "@/lib/email/deliverFinalSkinPlan";
 import type { SkinDiscoverySubmission } from "@/types/skinDiscoverySubmission";
+import { getSupabaseProductCatalog } from "@/lib/supabaseProductCatalog";
 
 const sampleSubmission: SkinDiscoverySubmission = {
   submissionId: "SUB-2026-0001",
@@ -39,7 +40,7 @@ const sampleSubmission: SkinDiscoverySubmission = {
     },
     moreFreshPicks: ["good-gravity-lifting-milky-spray-serum", "golden-moon-dip"],
   },
-  enhancementRecommendations: ["dermaplaning", "microcurrent"],
+  enhancementRecommendations: ["microcurrent"],
   actions: {
     booked: null,
     membershipInterest: null,
@@ -67,16 +68,50 @@ const gentlemenSampleSubmission: SkinDiscoverySubmission = {
     moreFreshPicks: ["deep-clean", "long-night"],
   },
 };
-export default function EmailPreviewPage() {
+export default async function EmailPreviewPage() {
   if (process.env.NODE_ENV === "production") {
     notFound();
   }
+
+  const products = await getSupabaseProductCatalog();
+
+const savedProducts = products.map((product) => {
+  const featuredSteps = Object.entries(
+    sampleSubmission.productRecommendations.featured
+  );
+
+  const featuredIndex = featuredSteps.findIndex(
+    ([, productId]) => productId === product.id
+  );
+
+  const freshPickIndex =
+    sampleSubmission.productRecommendations.moreFreshPicks.indexOf(
+      product.id
+    );
+
+  return {
+    productId: product.id,
+    name: product.name,
+    description: product.guestBenefit,
+    routineStep:
+      featuredIndex >= 0
+        ? featuredSteps[featuredIndex][0]
+        : "fresh-pick",
+    routineOrder:
+      featuredIndex >= 0
+        ? featuredIndex + 1
+        : freshPickIndex >= 0
+          ? freshPickIndex + 5
+          : 0,
+  };
+});
 
   const previewBaseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
   const guestEmail = renderGuestDiscoveryEmail(sampleSubmission, {
   logoUrl: `${previewBaseUrl}/ffb-logo.png`,
   bookingUrl: "",
   previewMode: true,
+  savedProducts,
   productCommerce: [
     {
       productId: "make-it-melt-cleansing-balm",
@@ -273,8 +308,9 @@ const finalGentlemensEmail = renderFinalSkinPlanEmail({
   ],
 });
   const teamEmail = renderTeamDiscoveryEmail(sampleSubmission, {
-    previewMode: true,
-  });
+  previewMode: true,
+  savedProducts,
+});
 
   return (
     <main style={{ padding: 32, background: "#f6f1eb", color: "#1e1b1a", fontFamily: "Arial, sans-serif" }}>

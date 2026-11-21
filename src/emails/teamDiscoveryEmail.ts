@@ -1,9 +1,9 @@
 import { enhancementCatalog } from "@/data/enhancementCatalog";
-import { cgcProductCatalog } from "@/data/cgcProductCatalog";
-import { productCatalog } from "@/data/productCatalog";
 import { EMAIL_BASE_CSS, EMAIL_COLORS, escapeHtml } from "@/emails/emailStyles";
 import { mapPrimaryMotivation, mapSelectedValues, skinExperienceLabels, desiredOutcomesLabels } from "@/lib/journeyReviewMappings";
 import type { SkinDiscoverySubmission } from "@/types/skinDiscoverySubmission";
+
+import type { GuestEmailConfig } from "@/emails/guestDiscoveryEmail";
 
 export type TeamEmailConfig = {
   previewMode?: boolean;
@@ -11,6 +11,8 @@ export type TeamEmailConfig = {
   businessEmail?: string;
   businessPhone?: string;
   locationLabel?: string;
+  savedProducts?: GuestEmailConfig["savedProducts"];
+  savedEnhancements?: GuestEmailConfig["savedEnhancements"];
 };
 
 export type TeamEmailTemplateResult = {
@@ -19,16 +21,23 @@ export type TeamEmailTemplateResult = {
   text: string;
 };
 
-const productLookup = new Map(productCatalog.map((product) => [product.id, product]));
-const cgcProductLookup = new Map(cgcProductCatalog.map((product) => [product.id, product]));
+function lookupProduct(
+  productId: string | null | undefined,
+  _experience?: string,
+  savedProducts?: TeamEmailConfig["savedProducts"],
+) {
+  if (!productId || !savedProducts) return null;
 
-function lookupProduct(productId: string | null | undefined, experience?: string) {
-  if (!productId) return null;
-  if (experience === "gentlemens-corner") {
-    return cgcProductLookup.get(productId) ?? productLookup.get(productId) ?? null;
-  }
+  const savedProduct = savedProducts.find(
+    (product) => product.productId === productId,
+  );
 
-  return productLookup.get(productId) ?? cgcProductLookup.get(productId) ?? null;
+  if (!savedProduct) return null;
+
+  return {
+    name: savedProduct.name,
+    guestBenefit: savedProduct.description,
+  };
 }
 const enhancementLookup = new Map(enhancementCatalog.map((enhancement) => [enhancement.id, enhancement]));
 
@@ -119,7 +128,10 @@ function renderDiscoveryAnswers(submission: SkinDiscoverySubmission): string {
   `;
 }
 
-function renderFeaturedProducts(submission: SkinDiscoverySubmission): string {
+function renderFeaturedProducts(
+  submission: SkinDiscoverySubmission,
+  config: TeamEmailConfig,
+): string {
   const rows = [
     ["Cleanse", submission.productRecommendations.featured.cleanse],
     ["Treat", submission.productRecommendations.featured.treat],
@@ -127,7 +139,11 @@ function renderFeaturedProducts(submission: SkinDiscoverySubmission): string {
     ["Protect", submission.productRecommendations.featured.protect],
   ]
     .map(([label, productId]) => {
-      const product = lookupProduct(productId, submission.experience);
+      const product = lookupProduct(
+  productId,
+  submission.experience,
+  config.savedProducts,
+);
       if (!product) return "";
       return `
         <tr>
@@ -136,8 +152,17 @@ function renderFeaturedProducts(submission: SkinDiscoverySubmission): string {
               <tr>
                 <td style="padding: 12px 16px; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: ${EMAIL_COLORS.mutedAlt}; font-weight: 700;">${escapeHtml(label as string)}</td>
               </tr>
-              <tr><td style="padding: 0 16px 12px; font-size: 15px; line-height: 22px; color: ${EMAIL_COLORS.ink}; font-weight: 700;">${escapeHtml(product.name)}</td></tr>
-            </table>
+              <tr><td style="padding: 0 16px 8px; font-size: 16px; line-height: 24px; color: ${EMAIL_COLORS.ink}; font-weight: 700;">${escapeHtml(product.name)}</td></tr>
+           ${
+  product.guestBenefit
+    ? `<tr>
+        <td style="padding: 0 16px 12px; font-size: 13px; line-height: 20px; color: ${EMAIL_COLORS.muted};">
+          ${escapeHtml(product.guestBenefit)}
+        </td>
+      </tr>`
+    : ""
+}
+              </table>
           </td>
         </tr>
       `;
@@ -152,7 +177,10 @@ function renderFeaturedProducts(submission: SkinDiscoverySubmission): string {
   `;
 }
 
-function renderMoreFreshPicks(submission: SkinDiscoverySubmission): string {
+function renderMoreFreshPicks(
+  submission: SkinDiscoverySubmission,
+  config: TeamEmailConfig,
+): string {
   if (!submission.productRecommendations.moreFreshPicks.length) {
     return `
       <tr>
@@ -164,9 +192,26 @@ function renderMoreFreshPicks(submission: SkinDiscoverySubmission): string {
 
   const rows = submission.productRecommendations.moreFreshPicks
     .map((productId) => {
-      const product = productLookup.get(productId);
+      const product = lookupProduct(
+  productId,
+  submission.experience,
+  config.savedProducts,
+);
       if (!product) return "";
-      return `<tr><td style="padding: 0 0 8px; font-size: 15px; line-height: 22px; color: ${EMAIL_COLORS.ink};">• ${escapeHtml(product.name)}</td></tr>`;
+      return `
+  <tr>
+    <td style="padding: 0 0 14px; font-size: 15px; line-height: 22px; color: ${EMAIL_COLORS.ink};">
+  <strong>• ${escapeHtml(product.name)}</strong>
+      ${
+        product.guestBenefit
+          ? `<div style="padding: 4px 0 0 14px; font-size: 13px; line-height: 20px; color: ${EMAIL_COLORS.muted};">
+              ${escapeHtml(product.guestBenefit)}
+            </div>`
+          : ""
+      }
+    </td>
+  </tr>
+`;
     })
     .join("");
 
@@ -178,7 +223,10 @@ function renderMoreFreshPicks(submission: SkinDiscoverySubmission): string {
   `;
 }
 
-function renderEnhancements(submission: SkinDiscoverySubmission): string {
+function renderEnhancements(
+  submission: SkinDiscoverySubmission,
+  config: TeamEmailConfig,
+): string {
   if (!submission.enhancementRecommendations.length) {
     return `
       <tr>
@@ -190,7 +238,11 @@ function renderEnhancements(submission: SkinDiscoverySubmission): string {
 
   const rows = submission.enhancementRecommendations
     .map((enhancementId) => {
-      const enhancement = enhancementLookup.get(enhancementId);
+      const enhancement = config.savedEnhancements
+  ? config.savedEnhancements.find(
+      (item) => item.id === enhancementId,
+    )
+  : enhancementLookup.get(enhancementId);
       if (!enhancement) return "";
       return `<tr><td style="padding: 0 0 8px; font-size: 15px; line-height: 22px; color: ${EMAIL_COLORS.ink};">• ${escapeHtml(enhancement.name)}</td></tr>`;
     })
@@ -211,59 +263,132 @@ function renderTeamEmailHtml(submission: SkinDiscoverySubmission, config: TeamEm
     : submission.journey.primaryJourneys.map((journey) => formatJourneyName(journey)).join(" + ");
   const now = new Date(submission.createdAt).toLocaleString();
   const customDirection = createCustomFacialDirection(submission);
-  const bookedStatus = submission.actions.booked === null ? "Not yet known" : submission.actions.booked ? "Yes" : "No";
-  const membershipStatus = submission.actions.membershipInterest === null ? "Not yet known" : submission.actions.membershipInterest ? "Yes" : "No";
+  const guestName = [
+  submission.guest.firstName,
+  submission.guest.lastName,
+]
+  .filter(Boolean)
+  .join(" ")
+  .trim() || "New Guest";
+  
   const boulevardTags = submission.internal.boulevardTags.length ? submission.internal.boulevardTags.join("<br />") : "None";
-
+const reviewNotice = `
+  <tr>
+    <td style="padding: 0 28px 20px;">
+      <table role="presentation" width="100%"
+        cellpadding="0" cellspacing="0" border="0"
+        style="background:#f5f2ed; border:1px solid ${EMAIL_COLORS.border}; border-radius:12px;">
+        <tr>
+          <td style="padding:16px 18px;">
+            <div style="font-size:15px; font-weight:700; color:${EMAIL_COLORS.ink};">
+              Mixo Review Required
+            </div>
+            <div style="padding-top:6px; font-size:14px; line-height:21px; color:${EMAIL_COLORS.muted};">
+              Review this guest's Skin Discovery and personalized recommendations in Fresh Desk before finalizing their Skin Plan.
+            </div>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+`;
   const followUpNotice = needsMixoFollowUp
     ? `<tr><td style="padding: 0 28px 20px; font-size: 16px; line-height: 24px; color: ${EMAIL_COLORS.ink}; font-weight: 700;">Skin Discovery needs Mixo follow-up — no strong Skin Journey result was generated.</td></tr>`
     : "";
 
-  return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /><title>${escapeHtml("New Skin Discovery")}</title><style>${EMAIL_BASE_CSS}</style></head><body><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f3f0ef; padding: 32px 18px;"><tr><td align="center"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width: 760px; background:#ffffff; border:1px solid ${EMAIL_COLORS.border}; border-radius: 18px;"><tr><td style="padding: 28px 28px 6px; font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: ${EMAIL_COLORS.mutedAlt}; font-weight: 700;">NEW SKIN DISCOVERY</td></tr><tr><td style="padding: 0 28px 20px; font-size: 24px; line-height: 32px; color: ${EMAIL_COLORS.ink}; font-weight: 700;">${escapeHtml(subjectJourney)}</td></tr>${followUpNotice}<tr><td style="padding: 0 28px 20px;">
+  return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /><title>${escapeHtml("New Skin Discovery")}</title><style>${EMAIL_BASE_CSS}</style></head><body><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f3f0ef; padding: 32px 18px;"><tr><td align="center"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width: 760px; background:#ffffff; border:1px solid ${EMAIL_COLORS.border}; border-radius: 18px;"><tr><td style="padding: 28px 28px 6px; font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: ${EMAIL_COLORS.mutedAlt}; font-weight: 700;">NEW SKIN DISCOVERY</td></tr><tr><td style="padding: 0 28px 20px; font-size: 24px; line-height: 32px; color: ${EMAIL_COLORS.ink}; font-weight: 700;">${escapeHtml(guestName)}</td></tr>${reviewNotice}${followUpNotice}<tr><td style="padding: 0 28px 20px;">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid ${EMAIL_COLORS.border}; background:#fff; border-radius: 12px;">
           <tr>
-            <td style="padding: 14px 18px; font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; color: ${EMAIL_COLORS.mutedAlt}; font-weight: 700;">Submission Details</td>
+            <td style="padding: 14px 18px; font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; color: ${EMAIL_COLORS.mutedAlt}; font-weight: 700;">GUEST INFORMATION</td>
           </tr>
-          <tr><td style="padding: 0 18px 8px; font-size: 13px; line-height: 20px; color: ${EMAIL_COLORS.muted};">Submission ID: <span style="color:${EMAIL_COLORS.ink};">${escapeHtml(submission.submissionId)}</span></td></tr>
-          <tr><td style="padding: 0 18px 8px; font-size: 13px; line-height: 20px; color: ${EMAIL_COLORS.muted};">Date/time: <span style="color:${EMAIL_COLORS.ink};">${escapeHtml(now)}</span></td></tr>
-          <tr><td style="padding: 0 18px 8px; font-size: 13px; line-height: 20px; color: ${EMAIL_COLORS.muted};">First Name: <span style="color:${EMAIL_COLORS.ink};">${escapeHtml(submission.guest.firstName)}</span></td></tr>
-          <tr><td style="padding: 0 18px 8px; font-size: 13px; line-height: 20px; color: ${EMAIL_COLORS.muted};">Last Name: <span style="color:${EMAIL_COLORS.ink};">${escapeHtml(submission.guest.lastName)}</span></td></tr>
           <tr><td style="padding: 0 18px 8px; font-size: 13px; line-height: 20px; color: ${EMAIL_COLORS.muted};">Email: <span style="color:${EMAIL_COLORS.ink};">${escapeHtml(submission.guest.email)}</span></td></tr>
           <tr><td style="padding: 0 18px 14px; font-size: 13px; line-height: 20px; color: ${EMAIL_COLORS.muted};">Phone: <span style="color:${EMAIL_COLORS.ink};">${escapeHtml(submission.guest.phone)}</span></td></tr>
         </table>
       </td></tr>
-      <tr><td style="padding: 0 28px 20px;">${renderDiscoveryAnswers(submission)}</td></tr>
-      <tr><td style="padding: 0 28px 18px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding: 0 0 10px; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: ${EMAIL_COLORS.mutedAlt}; font-weight: 700;">SKIN JOURNEY</td></tr><tr><td style="padding: 0 0 8px; font-size: 15px; line-height: 22px; color: ${EMAIL_COLORS.ink};">Result type: ${escapeHtml(submission.journey.resultType)}</td></tr><tr><td style="padding: 0 0 8px; font-size: 15px; line-height: 22px; color: ${EMAIL_COLORS.ink};">Primary Journey(s): ${escapeHtml(submission.journey.primaryJourneys.map(formatJourneyName).join(" + "))}</td></tr>${submission.journey.secondaryJourney ? `<tr><td style="padding: 0 0 8px; font-size: 15px; line-height: 22px; color: ${EMAIL_COLORS.ink};">Supporting Journey: ${escapeHtml(formatJourneyName(submission.journey.secondaryJourney))}</td></tr>` : ""}</table></td></tr>
-      <tr><td style="padding: 0 28px 18px;">${renderFeaturedProducts(submission)}</td></tr>
-      <tr><td style="padding: 0 28px 18px;">${renderMoreFreshPicks(submission)}</td></tr>
-      <tr><td style="padding: 0 28px 18px;">${renderEnhancements(submission)}</td></tr>
+      <tr>
+  <td style="padding: 0 28px 20px;">
+    <table
+      role="presentation"
+      width="100%"
+      cellpadding="0"
+      cellspacing="0"
+      border="0"
+    >
+      ${renderDiscoveryAnswers(submission)}
+    </table>
+  </td>
+</tr>
+      <tr><td style="padding: 0 28px 18px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding: 0 0 10px; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: ${EMAIL_COLORS.mutedAlt}; font-weight: 700;">SKIN JOURNEY</td></tr><tr><td style="padding: 0 0 8px; font-size: 15px; line-height: 22px; color: ${EMAIL_COLORS.ink};">Primary Journey(s): ${escapeHtml(submission.journey.primaryJourneys.map(formatJourneyName).join(" + "))}</td></tr>${submission.journey.secondaryJourney ? `<tr><td style="padding: 0 0 8px; font-size: 15px; line-height: 22px; color: ${EMAIL_COLORS.ink};">Supporting Journey: ${escapeHtml(formatJourneyName(submission.journey.secondaryJourney))}</td></tr>` : ""}</table></td></tr>
+      <tr>
+  <td style="padding: 0 28px 18px;">
+    <table
+      role="presentation"
+      width="100%"
+      cellpadding="0"
+      cellspacing="0"
+      border="0"
+    >
+      ${renderFeaturedProducts(submission, config)}
+    </table>
+  </td>
+</tr>
+      <tr>
+  <td style="padding: 0 28px 18px;">
+    <table
+      role="presentation"
+      width="100%"
+      cellpadding="0"
+      cellspacing="0"
+      border="0"
+    >
+      ${renderMoreFreshPicks(submission, config)}
+    </table>
+  </td>
+</tr>
+      <tr>
+  <td style="padding: 0 28px 18px;">
+    <table
+      role="presentation"
+      width="100%"
+      cellpadding="0"
+      cellspacing="0"
+      border="0"
+    >
+      ${renderEnhancements(submission, config)}
+    </table>
+  </td>
+</tr>
       <tr><td style="padding: 0 28px 18px;">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
           <tr><td style="padding: 0 0 8px; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: ${EMAIL_COLORS.mutedAlt}; font-weight: 700;">CUSTOM FACIAL DIRECTION</td></tr>
-          <tr><td style="font-size: 15px; line-height: 22px; color: ${EMAIL_COLORS.ink};">${escapeHtml(customDirection)}</td></tr>
+          <tr>
+  <td>
+    <table
+      role="presentation"
+      width="100%"
+      cellpadding="0"
+      cellspacing="0"
+      border="0"
+      style="background:#f5f2ed; border:1px solid ${EMAIL_COLORS.border}; border-radius:12px;"
+    >
+      <tr>
+        <td style="padding:16px 18px; font-size:15px; line-height:24px; color:${EMAIL_COLORS.ink};">
+          ${escapeHtml(customDirection)}
+        </td>
+      </tr>
+    </table>
+  </td>
+</tr>
         </table>
       </td></tr>
       <tr><td style="padding: 0 28px 18px;">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
           <tr><td style="padding: 0 0 8px; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: ${EMAIL_COLORS.mutedAlt}; font-weight: 700;">BOULEVARD</td></tr>
           <tr><td style="padding: 0 0 8px; font-size: 15px; line-height: 22px; color: ${EMAIL_COLORS.ink};">${boulevardTags}</td></tr>
-          <tr><td style="font-size: 14px; line-height: 22px; color: ${EMAIL_COLORS.muted};">Boulevard sync: Not yet connected</td></tr>
-        </table>
-      </td></tr>
-      <tr><td style="padding: 0 28px 18px;">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-          <tr><td style="padding: 0 0 8px; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: ${EMAIL_COLORS.mutedAlt}; font-weight: 700;">FOLLOW-UP STATUS</td></tr>
-          <tr><td style="padding: 0 0 8px; font-size: 15px; line-height: 22px; color: ${EMAIL_COLORS.ink};">Booked?: ${escapeHtml(bookedStatus)}</td></tr>
-          <tr><td style="padding: 0 0 8px; font-size: 15px; line-height: 22px; color: ${EMAIL_COLORS.ink};">Membership Interest: ${escapeHtml(membershipStatus)}</td></tr>
-          <tr><td style="font-size: 15px; line-height: 22px; color: ${EMAIL_COLORS.ink};">Notes: ${escapeHtml(submission.internal.notes || "No notes yet")}</td></tr>
         </table>
       </td></tr>
       <tr><td style="padding: 0 28px 30px;">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-          <tr><td style="padding: 0 0 8px; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: ${EMAIL_COLORS.mutedAlt}; font-weight: 700;">INTERNAL NOTES</td></tr>
-          <tr><td style="font-size: 15px; line-height: 22px; color: ${EMAIL_COLORS.ink};">${escapeHtml(submission.internal.notes || "No internal notes")}</td></tr>
-        </table>
-      </td></tr>
       <tr><td style="padding: 0 28px 30px; font-size: 12px; line-height: 20px; color: ${EMAIL_COLORS.mutedAlt}; text-align: center;">${escapeHtml(config.businessName ?? "Fresh Facial Bar & Lash Lounge")}${config.businessEmail ? ` | ${escapeHtml(config.businessEmail)}` : ""}${config.businessPhone ? ` | ${escapeHtml(config.businessPhone)}` : ""}${config.locationLabel ? ` | ${escapeHtml(config.locationLabel)}` : ""}</td></tr></table></td></tr></table></body></html>`;
 }
 
@@ -272,8 +397,6 @@ function renderTeamEmailText(submission: SkinDiscoverySubmission, config: TeamEm
   const subjectJourney = needsMixoFollowUp
     ? "Mixo follow-up needed"
     : submission.journey.primaryJourneys.map((journey) => formatJourneyName(journey)).join(" + ");
-  const bookedStatus = submission.actions.booked === null ? "Not yet known" : submission.actions.booked ? "Yes" : "No";
-  const membershipStatus = submission.actions.membershipInterest === null ? "Not yet known" : submission.actions.membershipInterest ? "Yes" : "No";
   const boulevardTags = submission.internal.boulevardTags.length ? submission.internal.boulevardTags.join("\n- ") : "None";
 
   const lines = [
@@ -287,7 +410,7 @@ function renderTeamEmailText(submission: SkinDiscoverySubmission, config: TeamEm
     `Email: ${submission.guest.email}`,
     `Phone: ${submission.guest.phone}`,
     "",
-    "DISCOVERY ANSWERS",
+    "GUEST SKIN PROFILE",
     `Biggest Concern / Primary Motivation: ${submission.discovery.primaryMotivation ? mapPrimaryMotivation(submission.discovery.primaryMotivation) : "Not provided"}`,
     `Skin Experience: ${submission.discovery.skinExperience.length ? mapSelectedValues(submission.discovery.skinExperience, skinExperienceLabels).join(", ") : "Not provided"}`,
     `Desired Outcomes: ${submission.discovery.desiredOutcomes.length ? mapSelectedValues(submission.discovery.desiredOutcomes, desiredOutcomesLabels).join(", ") : "Not provided"}`,
@@ -301,18 +424,52 @@ function renderTeamEmailText(submission: SkinDiscoverySubmission, config: TeamEm
     ...["cleanse", "treat", "moisturize", "protect"].map((step) => {
       const key = step as keyof typeof submission.productRecommendations.featured;
       const productId = submission.productRecommendations.featured[key];
-      const product = lookupProduct(productId, submission.experience);
-      return product ? `${step}: ${product.name}` : `${step}: Not selected`;
+      const product = lookupProduct(
+  productId,
+  submission.experience,
+  config.savedProducts,
+);
+      return product
+  ? `${step}: ${product.name}${
+      product.guestBenefit
+        ? `\nBenefit: ${product.guestBenefit}`
+        : ""
+    }`
+  : `${step}: Not selected`;
     }),
     "",
     "MORE FRESH PICKS",
     submission.productRecommendations.moreFreshPicks.length
-      ? submission.productRecommendations.moreFreshPicks.map((productId) => lookupProduct(productId, submission.experience)?.name ?? productId).join("\n")
+      ? submission.productRecommendations.moreFreshPicks
+  .map((productId) => {
+  const product = lookupProduct(
+    productId,
+    submission.experience,
+    config.savedProducts,
+  );
+
+  if (!product) return productId;
+
+  return product.guestBenefit
+    ? `${product.name}\nBenefit: ${product.guestBenefit}`
+    : product.name;
+})
+  .join("\n")
       : "None recommended",
     "",
     "RECOMMENDED ENHANCEMENTS",
     submission.enhancementRecommendations.length
-      ? submission.enhancementRecommendations.map((enhancementId) => enhancementLookup.get(enhancementId)?.name ?? enhancementId).join("\n")
+      ? submission.enhancementRecommendations
+  .map((enhancementId) => {
+    const enhancement = config.savedEnhancements
+      ? config.savedEnhancements.find(
+          (item) => item.id === enhancementId,
+        )
+      : enhancementLookup.get(enhancementId);
+
+    return enhancement?.name ?? enhancementId;
+  })
+  .join("\n")
       : "None recommended",
     "",
     "CUSTOM FACIAL DIRECTION",
@@ -320,16 +477,8 @@ function renderTeamEmailText(submission: SkinDiscoverySubmission, config: TeamEm
     "",
     "BOULEVARD",
     boulevardTags,
-    "Boulevard sync: Not yet connected",
     "",
-    "FOLLOW-UP STATUS",
-    `Booked?: ${bookedStatus}`,
-    `Membership Interest: ${membershipStatus}`,
-    `Notes: ${submission.internal.notes || "No notes yet"}`,
-    "",
-    "INTERNAL NOTES",
-    submission.internal.notes || "No internal notes",
-    "",
+    
     config.businessName ?? "Fresh Facial Bar & Lash Lounge",
   ];
 
