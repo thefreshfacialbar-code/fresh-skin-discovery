@@ -709,7 +709,6 @@ function renderGuestEmailHtml(submission: SkinDiscoverySubmission, config: Guest
 }
 
 function renderGuestEmailText(submission: SkinDiscoverySubmission, config: GuestEmailConfig): string {
-  const colors = getEmailColors(submission);
   const firstName = formatName(submission.guest.firstName);
   const lines: string[] = [];
   lines.push("Your Skin Discovery Journey is here");
@@ -854,7 +853,6 @@ export function renderGuestDiscoveryEmail(
   submission: SkinDiscoverySubmission,
   config: GuestEmailConfig = {},
 ): EmailTemplateResult {
-  const colors = getEmailColors(submission);
   const normalizedConfig: GuestEmailConfig = {
     businessName: "Fresh Facial Bar & Lash Lounge",
     previewMode: process.env.NODE_ENV !== "production",

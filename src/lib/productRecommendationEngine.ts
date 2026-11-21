@@ -303,13 +303,6 @@ if (product.featuredEligible === false) {
 
   if (slot === "treat") {
   const strongCalmReactive = isStrongCalmReactive(selectedAnswers);
-  const calmContext =
-    primaryJourneys.includes("calm") ||
-    secondaryJourney === "calm";
-
-  const purifyContext =
-    primaryJourneys.includes("purify") ||
-    secondaryJourney === "purify";
 
   if (strongCalmReactive) {
     pool = pool.filter(

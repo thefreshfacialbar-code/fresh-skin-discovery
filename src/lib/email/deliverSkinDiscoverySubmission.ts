@@ -1,4 +1,3 @@
-import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { loadSkinDiscoveryEmailData } from "@/lib/email/loadSkinDiscoveryEmailData";
 import type { SkinDiscoverySubmission } from "@/types/skinDiscoverySubmission";
 import { createResendEmailProvider, type SkinDiscoveryDeliveryResult } from "@/lib/email/emailProvider";
@@ -10,53 +9,7 @@ import {
   type SendSkinDiscoveryEmailsOptions,
 } from "@/lib/email/sendSkinDiscoveryEmails";
 const deliveryStateStore = createInMemoryDeliveryStateStore();
-function getRecommendedProductIds(
-  submission: SkinDiscoverySubmission,
-): string[] {
-  const featured = submission.productRecommendations.featured;
 
-  return Array.from(
-    new Set(
-      [
-        featured.cleanse,
-        featured.treat,
-        featured.moisturize,
-        featured.protect,
-        ...submission.productRecommendations.moreFreshPicks,
-      ].filter((productId): productId is string => Boolean(productId)),
-    ),
-  );
-}
-
-async function loadProductCommerce(
-  submission: SkinDiscoverySubmission,
-) {
-  const productIds = getRecommendedProductIds(submission);
-
-  if (productIds.length === 0) {
-    return [];
-  }
-
-  const { data, error } = await supabaseAdmin
-    .from("products")
-    .select("fresh_product_id, product_url, shopify_variant_id")
-    .in("fresh_product_id", productIds);
-
-  if (error) {
-    console.error(
-      "Could not load Shopify commerce data for Skin Discovery email:",
-      error.message,
-    );
-
-    return [];
-  }
-
-  return (data ?? []).map((product) => ({
-    productId: product.fresh_product_id,
-    productUrl: product.product_url,
-    shopifyVariantId: product.shopify_variant_id,
-  }));
-}
 function readEnv(name: string): string {
   return process.env[name]?.trim() ?? "";
 }

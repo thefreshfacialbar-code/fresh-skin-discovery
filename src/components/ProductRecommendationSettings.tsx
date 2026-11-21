@@ -439,8 +439,8 @@ async function handleSubmitForReview() {
         </label>
 
         <p className="mt-1 text-xs text-[#77716D]">
-          Describe the product's benefits and how it supports the
-          customer's skincare routine. This guidance appears in
+          Describe the product&apos;s benefits and how it supports the
+          customer&apos;s skincare routine. This guidance appears in
           Skin Discovery recommendations.
         </p>
 
@@ -546,7 +546,7 @@ async function handleSubmitForReview() {
 
   <p className="mt-1 text-sm text-[#77716D]">
     Configure how this product is recommended and used in a
-    customer's Fresh Method routine.
+    customer&apos;s Fresh Method routine.
   </p>
 
   <div className="mt-4 grid gap-4 sm:grid-cols-2">

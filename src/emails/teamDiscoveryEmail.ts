@@ -258,10 +258,6 @@ function renderEnhancements(
 
 function renderTeamEmailHtml(submission: SkinDiscoverySubmission, config: TeamEmailConfig): string {
   const needsMixoFollowUp = submission.journey.resultType === "no-strong-journey";
-  const subjectJourney = needsMixoFollowUp
-    ? "Mixo follow-up needed"
-    : submission.journey.primaryJourneys.map((journey) => formatJourneyName(journey)).join(" + ");
-  const now = new Date(submission.createdAt).toLocaleString();
   const customDirection = createCustomFacialDirection(submission);
   const guestName = [
   submission.guest.firstName,

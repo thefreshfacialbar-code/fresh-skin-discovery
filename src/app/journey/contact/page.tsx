@@ -252,7 +252,7 @@ try {
     role="alert"
     className="max-w-lg text-center text-sm leading-6 text-[#7D3F3D]"
   >
-    We're having trouble loading our skincare collection.
+    We&apos;re having trouble loading our skincare collection.
     Your information is still here. Please try again in a moment.
   </p>
 )}

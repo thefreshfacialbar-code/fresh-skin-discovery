@@ -80,7 +80,6 @@ const ownershipCustomer = Array.isArray(ownershipConsultation?.customers)
   ? ownershipConsultation.customers[0]
   : ownershipConsultation?.customers;
 
-const planBusinessId = ownershipCustomer?.business_id;
     const productBusinessId = ownershipCustomer?.business_id;
 
     if (productBusinessId !== employeeSession.employee.business_id) {

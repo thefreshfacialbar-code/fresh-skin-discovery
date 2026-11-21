@@ -5,8 +5,6 @@ import { useState } from "react";
 
 export default function ProductVendorLookupTest({
   productId,
-  researchStatus,
-  manufacturerProductId,
 }: {
   productId: string;
   researchStatus?: string | null;

@@ -50,6 +50,44 @@ type Props = {
 const selectClass = "mt-1 w-full rounded-lg border p-3";
 const labelClass = "block text-sm font-medium";
 
+function MultiSelect({
+    title,
+    name,
+    options,
+    selected,
+    required = false,
+  }: {
+    title: string;
+    name: string;
+    options: readonly { value: string; label: string }[];
+    selected: string[];
+    required?: boolean;
+  }) {
+     return (
+    <fieldset className="rounded-lg border p-4">
+      <legend className="px-2 text-sm font-medium">
+        {title}{required ? " *" : ""}
+      </legend>
+
+      <div className="grid gap-2 sm:grid-cols-2">
+        {options.map((option) => (
+          <label
+            key={option.value}
+            className="flex items-center gap-2 text-sm"
+          >
+            <input
+              type="checkbox"
+              name={name}
+              value={option.value}
+              defaultChecked={selected.includes(option.value)}
+            />
+            {option.label}
+          </label>
+        ))}
+      </div>
+    </fieldset>
+  );
+}
 export default function ProductManualResearch({
   productId,
   productName,
@@ -152,45 +190,6 @@ export default function ProductManualResearch({
     } finally {
       setSaving(false);
     }
-  }
-
-  function MultiSelect({
-    title,
-    name,
-    options,
-    selected,
-    required = false,
-  }: {
-    title: string;
-    name: string;
-    options: readonly { value: string; label: string }[];
-    selected: string[];
-    required?: boolean;
-  }) {
-    return (
-      <fieldset className="rounded-lg border p-4">
-        <legend className="px-2 text-sm font-medium">
-          {title}{required ? " *" : ""}
-        </legend>
-
-        <div className="grid gap-2 sm:grid-cols-2">
-          {options.map((option) => (
-            <label
-              key={option.value}
-              className="flex items-center gap-2 text-sm"
-            >
-              <input
-                type="checkbox"
-                name={name}
-                value={option.value}
-                defaultChecked={selected.includes(option.value)}
-              />
-              {option.label}
-            </label>
-          ))}
-        </div>
-      </fieldset>
-    );
   }
 
   return (

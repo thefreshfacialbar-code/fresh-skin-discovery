@@ -126,7 +126,7 @@ if (skinPlanProductsError) {
           className="text-4xl text-[#302C2A]"
           style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}
         >
-          We Couldn't Load Your Routine
+          We Couldn&apos;t Load Your Routine
         </h1>
 
         <p className="mt-5 text-base leading-8 text-[#5A5553]">

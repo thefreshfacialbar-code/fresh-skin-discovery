@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+
 import { useState } from "react";
 
 
@@ -17,7 +17,6 @@ export default function ProductReviewActions({
   productCatalogId,
   routineStep,
 }: ProductReviewActionsProps) {
-  const router = useRouter();
 const statusLabel =
   status === "confirmed"
     ? "Kept"

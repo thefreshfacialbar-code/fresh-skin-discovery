@@ -247,9 +247,13 @@ export default function ResultsPage() {
   const [journeySummary, setJourneySummary] = useState<ReturnType<typeof readJourneySummary>>(null);
   
   useEffect(() => {
+  const timeoutId = window.setTimeout(() => {
     setIsCurated(getSelectedExperience() === "gentlemens-corner");
     setRecommendation(readStoredRecommendation());
     setJourneySummary(readJourneySummary());
+  }, 0);
+
+  return () => window.clearTimeout(timeoutId);
 }, []);
 
 

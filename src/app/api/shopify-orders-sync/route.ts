@@ -91,18 +91,6 @@ if (businessError || !business) {
 }
     const products = await getShopifyProducts();
 
-const eventProducts = products
-  .filter((product) =>
-    product.variants.nodes.some((variant) =>
-      variant.sku?.startsWith("EVENT-")
-    )
-  )
-  .map((product) => ({
-    id: product.id,
-    title: product.title,
-    variants: product.variants.nodes,
-    metafields: product.metafields.nodes,
-  }));
   if (!testOrderNumber) {
   for (const product of products) {
   const eventVariant = product.variants.nodes.find((variant) =>

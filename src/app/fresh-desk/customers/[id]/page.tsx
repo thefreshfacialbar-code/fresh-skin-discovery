@@ -142,6 +142,11 @@ if (orderItemsError) {
   .order("version", { ascending: false })
   .limit(1)
   .maybeSingle();
+  if (skinPlanError) {
+  throw new Error(
+    `Could not load latest Skin Plan: ${skinPlanError.message}`
+  );
+}
   const { data: latestConsultation } = latestSkinPlan?.consultation_id
   ? await supabaseAdmin
       .from("consultations")

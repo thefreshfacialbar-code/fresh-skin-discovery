@@ -1,6 +1,5 @@
 "use client";
 
-/* eslint-disable react-hooks/set-state-in-effect */
 
 import Image from "next/image";
 import Script from "next/script";
@@ -154,7 +153,7 @@ if (catalogError) {
         </h1>
 
         <p className="mt-6 text-base leading-8 text-[#5A5553] sm:text-lg">
-          We're having a little trouble loading our skincare collection.
+          We&apos;re having a little trouble loading our skincare collection.
           Your Skin Discovery answers are still here.
           Please try again in a moment.
         </p>

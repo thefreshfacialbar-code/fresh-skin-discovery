@@ -227,7 +227,7 @@ async function sendTrackedEmail(
 
   try {
     response = await provider.send(message);
-  } catch (error) {
+  } catch {
     return {
       attempted: true,
       success: false,
