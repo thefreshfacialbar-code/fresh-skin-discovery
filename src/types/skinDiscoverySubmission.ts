@@ -1,4 +1,4 @@
-import type { JourneyId, RecommendationResult } from "@/types/recommendation";
+import type { JourneyId, JourneyScores, RecommendationResult } from "@/types/recommendation";
 import type { ProductRecommendationResult } from "@/types/productRecommendation";
 import type { RecommendedEnhancement } from "@/types/enhancementRecommendation";
 
@@ -31,6 +31,7 @@ export type SkinDiscoverySubmission = {
     resultType: string;
     primaryJourneys: JourneyId[];
     secondaryJourney: JourneyId | null;
+    scores: JourneyScores;
   };
 
   productRecommendations: {
@@ -44,6 +45,11 @@ export type SkinDiscoverySubmission = {
   };
 
   enhancementRecommendations: string[];
+  enhancementDetails?: {
+    id: string;
+    name: string;
+    guestBenefit: string | null;
+  }[];
 
   actions: {
     booked: boolean | null;

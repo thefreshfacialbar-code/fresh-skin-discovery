@@ -1,9 +1,9 @@
-import test from "node:test";
+import { test } from "vitest";
 import assert from "node:assert/strict";
 
 import type { RecommendationResult } from "@/types/recommendation";
 import { productByCategory, productCatalog } from "@/data/productCatalog";
-import { generateProductRecommendation, PRODUCT_EXCLUSIONS } from "@/lib/productRecommendationEngine";
+import { generateProductRecommendation } from "@/lib/productRecommendationEngine";
 
 function buildJourneyResult(overrides: Partial<RecommendationResult> = {}): RecommendationResult {
   return {
@@ -32,9 +32,76 @@ function buildJourneyResult(overrides: Partial<RecommendationResult> = {}): Reco
     ...overrides,
   };
 }
+function withExperiencePriority(
+  product: (typeof productCatalog)[number],
+  freshPriority: 80 | 100 | 120,
+  cgcPriority: 80 | 100 | 120,
+) {
+  return {
+    ...product,
+    experienceRecommendations: [
+      {
+        experienceId: "fresh-facial-bar-lash-lounge",
+        assigned: true,
+        approvalStatus: "approved" as const,
+        recommendationPriority: freshPriority,
+      },
+      {
+        experienceId: "gentlemens-corner",
+        assigned: true,
+        approvalStatus: "approved" as const,
+        recommendationPriority: cgcPriority,
+      },
+    ],
+  };
+}
+test("TiZO Lip Protection is supplemental, not Featured Protect", () => {
+  const lipProtection = {
+    ...productCatalog.find(
+      (product) => product.name === "TiZO Lip Protection"
+    )!,
+    id: "test-tizo-lip-protection",
+    category: "Sun Protection" as const,
+    excluded: false,
+    intensity: 1 as const,
+    primaryJourney: "renew" as const,
+    supportingJourney: "quench" as const,
+    eligibilityRules: undefined,
+  };
 
+  const fullFaceSpf = {
+    ...lipProtection,
+    id: "test-full-face-spf",
+    name: "Full Face SPF",
+    primaryJourney: "calm" as const,
+    supportingJourney: "calm" as const,
+  };
+
+  const result = generateProductRecommendation({
+    products: [lipProtection, fullFaceSpf],
+    journeyResult: buildJourneyResult(),
+    selectedAnswers: {
+      primaryMotivation: "aging",
+      skinExperience: ["fine-lines-texture"],
+      desiredOutcomes: ["feel-firmer-smoother"],
+    },
+  });
+
+  assert.equal(
+    result.featured.protect?.productName,
+    "Full Face SPF"
+  );
+
+  assert.ok(
+    result.moreFreshPicks.some(
+      (product) =>
+        product.productName === "TiZO Lip Protection"
+    )
+  );
+});
 test("Straight Renew generates a balanced routine with one featured product per slot", () => {
   const result = generateProductRecommendation({
+    products: productCatalog,
     journeyResult: buildJourneyResult(),
     selectedAnswers: {
       primaryMotivation: "aging",
@@ -61,6 +128,7 @@ test("Straight Renew generates a balanced routine with one featured product per 
 
 test("Renew + Quench gives hydration and renewal crossover products an advantage", () => {
   const result = generateProductRecommendation({
+    products: productCatalog,
     journeyResult: buildJourneyResult({
       primaryJourneys: ["renew"],
       secondaryJourney: "quench",
@@ -85,6 +153,7 @@ test("Renew + Quench gives hydration and renewal crossover products an advantage
 
 test("Calm reactive signal suppresses high-intensity featured products", () => {
   const result = generateProductRecommendation({
+    products: productCatalog,
     journeyResult: buildJourneyResult({
       primaryJourneys: ["calm"],
       secondaryJourney: "quench",
@@ -110,6 +179,7 @@ test("Calm reactive signal suppresses high-intensity featured products", () => {
 
 test("Purify + Quench still keeps a hydration-supportive moisturizer and SPF", () => {
   const result = generateProductRecommendation({
+    products: productCatalog,
     journeyResult: buildJourneyResult({
       primaryJourneys: ["purify"],
       secondaryJourney: "quench",
@@ -134,6 +204,7 @@ test("Purify + Quench still keeps a hydration-supportive moisturizer and SPF", (
 
 test("Purify + Quench without aging signals keeps Necks-Level out and a Purify treatment in front", () => {
   const result = generateProductRecommendation({
+    products: productCatalog,
     journeyResult: buildJourneyResult({
       primaryJourneys: ["purify"],
       secondaryJourney: "quench",
@@ -155,6 +226,7 @@ test("Purify + Quench without aging signals keeps Necks-Level out and a Purify t
 
 test("Straight Purify prefers a clarifying targeted treatment over Watermelonaid", () => {
   const result = generateProductRecommendation({
+    products: productCatalog,
     journeyResult: buildJourneyResult({
       primaryJourneys: ["purify"],
       secondaryJourney: null,
@@ -185,6 +257,7 @@ test("Straight Purify prefers a clarifying targeted treatment over Watermelonaid
 
 test("Purify + Calm suppresses aggressive treatment options and keeps Watermelonaid from winning by default", () => {
   const result = generateProductRecommendation({
+    products: productCatalog,
     journeyResult: buildJourneyResult({
       primaryJourneys: ["purify"],
       secondaryJourney: "calm",
@@ -215,6 +288,7 @@ test("Purify + Calm suppresses aggressive treatment options and keeps Watermelon
 
 test("Straight Calm keeps Necks-Level out and prioritizes Calm treatment identity", () => {
   const result = generateProductRecommendation({
+    products: productCatalog,
     journeyResult: buildJourneyResult({
       primaryJourneys: ["calm"],
       secondaryJourney: null,
@@ -236,6 +310,7 @@ test("Straight Calm keeps Necks-Level out and prioritizes Calm treatment identit
 
 test("Calm + Quench keeps Calm primary and lets hydration support the wider routine", () => {
   const result = generateProductRecommendation({
+    products: productCatalog,
     journeyResult: buildJourneyResult({
       primaryJourneys: ["calm"],
       secondaryJourney: "quench",
@@ -257,6 +332,7 @@ test("Calm + Quench keeps Calm primary and lets hydration support the wider rout
 
 test("Purify + Illuminate keeps clarifying treatment competitive without defaulting to a hydration serum", () => {
   const result = generateProductRecommendation({
+    products: productCatalog,
     journeyResult: buildJourneyResult({
       primaryJourneys: ["purify"],
       secondaryJourney: "illuminate",
@@ -286,6 +362,7 @@ test("Purify + Illuminate keeps clarifying treatment competitive without default
 
 test("Illuminate + Quench without aging keeps Necks-Level out", () => {
   const result = generateProductRecommendation({
+    products: productCatalog,
     journeyResult: buildJourneyResult({
       primaryJourneys: ["illuminate"],
       secondaryJourney: "quench",
@@ -307,6 +384,7 @@ test("Illuminate + Quench without aging keeps Necks-Level out", () => {
 
 test("Renew + Quench keeps Necks-Level eligible without forcing it", () => {
   const result = generateProductRecommendation({
+    products: productCatalog,
     journeyResult: buildJourneyResult({
       primaryJourneys: ["renew"],
       secondaryJourney: "quench",
@@ -323,25 +401,41 @@ test("Renew + Quench keeps Necks-Level eligible without forcing it", () => {
 
   assert.ok(
     result.moreFreshPicks.some((entry) => entry.productName === "Necks-Level Smooth") ||
-      result.featured.treat?.productName === "Watermelonaid" ||
-      result.featured.treat?.productName === "Flat Out Firm Peptide Firming Serum",
+    result.featured.treat?.productName === "Watermelonaid" ||
+    result.featured.treat?.productName === "Flat Out Firm Peptide Firming Serum",
   );
 });
 
-test("Hard exclusions are never returned", () => {
-  const allNames = [
-    "Thyme Swipe",
-    "Comeback Clear",
-    "Elevated Shade",
-  ];
+test("Supabase-excluded products are never recommended", () => {
+  const products = productCatalog.map((product) => ({
+    ...product,
+    excluded: true,
+  }));
 
-  for (const excludedName of allNames) {
-    assert.equal(PRODUCT_EXCLUSIONS.includes(excludedName), true);
-  }
+  const result = generateProductRecommendation({
+    products,
+    journeyResult: buildJourneyResult({
+      primaryJourneys: ["quench"],
+      secondaryJourney: null,
+    }),
+    selectedAnswers: {
+  primaryMotivation: "hydration",
+  skinExperience: ["dry-dehydrated"],
+  desiredOutcomes: ["feel-more-hydrated"],
+},
+  });
+
+  assert.equal(
+    Object.values(result.featured).filter(Boolean).length,
+    0,
+  );
+
+  assert.equal(result.moreFreshPicks.length, 0);
 });
 
 test("No strong journey returns no automated products", () => {
   const result = generateProductRecommendation({
+    products: productCatalog,
     journeyResult: buildJourneyResult({
       resultType: "no-strong-journey",
       primaryJourneys: [],
@@ -363,6 +457,7 @@ test("No strong journey returns no automated products", () => {
 
 test("Featured protect products always come from the approved Sun Protection list", () => {
   const result = generateProductRecommendation({
+    products: productCatalog,
     journeyResult: buildJourneyResult({
       primaryJourneys: ["quench"],
       secondaryJourney: null,
@@ -394,6 +489,7 @@ test("Featured protect products always come from the approved Sun Protection lis
 
 test("Routine balance respects exactly one product per featured slot", () => {
   const result = generateProductRecommendation({
+    products: productCatalog,
     journeyResult: buildJourneyResult({
       primaryJourneys: ["illuminate"],
       secondaryJourney: "renew",
@@ -435,6 +531,7 @@ test("Necks-Level Smooth displays category Neck & Décolleté", () => {
 
 test("Renew + Quench and Illuminate + Quench create materially different recommendation sets", () => {
   const renewResult = generateProductRecommendation({
+    products: productCatalog,
     journeyResult: buildJourneyResult({
       primaryJourneys: ["renew"],
       secondaryJourney: "quench",
@@ -450,6 +547,7 @@ test("Renew + Quench and Illuminate + Quench create materially different recomme
   });
 
   const illuminateResult = generateProductRecommendation({
+    products: productCatalog,
     journeyResult: buildJourneyResult({
       primaryJourneys: ["illuminate"],
       secondaryJourney: "quench",
@@ -485,6 +583,7 @@ test("Renew + Quench and Illuminate + Quench create materially different recomme
 
 test("Guest-facing result contains no raw product scores", () => {
   const result = generateProductRecommendation({
+    products: productCatalog,
     journeyResult: buildJourneyResult(),
     selectedAnswers: {
       primaryMotivation: "aging",
@@ -496,4 +595,508 @@ test("Guest-facing result contains no raw product scores", () => {
   const serialized = JSON.stringify(result);
   assert.equal(serialized.includes("internalScore"), true);
   assert.equal(serialized.includes("score"), false);
+});
+test("Reactive skin excludes high-intensity and cautioned More Fresh Picks", () => {
+  const result = generateProductRecommendation({
+    journeyResult: buildJourneyResult({
+      primaryJourneys: ["calm"],
+      secondaryJourney: "quench",
+    }),
+    selectedAnswers: {
+      primaryMotivation: "sensitive",
+      skinExperience: ["easily-irritated"],
+      desiredOutcomes: ["feel-calmer"],
+    },
+    products: productCatalog,
+  });
+
+  for (const recommendation of result.moreFreshPicks) {
+    const product = productCatalog.find(
+      (item) => item.id === recommendation.productId,
+    );
+
+    assert.ok(product, "Recommended product must exist in the catalog");
+    assert.ok(
+      product.intensity <= 2,
+      `${product.name} exceeds the allowed intensity`,
+    );
+    assert.notEqual(
+      product.calmSensitiveCaution,
+      true,
+      `${product.name} has a sensitivity caution`,
+    );
+  }
+});
+test("Higher experience priority wins when suitability is equal", () => {
+  const base = productCatalog.find(
+    (product) => product.category === "Cleanser",
+  );
+
+  assert.ok(base, "Test catalog must contain a cleanser");
+
+  const lowerPriority = withExperiencePriority(
+    { ...base, id: "priority-low", name: "Priority Low Cleanser" },
+    80,
+    120,
+  );
+
+  const higherPriority = withExperiencePriority(
+    { ...base, id: "priority-high", name: "Priority High Cleanser" },
+    120,
+    80,
+  );
+
+  const selectedAnswers = {
+    primaryMotivation: "aging",
+    skinExperience: ["fine-lines-texture"],
+    desiredOutcomes: ["feel-firmer-smoother"],
+  };
+
+  const generate = (selectedExperience: string) =>
+    generateProductRecommendation({
+      products: [lowerPriority, higherPriority],
+      selectedExperience,
+      journeyResult: buildJourneyResult(),
+      selectedAnswers,
+    });
+
+  const freshResult = generate("fresh-facial-bar-lash-lounge");
+  const cgcResult = generate("gentlemens-corner");
+
+  assert.equal(
+    freshResult.featured.cleanse?.productId,
+    "priority-high",
+  );
+
+  assert.equal(
+    cgcResult.featured.cleanse?.productId,
+    "priority-low",
+  );
+});
+test("Better Fresh Method suitability overrides higher business priority", () => {
+  const base = productCatalog.find(
+    (product) => product.category === "Cleanser",
+  );
+
+  assert.ok(base, "Test catalog must contain a cleanser");
+
+  const betterFit = withExperiencePriority(
+    {
+      ...base,
+      id: "better-fit-cleanser",
+      name: "Better Fit Cleanser",
+      primaryJourney: "renew",
+      supportingJourney: "quench",
+    },
+    80,
+    80,
+  );
+
+  const weakerFit = withExperiencePriority(
+    {
+      ...base,
+      id: "weaker-fit-cleanser",
+      name: "Weaker Fit Cleanser",
+      primaryJourney: "purify",
+      supportingJourney: "calm",
+    },
+    120,
+    120,
+  );
+
+  const result = generateProductRecommendation({
+    products: [betterFit, weakerFit],
+    selectedExperience: "fresh-facial-bar-lash-lounge",
+    journeyResult: buildJourneyResult(),
+    selectedAnswers: {
+      primaryMotivation: "aging",
+      skinExperience: ["fine-lines-texture"],
+      desiredOutcomes: ["feel-firmer-smoother"],
+    },
+  });
+
+  assert.equal(
+    result.featured.cleanse?.productId,
+    "better-fit-cleanser",
+  );
+});
+test("More Fresh Picks honors experience-specific priority", () => {
+  const base = productCatalog.find(
+    (product) => product.category === "Eye Care",
+  );
+
+  assert.ok(base, "Test catalog must contain an Eye Care product");
+
+  const freshPreferred = withExperiencePriority(
+    { ...base, id: "fresh-eye", name: "Fresh Preferred Eye Care" },
+    120,
+    80,
+  );
+
+  const cgcPreferred = withExperiencePriority(
+    { ...base, id: "cgc-eye", name: "CGC Preferred Eye Care" },
+    80,
+    120,
+  );
+
+  const generate = (selectedExperience: string) =>
+    generateProductRecommendation({
+      products: [freshPreferred, cgcPreferred],
+      selectedExperience,
+      journeyResult: buildJourneyResult(),
+      selectedAnswers: {
+        primaryMotivation: "aging",
+        skinExperience: ["fine-lines-texture"],
+        desiredOutcomes: ["feel-firmer-smoother"],
+      },
+    });
+
+  const freshResult = generate("fresh-facial-bar-lash-lounge");
+  const cgcResult = generate("gentlemens-corner");
+
+  assert.equal(
+    freshResult.moreFreshPicks.find(
+      (product) => product.category === "Eye Care",
+    )?.productId,
+    "fresh-eye",
+  );
+
+  assert.equal(
+    cgcResult.moreFreshPicks.find(
+      (product) => product.category === "Eye Care",
+    )?.productId,
+    "cgc-eye",
+  );
+});
+test("Supabase eligibility policy excludes an ineligible product", () => {
+  const product = {
+    ...productCatalog[0],
+    id: "eligibility-policy-test",
+    name: "Eligibility Policy Test",
+    category: "Serum & Treatment" as const,
+    primaryJourney: "renew" as const,
+    supportingJourney: "quench" as const,
+    eligibilityRules: {
+      version: 1 as const,
+      policy: "renew_targeted" as const,
+    },
+  };
+
+  const journeyResult = buildJourneyResult({
+    primaryJourneys: ["calm"],
+    secondaryJourney: null,
+  });
+
+  const result = generateProductRecommendation({
+    products: [product],
+    journeyResult,
+    selectedAnswers: {
+      primaryMotivation: "sensitive",
+      skinExperience: ["easily-irritated"],
+      desiredOutcomes: ["feel-calmer"],
+    },
+  });
+
+  const featuredProducts = Object.values(result.featured)
+  .filter((product) => product !== null);
+
+assert.equal(
+  featuredProducts.some(
+    (item) => item.productId === product.id
+  ),
+  false
+);
+
+assert.equal(
+  result.moreFreshPicks.some(
+    (item) => item.productId === product.id
+  ),
+  false
+);
+});
+test("Supabase eligibility policy allows a qualifying Renew treatment", () => {
+  const product = {
+    ...productCatalog[0],
+    id: "renew-policy-eligible-test",
+    name: "Renew Policy Eligible Test",
+    category: "Serum & Treatment" as const,
+    primaryJourney: "renew" as const,
+    supportingJourney: "quench" as const,
+    intensity: 2 as const,
+    excluded: false,
+    requiresFarmacistReview: false,
+    calmSensitiveCaution: false,
+    eligibilityRules: {
+      version: 1 as const,
+      policy: "renew_targeted" as const,
+    },
+  };
+
+  const selectedAnswers = {
+    primaryMotivation: "aging",
+    skinExperience: ["fine-lines-texture"],
+    desiredOutcomes: ["feel-firmer-smoother"],
+  };
+
+  const result = generateProductRecommendation({
+    products: [product],
+    journeyResult: buildJourneyResult(),
+    selectedAnswers,
+  });
+
+  assert.equal(
+    result.featured.treat?.productId,
+    product.id
+  );
+});
+test("Necks-Level published policy excludes ineligible Calm consultations", () => {
+  const product = {
+    ...productCatalog[0],
+    id: "necks-level-smooth",
+    name: "Necks-Level Smooth",
+    category: "Serum & Treatment" as const,
+    primaryJourney: "renew" as const,
+    supportingJourney: "quench" as const,
+    intensity: 2 as const,
+    excluded: false,
+    requiresFarmacistReview: false,
+    calmSensitiveCaution: false,
+    eligibilityRules: {
+  version: 1 as const,
+  policy: "renew_targeted" as const,
+},
+  };
+
+  const result = generateProductRecommendation({
+    products: [product],
+    journeyResult: buildJourneyResult({
+      primaryJourneys: ["calm"],
+      secondaryJourney: null,
+    }),
+    selectedAnswers: {
+      primaryMotivation: "sensitive",
+      skinExperience: [],
+      desiredOutcomes: [],
+    },
+  });
+
+  assert.equal(
+    Object.values(result.featured).some(
+      (item) => item?.productId === product.id
+    ),
+    false
+  );
+
+  assert.equal(
+    result.moreFreshPicks.some(
+      (item) => item.productId === product.id
+    ),
+    false
+  );
+});
+test("Supabase Watermelonaid policy excludes Purify consultations", () => {
+  const product = {
+    ...productCatalog[0],
+    id: "watermelonaid-policy-test",
+    name: "Watermelonaid Policy Test",
+    category: "Serum & Treatment" as const,
+    primaryJourney: "quench" as const,
+    supportingJourney: "renew" as const,
+    intensity: 2 as const,
+    excluded: false,
+    requiresFarmacistReview: false,
+    calmSensitiveCaution: false,
+    eligibilityRules: {
+      version: 1 as const,
+      policy: "renew_quench_hydration" as const,
+    },
+  };
+
+  const selectedAnswers = {
+    primaryMotivation: "congestion",
+    skinExperience: ["oily-congested"],
+    desiredOutcomes: ["feel-clearer"],
+  };
+
+  const result = generateProductRecommendation({
+    products: [product],
+    journeyResult: buildJourneyResult({
+      primaryJourneys: ["purify"],
+      secondaryJourney: "quench",
+    }),
+    selectedAnswers,
+  });
+
+  assert.equal(
+    Object.values(result.featured).some(
+      (item) => item?.productId === product.id
+    ),
+    false
+  );
+
+  assert.equal(
+    result.moreFreshPicks.some(
+      (item) => item.productId === product.id
+    ),
+    false
+  );
+});
+test("Supabase Watermelonaid policy allows qualifying Renew and Quench consultations", () => {
+  const product = {
+    ...productCatalog[0],
+    id: "hydration-policy-eligible-test",
+    name: "Hydration Policy Eligible Test",
+    category: "Serum & Treatment" as const,
+    primaryJourney: "quench" as const,
+    supportingJourney: "renew" as const,
+    intensity: 2 as const,
+    excluded: false,
+    requiresFarmacistReview: false,
+    calmSensitiveCaution: false,
+    eligibilityRules: {
+      version: 1 as const,
+      policy: "renew_quench_hydration" as const,
+    },
+  };
+
+  const selectedAnswers = {
+    primaryMotivation: "aging",
+    skinExperience: ["dry-dehydrated"],
+    desiredOutcomes: ["feel-more-hydrated"],
+  };
+
+  const result = generateProductRecommendation({
+    products: [product],
+    journeyResult: buildJourneyResult({
+      primaryJourneys: ["renew"],
+      secondaryJourney: "quench",
+    }),
+    selectedAnswers,
+  });
+
+  assert.equal(
+    result.featured.treat?.productId,
+    product.id
+  );
+});
+test("Mixo-guided treatment requires professional review", () => {
+  const product = {
+    ...productCatalog[0],
+    id: "mixo-guided-treatment-test",
+    name: "Mixo Guided Treatment Test",
+    category: "Serum & Treatment" as const,
+    primaryJourney: "renew" as const,
+    supportingJourney: "quench" as const,
+    intensity: 2 as const,
+    excluded: false,
+    featuredEligible: true,
+    requiresFarmacistReview: true,
+    calmSensitiveCaution: false,
+    eligibilityRules: undefined,
+  };
+
+  const result = generateProductRecommendation({
+    products: [product],
+    journeyResult: buildJourneyResult(),
+    selectedAnswers: {
+      primaryMotivation: "aging",
+      skinExperience: ["fine-lines-texture"],
+      desiredOutcomes: ["feel-firmer-smoother"],
+    },
+  });
+
+  assert.equal(
+    result.featured.treat?.productId,
+    product.id
+  );
+
+  assert.equal(
+    result.featured.treat?.farmacistReviewRecommended,
+    true
+  );
+});
+test("Mixo-guided products are excluded from non-treatment featured slots", () => {
+  const categories = [
+    "Cleanser",
+    "Moisturizer",
+    "Sun Protection",
+  ] as const;
+
+  for (const category of categories) {
+    const product = {
+      ...productCatalog[0],
+      id: `mixo-restricted-${category}`,
+      name: `Mixo Restricted ${category}`,
+      category,
+      primaryJourney: "renew" as const,
+      supportingJourney: "quench" as const,
+      intensity: 2 as const,
+      excluded: false,
+      featuredEligible: true,
+      requiresFarmacistReview: true,
+      calmSensitiveCaution: false,
+      eligibilityRules: undefined,
+    };
+
+    const result = generateProductRecommendation({
+      products: [product],
+      journeyResult: buildJourneyResult(),
+      selectedAnswers: {
+        primaryMotivation: "aging",
+        skinExperience: ["fine-lines-texture"],
+        desiredOutcomes: ["feel-firmer-smoother"],
+      },
+    });
+
+    assert.equal(
+      Object.values(result.featured).some(
+        (item) => item?.productId === product.id
+      ),
+      false,
+      `Mixo-guided ${category} should not be featured`
+    );
+  }
+});
+test("High-intensity Mixo-guided treatments are excluded for reactive skin", () => {
+  const product = {
+    ...productCatalog[0],
+    id: "mixo-reactive-skin-test",
+    name: "Mixo Reactive Skin Test",
+    category: "Serum & Treatment" as const,
+    primaryJourney: "calm" as const,
+    supportingJourney: "renew" as const,
+    intensity: 4 as const,
+    excluded: false,
+    featuredEligible: true,
+    requiresFarmacistReview: true,
+    calmSensitiveCaution: true,
+    eligibilityRules: undefined,
+  };
+
+  const result = generateProductRecommendation({
+    products: [product],
+    journeyResult: buildJourneyResult({
+      primaryJourneys: ["calm"],
+      secondaryJourney: null,
+    }),
+    selectedAnswers: {
+      primaryMotivation: "sensitive",
+      skinExperience: ["easily-irritated"],
+      desiredOutcomes: ["feel-calmer"],
+    },
+  });
+
+  assert.equal(
+    Object.values(result.featured).some(
+      (item) => item?.productId === product.id
+    ),
+    false
+  );
+
+  assert.equal(
+    result.moreFreshPicks.some(
+      (item) => item.productId === product.id
+    ),
+    false
+  );
 });

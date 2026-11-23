@@ -10,7 +10,10 @@ import type {
   EmailProvider,
   SkinDiscoveryDeliveryResult,
 } from "@/lib/email/emailProvider";
-
+import {
+  claimEmailDelivery,
+  completeEmailDelivery,
+} from "@/lib/email/supabaseEmailDelivery";
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 type RelayBlockedField = "to" | "subject" | "html" | "text";
@@ -123,11 +126,23 @@ export function buildSkinDiscoverySubmission(input: unknown): SkinDiscoverySubmi
 export function buildSkinDiscoverySubmission(input: unknown): SkinDiscoverySubmission {
   return buildSubmission(input as SkinDiscoverySubmissionInput);
 }
-
+export type SkinDiscoveryProductCommerce = {
+  productId: string;
+  productUrl: string | null;
+  shopifyVariantId: string | null;
+};
 export type SendSkinDiscoveryEmailsOptions = {
   provider: EmailProvider;
+    savedDeliveryContext?: {
+    businessId: string;
+    consultationId: string;
+    skinPlanId: string;
+  };
   teamRecipient: string;
   config: SkinDiscoveryEmailConfig;
+  productCommerce?: SkinDiscoveryProductCommerce[];
+  savedProducts?: GuestEmailConfig["savedProducts"];
+  savedEnhancements?: GuestEmailConfig["savedEnhancements"];
   disabled?: boolean;
   store?: DeliveryStateStore;
 };
@@ -178,8 +193,132 @@ async function sendSingle(
     };
   }
 }
+async function sendTrackedEmail(
+  provider: EmailProvider,
+  message: {
+    to: string;
+    subject: string;
+    html: string;
+    text: string;
+  },
+  context: NonNullable<SendSkinDiscoveryEmailsOptions["savedDeliveryContext"]>,
+  recipient: "guest" | "team",
+): Promise<EmailDeliveryAttempt> {
+  const claim = await claimEmailDelivery(context, recipient, message.to);
 
-function toGuestTemplateConfig(config: SkinDiscoveryEmailConfig): GuestEmailConfig {
+  if (!claim.claimed) {
+    if (claim.status === "sent") {
+      return {
+        attempted: false,
+        success: true,
+      };
+    }
+
+    return {
+      attempted: false,
+      success: false,
+      errorCode: "provider_error",
+      errorMessage:
+        "Email is already being sent or its delivery outcome is uncertain.",
+    };
+  }
+
+  let response;
+
+  try {
+    response = await provider.send(message);
+  } catch {
+    return {
+      attempted: true,
+      success: false,
+      errorCode: "provider_error",
+      errorMessage:
+        "Email delivery outcome is uncertain. Automatic retry is blocked.",
+    };
+  }
+
+  if (!response.ok) {
+  const providerError =
+    response.errorMessage ?? "Email provider rejected the request.";
+
+  try {
+    await completeEmailDelivery(claim.deliveryId, {
+      success: false,
+      errorMessage: providerError,
+    });
+  } catch (error) {
+    console.error(
+      "Email provider rejected delivery, but Supabase could not record the failure:",
+      {
+        deliveryId: claim.deliveryId,
+        providerError,
+        error,
+      },
+    );
+
+    return {
+      attempted: true,
+      success: false,
+      errorCode: "provider_error",
+      errorMessage:
+        "Email delivery failed, but the failure could not be recorded. Reconciliation is required.",
+    };
+  }
+
+  return {
+    attempted: true,
+    success: false,
+    errorCode: "provider_error",
+    errorMessage: providerError,
+  };
+}
+
+  if (!response.messageId) {
+    return {
+      attempted: true,
+      success: false,
+      errorCode: "provider_error",
+      errorMessage:
+        "Provider response contained no message ID. Delivery outcome requires reconciliation.",
+    };
+  }
+
+  try {
+  await completeEmailDelivery(claim.deliveryId, {
+    success: true,
+    messageId: response.messageId,
+  });
+} catch (error) {
+  console.error(
+    "Resend accepted the email, but Supabase delivery completion failed:",
+    {
+      deliveryId: claim.deliveryId,
+      messageId: response.messageId,
+      error,
+    },
+  );
+
+  return {
+    attempted: true,
+    success: false,
+    errorCode: "provider_error",
+    errorMessage:
+      "Email was accepted by Resend, but delivery tracking could not be confirmed. Reconciliation is required.",
+  };
+}
+
+return {
+  attempted: true,
+  success: true,
+  messageId: response.messageId,
+};
+}
+function toGuestTemplateConfig(
+  config: SkinDiscoveryEmailConfig,
+  productCommerce?: SkinDiscoveryProductCommerce[],
+  savedProducts?: GuestEmailConfig["savedProducts"],
+  savedEnhancements?: GuestEmailConfig["savedEnhancements"],
+): GuestEmailConfig {
   return {
     logoUrl: config.logoUrl,
     bookingUrl: config.bookingUrl,
@@ -189,15 +328,24 @@ function toGuestTemplateConfig(config: SkinDiscoveryEmailConfig): GuestEmailConf
     businessPhone: config.businessPhone,
     locationLabel: config.locationLabel,
     websiteUrl: config.appUrl,
+    productCommerce,
+    savedProducts,
+    savedEnhancements,
   };
 }
 
-function toTeamTemplateConfig(config: SkinDiscoveryEmailConfig): TeamEmailConfig {
+function toTeamTemplateConfig(
+  config: SkinDiscoveryEmailConfig,
+  savedProducts?: TeamEmailConfig["savedProducts"],
+  savedEnhancements?: TeamEmailConfig["savedEnhancements"],
+): TeamEmailConfig {
   return {
     businessName: config.businessName,
     businessEmail: config.businessEmail,
     businessPhone: config.businessPhone,
     locationLabel: config.locationLabel,
+    savedProducts,
+    savedEnhancements,
   };
 }
 
@@ -237,29 +385,64 @@ export async function sendSkinDiscoveryEmails(
     };
   }
 
-  const store = options.store;
+    const store = options.savedDeliveryContext
+    ? undefined
+    : options.store;
   const priorState = store ? await store.get(submission.submissionId) : null;
 
-  const guestTemplate = renderGuestDiscoveryEmail(submission, toGuestTemplateConfig(options.config));
-  const teamTemplate = renderTeamDiscoveryEmail(submission, toTeamTemplateConfig(options.config));
+  const guestTemplate = renderGuestDiscoveryEmail(
+  submission,
+  toGuestTemplateConfig(
+    options.config,
+    options.productCommerce,
+    options.savedProducts,
+    options.savedEnhancements,
+  ),
+);
+  const teamTemplate = renderTeamDiscoveryEmail(
+    submission,
+    toTeamTemplateConfig(
+      options.config,
+      options.savedProducts,
+      options.savedEnhancements,
+  ),
+);
 
-  const guestDelivery = priorState?.guestDelivered
-    ? skippedSuccessfulAttempt(priorState.guestMessageId)
-    : await sendSingle(options.provider, {
-        to: submission.guest.email,
-        subject: guestTemplate.subject,
-        html: guestTemplate.html,
-        text: guestTemplate.text,
-      });
+    const guestMessage = {
+    to: submission.guest.email,
+    subject: guestTemplate.subject,
+    html: guestTemplate.html,
+    text: guestTemplate.text,
+  };
 
-  const teamDelivery = priorState?.teamDelivered
-    ? skippedSuccessfulAttempt(priorState.teamMessageId)
-    : await sendSingle(options.provider, {
-        to: options.teamRecipient,
-        subject: teamTemplate.subject,
-        html: teamTemplate.html,
-        text: teamTemplate.text,
-      });
+  const guestDelivery = options.savedDeliveryContext
+    ? await sendTrackedEmail(
+        options.provider,
+        guestMessage,
+        options.savedDeliveryContext,
+        "guest",
+      )
+    : priorState?.guestDelivered
+      ? skippedSuccessfulAttempt(priorState.guestMessageId)
+      : await sendSingle(options.provider, guestMessage);
+
+    const teamMessage = {
+    to: options.teamRecipient,
+    subject: teamTemplate.subject,
+    html: teamTemplate.html,
+    text: teamTemplate.text,
+  };
+
+  const teamDelivery = options.savedDeliveryContext
+    ? await sendTrackedEmail(
+        options.provider,
+        teamMessage,
+        options.savedDeliveryContext,
+        "team",
+      )
+    : priorState?.teamDelivered
+      ? skippedSuccessfulAttempt(priorState.teamMessageId)
+      : await sendSingle(options.provider, teamMessage);
 
   const nextState: DeliveryState = {
     guestDelivered: Boolean(priorState?.guestDelivered) || guestDelivery.success,
@@ -273,7 +456,9 @@ export async function sendSkinDiscoveryEmails(
     await store.set(submission.submissionId, nextState);
   }
 
-  const overallSuccess = nextState.guestDelivered && nextState.teamDelivered;
+  const overallSuccess = options.savedDeliveryContext
+    ? guestDelivery.success && teamDelivery.success
+    : nextState.guestDelivered && nextState.teamDelivered;
 
   return {
     status: overallSuccess ? "sent" : "partial-failure",

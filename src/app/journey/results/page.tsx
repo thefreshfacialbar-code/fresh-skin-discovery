@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { getBrandLogoAlt, getBrandLogoPath, getSelectedExperience } from "@/lib/brandLogo";
 import {
   mapPrimaryMotivation,
@@ -242,9 +242,20 @@ function clearSkinDiscoverySession() {
 
 export default function ResultsPage() {
   const router = useRouter();
-  const isCurated = getSelectedExperience() === "gentlemens-corner";
-  const recommendation = useMemo(() => readStoredRecommendation(), []);
-  const journeySummary = useMemo(() => readJourneySummary(), []);
+  const [isCurated, setIsCurated] = useState(false);
+  const [recommendation, setRecommendation] = useState<ReturnType<typeof readStoredRecommendation>>(null);
+  const [journeySummary, setJourneySummary] = useState<ReturnType<typeof readJourneySummary>>(null);
+  
+  useEffect(() => {
+  const timeoutId = window.setTimeout(() => {
+    setIsCurated(getSelectedExperience() === "gentlemens-corner");
+    setRecommendation(readStoredRecommendation());
+    setJourneySummary(readJourneySummary());
+  }, 0);
+
+  return () => window.clearTimeout(timeoutId);
+}, []);
+
 
   useEffect(() => {
     const submission = readStoredSubmission();
@@ -266,8 +277,29 @@ export default function ResultsPage() {
       },
       body: JSON.stringify({ submission }),
       keepalive: true,
-    }).catch(() => {
-      window.sessionStorage.removeItem(attemptKey);
+        }).then(async (response) => {
+      if (response.ok) {
+        return;
+      }
+
+      const result = await response.json().catch(() => null);
+
+      if (result?.persistence?.success === true) {
+        console.warn(
+          "Skin Discovery was saved, but email delivery needs attention.",
+        );
+        return;
+      }
+
+      console.error(
+        "Skin Discovery submission could not be confirmed.",
+        result,
+      );
+    }).catch((error) => {
+      console.error(
+        "Skin Discovery request outcome could not be confirmed.",
+        error,
+      );
     });
   }, []);
 
@@ -284,7 +316,9 @@ export default function ResultsPage() {
               <Image
               src={getBrandLogoPath()}
               alt={getBrandLogoAlt()}
-                className="h-auto w-full opacity-90"
+              width={512}
+              height={512}
+              className="h-auto w-full opacity-90"
               />
             </div>
           </div>

@@ -1,3 +1,4 @@
+import { enhancementCatalog } from "@/data/enhancementCatalog";
 import type { RecommendationResult } from "@/types/recommendation";
 import type { SkinDiscoveryContact, SkinDiscoverySubmission, SkinDiscoverySubmissionInput } from "@/types/skinDiscoverySubmission";
 
@@ -114,6 +115,7 @@ export function buildSkinDiscoverySubmission(input: SkinDiscoverySubmissionInput
       resultType: input.journeyResult.resultType,
       primaryJourneys: input.journeyResult.primaryJourneys,
       secondaryJourney: input.journeyResult.secondaryJourney,
+      scores: input.journeyResult.scores,
     },
     productRecommendations: {
       featured: {
@@ -125,6 +127,17 @@ export function buildSkinDiscoverySubmission(input: SkinDiscoverySubmissionInput
       moreFreshPicks: input.productRecommendation?.moreFreshPicks.map((item) => item.productId) ?? [],
     },
     enhancementRecommendations,
+    enhancementDetails: enhancementRecommendations.map((id) => {
+      const enhancement = enhancementCatalog.find(
+        (item) => item.id === id
+      );
+
+      return {
+        id,
+        name: enhancement?.name ?? id,
+        guestBenefit: enhancement?.guestBenefit ?? null,
+      };
+    }),
     actions: input.actions ?? {
       booked: null,
       membershipInterest: null,

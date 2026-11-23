@@ -10,6 +10,7 @@ export const cgcProductCatalog: Product[] = [
     role: "Cleanse",
     guestBenefit: "Cleanses while helping skin feel refreshed, comfortable, and balanced.",
     intensity: 1,
+    usageType: "Daily",
   },
   {
     id: "thirsty-face",
@@ -20,6 +21,7 @@ export const cgcProductCatalog: Product[] = [
     role: "Moisturize",
     guestBenefit: "Delivers lightweight hydration that supports a dewy, comfortable complexion.",
     intensity: 2,
+    usageType: "Daily",
   },
   {
     id: "second-wind",
@@ -40,6 +42,7 @@ export const cgcProductCatalog: Product[] = [
     role: "Treat",
     guestBenefit: "Targets visible dullness and supports a brighter, more even-looking complexion.",
     intensity: 2,
+    usageType: "Daily",
   },
   {
     id: "deep-clean",
@@ -50,6 +53,7 @@ export const cgcProductCatalog: Product[] = [
     role: "Exfoliate/Refine",
     guestBenefit: "Helps smooth texture and refine the look of congestion when the skin can tolerate it.",
     intensity: 3,
+    usageType: "Weekly / Periodic",
   },
   {
     id: "long-night",
@@ -72,8 +76,8 @@ export const cgcProductCatalog: Product[] = [
     intensity: 1,
   },
   {
-    id: "tizo-ultra-zinc-non-tinted-spf-40",
-    name: "TiZO Ultra Zinc Non-Tinted SPF 40",
+    id: "tizo-ultra-zinc-non-tinted-sunscreen-face-body-spf-40",
+    name: "TiZO Ultra Zinc Non Tinted Sunscreen Face & Body SPF 40",
     category: "Sun Protection",
     primaryJourney: "calm",
     supportingJourney: "quench",
@@ -180,16 +184,6 @@ export const cgcProductCatalog: Product[] = [
     role: "Brighten",
     guestBenefit: "Supports a more radiant and even-looking complexion.",
     intensity: 2,
-  },
-  {
-    id: "replenish-non-tinted-spf-40",
-    name: "AM Replenish Non-Tinted SPF 40",
-    category: "Sun Protection",
-    primaryJourney: "quench",
-    supportingJourney: "renew",
-    role: "Protect",
-    guestBenefit: "Daily UV protection for a comfortable, hydrated routine.",
-    intensity: 1,
   },
 ];
 

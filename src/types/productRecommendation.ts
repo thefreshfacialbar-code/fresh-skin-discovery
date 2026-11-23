@@ -1,4 +1,7 @@
 import type { JourneyId } from "@/types/recommendation";
+import type {
+  ProductEligibilityRules,
+} from "@/lib/productEligibilityPolicies";
 
 export type ProductCategory =
   | "Cleanser"
@@ -11,10 +14,30 @@ export type ProductCategory =
   | "Neck & Décolleté"
   | "Sun Protection";
 
-export type ProductUsageType = "daily" | "periodic" | "weekly" | "farmacist-guided";
+export type ProductUsageType =
+  | "Daily"
+  | "Weekly"
+    | "Periodic"
+  | "As Needed"
+  | "Weekly / Periodic"
+  | "Daily / As Needed"
+  | "Mixo Guided";
 
 export type Product = {
   id: string;
+  experienceIds?: string[];
+
+  eligibilityRules?: ProductEligibilityRules | null;
+  featuredEligible?: boolean;
+  recommendationEnabled?: boolean;
+  experienceRecommendations?: {
+    experienceId: string;
+    assigned: boolean;
+    enabled?: boolean;
+    approvalStatus: "pending" | "approved" | "rejected";
+    recommendationPriority: 80 | 100 | 120;
+  }[];
+
   name: string;
   category: ProductCategory;
   primaryJourney: JourneyId;
@@ -23,6 +46,8 @@ export type Product = {
   guestBenefit: string;
   intensity: 1 | 2 | 3 | 4;
   usageType?: ProductUsageType;
+  timing?: string[];
+  frequency?: string;
   requiresFarmacistReview?: boolean;
   calmSensitiveCaution?: boolean;
   excluded?: boolean;

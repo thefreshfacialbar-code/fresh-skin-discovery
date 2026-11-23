@@ -7,7 +7,7 @@ export const productCatalog: Product[] = [
     id: "green-tea-milk-wash",
     name: "Green Tea Milk Wash",
     category: "Cleanser",
-    primaryJourney: "calm",
+    primaryJourney: "calm", 
     supportingJourney: "quench",
     role: "Reset",
     guestBenefit: "Gently cleanses while helping skin feel calm, comfortable, and supported.",
@@ -96,13 +96,17 @@ export const productCatalog: Product[] = [
   {
     id: "watermelonaid",
     name: "Watermelonaid",
+    eligibilityRules: {
+  version: 1,
+  policy: "renew_quench_hydration",
+},
     category: "Serum & Treatment",
     primaryJourney: "renew",
     supportingJourney: "quench",
     role: "Replenish",
     guestBenefit: "Delivers hydration while smoothing the appearance of fine lines.",
     intensity: 2,
-    usageType: "daily",
+    usageType: "Daily",
   },
   {
     id: "chocolate-fig-serum",
@@ -363,7 +367,7 @@ export const productCatalog: Product[] = [
     role: "Clarify",
     guestBenefit: "Helps purify congested skin while reducing visible redness.",
     intensity: 2,
-    usageType: "weekly",
+    usageType: "Weekly",
   },
   {
     id: "mighty-brighty-vitamin-c-brightening-mask",
@@ -424,7 +428,7 @@ export const productCatalog: Product[] = [
     role: "Refine",
     guestBenefit: "Exfoliates and smooths rough texture.",
     intensity: 3,
-    usageType: "weekly",
+    usageType: "Weekly",
   },
   {
     id: "illumination-fruit-pro-strength-acid-peel-mask",
@@ -435,7 +439,7 @@ export const productCatalog: Product[] = [
     role: "Resurface",
     guestBenefit: "Improves brightness and overall skin tone.",
     intensity: 4,
-    usageType: "farmacist-guided",
+    usageType: "Mixo Guided",
     requiresFarmacistReview: true,
   },
   {
@@ -487,7 +491,7 @@ export const productCatalog: Product[] = [
     role: "Clarify",
     guestBenefit: "Helps improve congestion and overall skin clarity.",
     intensity: 3,
-    usageType: "periodic",
+    usageType: "Periodic",
   },
   {
     id: "eye-m-revived-total-renewal-cream",
@@ -522,6 +526,10 @@ export const productCatalog: Product[] = [
   {
     id: "necks-level-smooth",
     name: "Necks-Level Smooth",
+    eligibilityRules: {
+  version: 1,
+  policy: "renew_targeted",
+},
     category: "Neck & Décolleté",
     primaryJourney: "renew",
     supportingJourney: "quench",

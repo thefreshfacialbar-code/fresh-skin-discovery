@@ -2,8 +2,17 @@ import { readStoredRecommendation } from "@/lib/recommendationSession";
 import type { ProductRecommendationResult } from "@/types/productRecommendation";
 
 const STORAGE_KEY = "skinDiscoveryProductRecommendations";
+const STORAGE_VERSION = 2;
 
-export function readStoredProductRecommendation(): ProductRecommendationResult | null {
+type StoredProductRecommendation = {
+  version: number;
+  fingerprint: string;
+  result: ProductRecommendationResult;
+};
+
+export function readStoredProductRecommendation(
+  expectedFingerprint: string,
+): ProductRecommendationResult | null {
   if (typeof window === "undefined") {
     return null;
   }
@@ -14,21 +23,47 @@ export function readStoredProductRecommendation(): ProductRecommendationResult |
     return null;
   }
 
-  try {
-    const parsed = JSON.parse(rawValue);
-    return parsed && typeof parsed === "object" ? (parsed as ProductRecommendationResult) : null;
-  } catch {
-    return null;
-  }
+try {
+  const parsed = JSON.parse(rawValue) as StoredProductRecommendation;
+
+  if (
+  !parsed ||
+  typeof parsed !== "object" ||
+  parsed.version !== STORAGE_VERSION ||
+  typeof parsed.fingerprint !== "string" ||
+  parsed.fingerprint !== expectedFingerprint ||
+  !parsed.result
+) {
+  return null;
 }
 
-export function writeProductRecommendationToStorage(result: ProductRecommendationResult) {
+  return parsed.result;
+} catch {
+  return null;
+}
+}
+
+export function writeProductRecommendationToStorage(
+  result: ProductRecommendationResult,
+  fingerprint: string,
+) {
   if (typeof window === "undefined") {
     return;
   }
 
-  window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(result));
+  const storedRecommendation: StoredProductRecommendation = {
+    version: STORAGE_VERSION,
+    fingerprint,
+    result,
+  };
+
+  window.sessionStorage.setItem(
+    STORAGE_KEY,
+    JSON.stringify(storedRecommendation),
+  );
 }
+
+
 
 export function readStoredJourneyRecommendation() {
   return readStoredRecommendation();

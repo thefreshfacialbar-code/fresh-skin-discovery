@@ -1,8 +1,8 @@
 "use client";
 
-/* eslint-disable react-hooks/set-state-in-effect */
 
 import Image from "next/image";
+import Script from "next/script";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { getBrandLogoAlt, getBrandLogoPath, getSelectedExperience } from "@/lib/brandLogo";
@@ -13,10 +13,23 @@ import {
   clearProductRecommendationSession,
 } from "@/lib/productRecommendationSession";
 import { readStoredRecommendation } from "@/lib/recommendationSession";
+import { fetchProductCatalog } from "@/lib/productCatalogClient";
 import { readOrCreateSkinDiscoveryRecommendations } from "@/lib/skinDiscoveryRecommendations";
 import type { RecommendedEnhancement } from "@/types/enhancementRecommendation";
 import type { ProductRecommendationResult, RecommendedProduct } from "@/types/productRecommendation";
-
+declare global {
+  interface Window {
+    blvd?: {
+      init: (config: { businessId: string }) => void;
+      openBookingWidget: (config: {
+        urlParams: {
+          locationId: string;
+          visitType: string;
+        };
+      }) => void;
+    };
+  }
+}
 const FEATURED_TITLES = {
   cleanse: "CLEANSE",
   treat: "TREAT",
@@ -63,10 +76,12 @@ export default function RecommendationsPage() {
   const router = useRouter();
   const isCurated = getSelectedExperience() === "gentlemens-corner";
   const [isHydrated, setIsHydrated] = useState(false);
+  const [catalogError, setCatalogError] = useState(false);
   const [productRecommendation, setProductRecommendation] = useState<ProductRecommendationResult | null>(null);
   const [enhancementRecommendations, setEnhancementRecommendations] = useState<RecommendedEnhancement[]>([]);
 
   useEffect(() => {
+  async function loadRecommendations() {
     const journeyRecommendation = readStoredRecommendation();
     if (!journeyRecommendation) {
       setProductRecommendation(null);
@@ -74,11 +89,31 @@ export default function RecommendationsPage() {
       return;
     }
 
-    const generatedRecommendations = readOrCreateSkinDiscoveryRecommendations(journeyRecommendation);
+    let products;
+
+try {
+  products = await fetchProductCatalog();
+  setCatalogError(false);
+} catch (error) {
+  console.error(
+    "Could not load Supabase product catalog.",
+    error,
+  );
+
+  setCatalogError(true);
+  setIsHydrated(true);
+  return;
+}
+
+const generatedRecommendations =
+  readOrCreateSkinDiscoveryRecommendations(journeyRecommendation, products);
     setProductRecommendation(generatedRecommendations.productRecommendation);
     setEnhancementRecommendations(generatedRecommendations.enhancementRecommendations);
     setIsHydrated(true);
-  }, []);
+  }
+  
+  loadRecommendations();
+}, []);
 
   if (!isHydrated) {
     return (
@@ -106,7 +141,38 @@ export default function RecommendationsPage() {
       </main>
     );
   }
+if (catalogError) {
+  return (
+    <main className="min-h-screen bg-[#FAF7F1] px-5 py-8 text-[#302C2A] sm:px-8 md:py-12">
+      <div className="mx-auto max-w-4xl rounded-[2rem] border border-[#DAD6DB] bg-[#FFFDFC] p-8 text-center shadow-[0_20px_60px_rgba(61,52,48,0.06)] sm:p-12">
+        <h1
+          className="text-4xl leading-tight sm:text-5xl"
+          style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}
+        >
+          Your Fresh Picks are almost ready.
+        </h1>
 
+        <p className="mt-6 text-base leading-8 text-[#5A5553] sm:text-lg">
+          We&apos;re having a little trouble loading our skincare collection.
+          Your Skin Discovery answers are still here.
+          Please try again in a moment.
+        </p>
+
+        <button
+          type="button"
+          onClick={() => window.location.reload()}
+          className={`mt-8 inline-flex items-center justify-center rounded-full px-8 py-4 text-sm font-semibold uppercase tracking-[0.16em] text-white ${
+            isCurated
+              ? "bg-[#24201F] hover:bg-[#3B3532]"
+              : "bg-[#908A9B] hover:bg-[#817B8B]"
+          }`}
+        >
+          Try Again
+        </button>
+      </div>
+    </main>
+  );
+}
   if (!productRecommendation) {
     return (
       <main className="min-h-screen bg-[#FAF7F1] px-5 py-8 text-[#302C2A] sm:px-8 md:py-12">
@@ -184,6 +250,17 @@ export default function RecommendationsPage() {
   }
 
   return (
+  <>
+    <Script
+      src="https://static.joinboulevard.com/injector.min.js"
+      strategy="afterInteractive"
+      onLoad={() => {
+        window.blvd?.init({
+          businessId: "8478558b-a7be-4dad-9050-9885cda11ca9",
+        });
+      }}
+    />
+
     <main className="min-h-screen bg-[#FAF7F1] px-5 py-8 text-[#302C2A] sm:px-8 md:py-12">
       <div className="mx-auto max-w-6xl">
         <div className="flex justify-center pt-2">
@@ -296,12 +373,20 @@ export default function RecommendationsPage() {
         </div>
 
         <div className="mt-10 flex flex-col items-center gap-4 pb-8">
-          <a
-            href="/api/skin-discovery/booking"
-            className={`inline-flex items-center justify-center rounded-full px-8 py-4 text-sm font-semibold uppercase tracking-[0.16em] text-white transition-all duration-200 hover:-translate-y-0.5 ${isCurated ? "bg-[#24201F] shadow-[0_10px_28px_rgba(36,32,31,0.24)] hover:bg-[#3B3532] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#24201F]" : "bg-[#908A9B] shadow-[0_10px_28px_rgba(144,138,155,0.24)] hover:bg-[#817B8B]"}`}
-          >
-            CRAFT MY FACIAL
-          </a>
+          <button
+  type="button"
+  onClick={() => {
+    window.blvd?.openBookingWidget({
+      urlParams: {
+        locationId: "d64c39d5-645d-4343-b9b9-d4798b331f95",
+        visitType: "SELF_VISIT",
+      },
+    });
+  }}
+  className={`inline-flex items-center justify-center rounded-full px-8 py-4 text-sm font-semibold uppercase tracking-[0.16em] text-white transition-all duration-200 hover:-translate-y-0.5 ${isCurated ? "bg-[#24201F] shadow-[0_10px_28px_rgba(36,32,31,0.24)] hover:bg-[#3B3532] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#24201F]" : "bg-[#908A9B] shadow-[0_10px_28px_rgba(144,138,155,0.24)] hover:bg-[#817B8B]"}`}
+>
+  CRAFT MY FACIAL
+</button>
           <a
             href="https://shop.thefreshfacialbar.com/"
             target="_blank"
@@ -328,5 +413,6 @@ export default function RecommendationsPage() {
         </div>
       </div>
     </main>
+    </>
   );
 }

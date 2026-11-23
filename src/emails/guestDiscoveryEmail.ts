@@ -1,6 +1,4 @@
 import { enhancementCatalog } from "@/data/enhancementCatalog";
-import { cgcProductCatalog } from "@/data/cgcProductCatalog";
-import { productCatalog } from "@/data/productCatalog";
 import { EMAIL_BASE_CSS, EMAIL_COLORS, ensureSafeUrl, escapeHtml } from "@/emails/emailStyles";
 import type { SkinDiscoverySubmission } from "@/types/skinDiscoverySubmission";
 
@@ -13,9 +11,35 @@ export type GuestEmailConfig = {
   businessPhone?: string;
   locationLabel?: string;
   websiteUrl?: string | null;
+  productCommerce?: Array<{
+  productId: string;
+  productUrl: string | null;
+  shopifyVariantId: string | null;
+}>;
+  savedProducts?: Array<{
+    productId: string;
+    name: string;
+    description: string;
+    routineStep: string;
+    routineOrder: number;
+  }>;
+  savedEnhancements?: Array<{
+  id: string;
+  name: string;
+  description: string | null;
+}>;
   previewMode?: boolean;
 };
-
+const GENTLEMENS_EMAIL_COLORS = {
+  cream: "#f2f2f2",
+  paper: "#ffffff",
+  ink: "#545455",
+  muted: "#737373",
+  mutedAlt: "#737373",
+  border: "#A5A6A5",
+  accent: "#545455",
+  accentSoft: "#F1F1F1",
+} as const;
 export type EmailTemplateResult = {
   subject: string;
   preheader: string;
@@ -23,8 +47,6 @@ export type EmailTemplateResult = {
   text: string;
 };
 
-const productLookup = new Map(productCatalog.map((product) => [product.id, product]));
-const cgcProductLookup = new Map(cgcProductCatalog.map((product) => [product.id, product]));
 const enhancementLookup = new Map(enhancementCatalog.map((enhancement) => [enhancement.id, enhancement]));
 
 const journeyDescriptions: Record<string, string> = {
@@ -57,19 +79,35 @@ function formatName(value: string | null | undefined): string {
   return cleaned ? cleaned : "friend";
 }
 
-function lookupProduct(productId: string | null | undefined, experience?: string) {
-  if (!productId) return null;
-  if (experience === "gentlemens-corner") {
-    return cgcProductLookup.get(productId) ?? productLookup.get(productId) ?? null;
-  }
 
-  return productLookup.get(productId) ?? cgcProductLookup.get(productId) ?? null;
+function lookupProduct(
+  productId: string | null | undefined,
+  _experience?: string,
+  savedProducts?: GuestEmailConfig["savedProducts"],
+) {
+  if (!productId || !savedProducts) return null;
+
+  const savedProduct = savedProducts.find(
+    (product) => product.productId === productId,
+  );
+
+  if (!savedProduct) return null;
+
+  return {
+    name: savedProduct.name,
+    guestBenefit: savedProduct.description,
+  };
 }
+
 
 function isCuratedSubmission(submission: SkinDiscoverySubmission): boolean {
   return submission.experience === "gentlemens-corner";
 }
-
+function getEmailColors(submission: SkinDiscoverySubmission) {
+  return isCuratedSubmission(submission)
+    ? GENTLEMENS_EMAIL_COLORS
+    : EMAIL_COLORS;
+}
 function getLogoUrl(submission: SkinDiscoverySubmission, config: GuestEmailConfig): string {
   if (!isCuratedSubmission(submission)) {
     return ensureSafeUrl(config.logoUrl ?? null) ?? "";
@@ -110,12 +148,14 @@ function getBookingHref(config: GuestEmailConfig): string {
 }
 
 function renderJourneySection(submission: SkinDiscoverySubmission): string {
+    const colors = getEmailColors(submission);
+  const isGentlemensCorner = isCuratedSubmission(submission);
   const primaryJourneyCard = (journey: string, description: string, label: string, secondary = false) => `
     <tr>
       <td style="padding: 0 0 14px;">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid ${secondary ? '#d8d0d6' : '#dad6db'}; border-radius: 20px; background:${secondary ? '#fffdfb' : '#fffaf7'}; border-left:4px solid ${secondary ? '#b3a8b6' : '#908A9B'};">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid ${isGentlemensCorner ? colors.border : secondary ? '#d8d0d6' : '#dad6db'}; border-radius: 20px; background:${isGentlemensCorner ? colors.accentSoft : secondary ? '#fffdfb' : '#fffaf7'}; border-left:4px solid ${isGentlemensCorner ? colors.accent : secondary ? '#b3a8b6' : '#908A9B'};">
           <tr>
-            <td style="padding: 18px 20px 8px; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: ${secondary ? '#7d7581' : '#908A9B'}; font-weight: 700; font-family: Arial, Helvetica, sans-serif;">
+            <td style="padding: 18px 20px 8px; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: ${isGentlemensCorner ? colors.accent : secondary ? '#7d7581' : '#908A9B'}; font-weight: 700; font-family: Arial, Helvetica, sans-serif;">
               ${escapeHtml(label)}
             </td>
           </tr>
@@ -165,28 +205,122 @@ function renderJourneySection(submission: SkinDiscoverySubmission): string {
     ${supportMarkup}
   `;
 }
+function getProductCommerce(
+  productId: string | null | undefined,
+  config: GuestEmailConfig,
+) 
+{
+  if (!productId) return null;
 
+  return (
+    config.productCommerce?.find(
+      (item) => item.productId === productId,
+    ) ?? null
+  );
+}
+function getShopifyVariantNumericId(
+  shopifyVariantId: string | null | undefined,
+): string | null {
+  if (!shopifyVariantId) return null;
+
+  const parts = shopifyVariantId.split("/");
+  const numericId = parts[parts.length - 1];
+
+  return /^\d+$/.test(numericId) ? numericId : null;
+}
+function buildRecommendedProductsCartUrl(
+  submission: SkinDiscoverySubmission,
+  config: GuestEmailConfig,
+): string | null {
+  const featured = submission.productRecommendations.featured;
+
+  const productIds = Array.from(
+    new Set(
+      [
+        featured.cleanse,
+        featured.treat,
+        featured.moisturize,
+        featured.protect,
+        ...submission.productRecommendations.moreFreshPicks,
+      ].filter((productId): productId is string => Boolean(productId)),
+    ),
+  );
+
+  const cartItems = productIds
+    .map((productId) => {
+      const commerce = getProductCommerce(productId, config);
+      const variantId = getShopifyVariantNumericId(
+        commerce?.shopifyVariantId,
+      );
+
+      return variantId ? `${variantId}:1` : null;
+    })
+    .filter((item): item is string => Boolean(item));
+
+  if (cartItems.length === 0) {
+    return null;
+  }
+
+  const productUrl = config.productCommerce?.find(
+    (item) => Boolean(item.productUrl),
+  )?.productUrl;
+
+  if (!productUrl) {
+    return null;
+  }
+
+  try {
+    const storefrontUrl = new URL(productUrl);
+
+    return `${storefrontUrl.origin}/cart/${cartItems.join(",")}`;
+  } catch {
+    return null;
+  }
+}
 function renderProductRow(
   step: string,
   productId: string | null | undefined,
-  experience?: string,
+  experience: string | undefined,
+  config: GuestEmailConfig,
 ): string {
-  const product = lookupProduct(productId, experience);
+    const isGentlemensCorner = experience === "gentlemens-corner";
+  const colors = isGentlemensCorner
+    ? GENTLEMENS_EMAIL_COLORS
+    : EMAIL_COLORS;
+  const product = lookupProduct(
+  productId,
+  experience,
+  config.savedProducts,
+);
   if (!product) return "";
 
+  const commerce = getProductCommerce(productId, config);
+const productButton = commerce?.productUrl
+  ? `
+      <div style="margin-top: 16px;">
+        <a
+          href="${escapeHtml(commerce.productUrl)}"
+          style="display:inline-block; padding:12px 20px; background:${colors.ink}; color:#ffffff; text-decoration:none; border-radius:999px; font-size:12px; letter-spacing:1.5px; font-weight:700; font-family:Arial, Helvetica, sans-serif;"
+        >
+          SHOP THIS PICK
+        </a>
+      </div>
+    `
+  : "";
   return `
     <tr>
       <td style="padding: 0 0 14px;">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #dad6db; background:#fffdfb; border-radius: 18px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid ${isGentlemensCorner ? colors.border : "#dad6db"}; background:${isGentlemensCorner ? colors.accentSoft : "#fffdfb"}; border-radius: 18px;">
           <tr>
             <td style="padding: 18px 20px;">
-              <div style="font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #908A9B; font-weight: 700; font-family: Arial, Helvetica, sans-serif;">${escapeHtml(step)}</div>
+              <div style="font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: ${isGentlemensCorner ? colors.accent : "#908A9B"}; font-weight: 700; font-family: Arial, Helvetica, sans-serif;">${escapeHtml(step)}</div>
               <div style="margin-top: 8px; font-size: 22px; line-height: 30px; color: ${EMAIL_COLORS.ink}; font-weight: 700; font-family: Georgia, 'Times New Roman', serif;">
                 ${escapeHtml(product.name)}
               </div>
               <div style="margin-top: 10px; font-size: 14px; line-height: 22px; color: ${EMAIL_COLORS.muted}; font-family: Arial, Helvetica, sans-serif;">
                 ${escapeHtml(product.guestBenefit)}
               </div>
+              ${productButton}
             </td>
           </tr>
         </table>
@@ -195,7 +329,11 @@ function renderProductRow(
   `;
 }
 
-function renderFeaturedProducts(submission: SkinDiscoverySubmission): string {
+function renderFeaturedProducts(
+  submission: SkinDiscoverySubmission,
+  config: GuestEmailConfig,
+): string {
+    const colors = getEmailColors(submission);
   const featuredRows = [
     ["CLEANSE", submission.productRecommendations.featured.cleanse],
     ["TREAT", submission.productRecommendations.featured.treat],
@@ -203,16 +341,38 @@ function renderFeaturedProducts(submission: SkinDiscoverySubmission): string {
     ["PROTECT", submission.productRecommendations.featured.protect],
   ]
     .map(([step, productId]) => renderProductRow(
-      step as string,
-      productId as string | null | undefined,
-      submission.experience,
-    ))
+  step as string,
+  productId as string | null | undefined,
+  submission.experience,
+  config,
+))
     .join("");
+const cartUrl = buildRecommendedProductsCartUrl(
+  submission,
+  config,
+);
 
+const shopAllButton = cartUrl
+  ? `
+      <tr>
+        <td style="padding: 6px 0 24px; text-align:center;">
+          <a
+            href="${escapeHtml(cartUrl)}"
+            style="display:inline-block; padding:14px 26px; background:${colors.ink}; color:#ffffff; text-decoration:none; border-radius:999px; font-size:12px; letter-spacing:1.5px; font-weight:700; font-family:Arial, Helvetica, sans-serif;"
+          >
+            SHOP MY FRESH PICKS
+          </a>
+          <div style="margin-top:10px; font-size:12px; line-height:18px; color:${EMAIL_COLORS.muted}; font-family:Arial, Helvetica, sans-serif;">
+            Add your recommended routine to your cart in one click.
+          </div>
+        </td>
+      </tr>
+    `
+  : "";
   return `
     <tr>
       <td style="padding: 0 0 8px;">
-        <div style="font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #908A9B; font-weight: 700; font-family: Arial, Helvetica, sans-serif;">YOUR FRESH PICKS</div>
+        <div style="font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: ${isCuratedSubmission(submission) ? colors.accent : "#908A9B"}; font-weight: 700; font-family: Arial, Helvetica, sans-serif;">YOUR FRESH PICKS</div>
       </td>
     </tr>
     <tr>
@@ -221,16 +381,42 @@ function renderFeaturedProducts(submission: SkinDiscoverySubmission): string {
       </td>
     </tr>
     ${featuredRows}
+    ${shopAllButton}
   `;
 }
 
-function renderMoreFreshPicks(submission: SkinDiscoverySubmission): string {
+function renderMoreFreshPicks(
+  submission: SkinDiscoverySubmission,
+  config: GuestEmailConfig,
+): string {
+    const colors = getEmailColors(submission);
+  const isGentlemensCorner = isCuratedSubmission(submission);
   if (!submission.productRecommendations.moreFreshPicks.length) return "";
 
   const items = submission.productRecommendations.moreFreshPicks
     .map((productId) => {
-      const product = lookupProduct(productId, submission.experience);
+      const product = lookupProduct(
+  productId,
+  submission.experience,
+  config.savedProducts,
+);
       if (!product) return "";
+      const commerce = getProductCommerce(productId, config);
+
+const productButton = commerce?.productUrl
+  ? `
+      <tr>
+        <td style="padding: 0 16px 14px;">
+          <a
+            href="${escapeHtml(commerce.productUrl)}"
+            style="display:inline-block; padding:10px 18px; background:${colors.ink}; color:#ffffff; text-decoration:none; border-radius:999px; font-size:11px; letter-spacing:1.5px; font-weight:700; font-family:Arial, Helvetica, sans-serif;"
+          >
+            SHOP THIS PICK
+          </a>
+        </td>
+      </tr>
+    `
+  : "";
       return `
         <tr>
           <td style="padding: 0 0 10px;">
@@ -242,7 +428,7 @@ function renderMoreFreshPicks(submission: SkinDiscoverySubmission): string {
               </tr>
               <tr>
                 <td style="padding: 0 16px 12px; font-size: 13px; line-height: 20px; color: ${EMAIL_COLORS.muted};">
-                  ${escapeHtml(product.guestBenefit)}
+                  ${escapeHtml(product.guestBenefit)}${productButton}
                 </td>
               </tr>
             </table>
@@ -254,7 +440,7 @@ function renderMoreFreshPicks(submission: SkinDiscoverySubmission): string {
 
   return `
     <tr>
-      <td style="padding: 16px 16px 8px; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #908A9B; font-weight: 700; font-family: Arial, Helvetica, sans-serif;">A FEW MORE FRESH PICKS</td>
+      <td style="padding: 16px 16px 8px; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: ${isGentlemensCorner ? colors.accent : "#908A9B"}; font-weight: 700; font-family: Arial, Helvetica, sans-serif;">A FEW MORE FRESH PICKS</td>
     </tr>
     <tr>
       <td style="padding: 0 16px 8px;">
@@ -264,13 +450,30 @@ function renderMoreFreshPicks(submission: SkinDiscoverySubmission): string {
   `;
 }
 
-function renderEnhancements(submission: SkinDiscoverySubmission): string {
+function renderEnhancements(
+  submission: SkinDiscoverySubmission,
+  config: GuestEmailConfig,
+): string {
+    const colors = getEmailColors(submission);
+  const isGentlemensCorner = isCuratedSubmission(submission);
   if (!submission.enhancementRecommendations.length) return "";
 
   const rows = submission.enhancementRecommendations
     .map((enhancementId) => {
-      const enhancement = lookupEnhancement(enhancementId);
-      if (!enhancement) return "";
+      const savedEnhancement = config.savedEnhancements?.find(
+  (item) => item.id === enhancementId,
+);
+
+const enhancement = config.savedEnhancements
+  ? savedEnhancement
+    ? {
+        name: savedEnhancement.name,
+        guestBenefit: savedEnhancement.description ?? "",
+      }
+    : null
+  : lookupEnhancement(enhancementId);
+
+if (!enhancement) return "";
 
       const note = enhancement.name === "FarmHouse Fresh Peel"
         ? "Your Mixo can determine which peel, if any, best complements your Journey."
@@ -279,7 +482,7 @@ function renderEnhancements(submission: SkinDiscoverySubmission): string {
       return `
         <tr>
           <td style="padding: 0 0 12px;">
-            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #dad6db; background:#fffdfb; border-radius: 16px;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"style="border:1px solid ${isGentlemensCorner ? colors.border : "#dad6db"}; background:${isGentlemensCorner ? colors.accentSoft : "#fffdfb"}; border-radius: 16px;">
               <tr>
                 <td style="padding: 14px 18px 8px; font-size: 15px; line-height: 22px; color: ${EMAIL_COLORS.ink}; font-weight: 700; font-family: Georgia, 'Times New Roman', serif;">
                   ${escapeHtml(enhancement.name)}
@@ -300,7 +503,7 @@ function renderEnhancements(submission: SkinDiscoverySubmission): string {
   return `
     <tr>
       <td style="padding: 0 0 8px;">
-        <div style="font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: ${EMAIL_COLORS.mutedAlt}; font-weight: 700;">ENHANCE YOUR JOURNEY</div>
+        <div style="font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: ${isGentlemensCorner ? colors.accent : EMAIL_COLORS.mutedAlt}; font-weight: 700;">ENHANCE YOUR JOURNEY</div>
       </td>
     </tr>
     <tr>
@@ -318,20 +521,21 @@ function renderEnhancements(submission: SkinDiscoverySubmission): string {
 }
 
 function renderGuestEmailHtml(submission: SkinDiscoverySubmission, config: GuestEmailConfig): string {
+  const colors = getEmailColors(submission);
   const firstName = formatName(submission.guest.firstName);
   const bookingHref = getBookingHref(config);
   const logoUrl = getLogoUrl(submission, config);
   const businessName = getEmailBusinessName(submission, config);
   const logoHtml = logoUrl
     ? `<img src="${escapeHtml(logoUrl)}" alt="${escapeHtml(businessName)}" width="180" style="display:block; max-width:180px; width:100%; height:auto; border:0;" />`
-    : `<div style="font-size: 14px; letter-spacing: 2px; text-transform: uppercase; font-weight: 700; color: ${EMAIL_COLORS.ink};">Fresh Facial Bar & Lash Lounge</div>`;
+    : `<div style="font-size: 14px; letter-spacing: 2px; text-transform: uppercase; font-weight: 700; color: ${colors.ink};">Fresh Facial Bar & Lash Lounge</div>`;
 
   const hiddenSubmissionMeta = submission.internal.notes
     ? `<div aria-hidden="true" style="display:none; max-height:0; overflow:hidden; opacity:0;">${escapeHtml(submission.internal.notes)}</div>`
     : "";
 
   const mainHtml = `
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${EMAIL_COLORS.cream};">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${colors.cream};">
       <tr>
         <td align="center" style="padding: 32px 18px;">
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="email-shell" style="max-width: 660px; background:#fffdfc; border:1px solid #e7dfe4; border-radius: 26px; box-shadow: 0 18px 42px rgba(43, 36, 33, 0.08);">
@@ -342,7 +546,7 @@ function renderGuestEmailHtml(submission: SkinDiscoverySubmission, config: Guest
                     <td align="center" style="padding-bottom: 16px;">${logoHtml}</td>
                   </tr>
                   <tr>
-                    <td align="center" style="font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: #7d7581; font-weight: 700; text-align: center; font-family: Arial, Helvetica, sans-serif;">
+                    <td align="center" style="font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: ${isCuratedSubmission(submission) ? colors.mutedAlt : "#7d7581"}; font-weight: 700; text-align: center; font-family: Arial, Helvetica, sans-serif;">
                       FRESH SKIN DISCOVERY
                     </td>
                   </tr>
@@ -379,11 +583,19 @@ function renderGuestEmailHtml(submission: SkinDiscoverySubmission, config: Guest
                 </table>
               </td>
             </tr>
-
+<tr>
+  <td style="padding: 0 32px 20px; text-align: center;" class="pad-mobile">
+    <div style="font-size: 14px; line-height: 22px; color: ${colors.muted}; font-family: Arial, Helvetica, sans-serif;">
+      Your personalized product recommendations are a starting point.
+      Your Mixo will review them with your skin's needs in mind before
+      finalizing your Skin Plan.
+    </div>
+  </td>
+</tr>
             <tr>
               <td style="padding: 0 32px 24px;" class="pad-mobile">
                 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-                  ${renderFeaturedProducts(submission)}
+                  ${renderFeaturedProducts(submission, config)}
                 </table>
               </td>
             </tr>
@@ -391,8 +603,8 @@ function renderGuestEmailHtml(submission: SkinDiscoverySubmission, config: Guest
             ${submission.productRecommendations.moreFreshPicks.length > 0 ? `
               <tr>
                 <td style="padding: 0 32px 24px;" class="pad-mobile">
-                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${EMAIL_COLORS.accentSoft}; border:1px solid ${EMAIL_COLORS.border}; border-radius:18px;">
-                    ${renderMoreFreshPicks(submission)}
+                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${colors.accentSoft}; border:1px solid ${colors.border}; border-radius:18px;">
+                    ${renderMoreFreshPicks(submission, config)}
                   </table>
                 </td>
               </tr>
@@ -402,7 +614,7 @@ function renderGuestEmailHtml(submission: SkinDiscoverySubmission, config: Guest
               <tr>
                 <td style="padding: 0 32px 24px;" class="pad-mobile">
                   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-                    ${renderEnhancements(submission)}
+                    ${renderEnhancements(submission, config)}
                   </table>
                 </td>
               </tr>
@@ -410,7 +622,7 @@ function renderGuestEmailHtml(submission: SkinDiscoverySubmission, config: Guest
 
             <tr>
               <td style="padding: 0 32px 20px;" class="pad-mobile">
-                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${EMAIL_COLORS.accentSoft}; border:1px solid ${EMAIL_COLORS.border}; border-radius:18px;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${colors.accentSoft}; border:1px solid ${colors.border}; border-radius:18px;">
                   <tr>
                     <td style="padding: 20px 20px 10px; font-size: 22px; line-height: 30px; color: ${EMAIL_COLORS.ink}; font-weight: 700; font-family: Georgia, 'Times New Roman', serif;">
                       Your Mixo Takes It From Here
@@ -430,7 +642,7 @@ function renderGuestEmailHtml(submission: SkinDiscoverySubmission, config: Guest
                 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
                   <tr>
                     <td align="center" style="padding: 8px 0 18px;">
-                      <a href="${escapeHtml(bookingHref)}" style="display:inline-block; background:#908A9B; color:#ffffff; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; text-decoration:none; font-weight:700; padding: 18px 32px; border-radius: 999px; min-width: 240px; font-family: Arial, Helvetica, sans-serif; box-shadow: 0 12px 20px rgba(144,138,155,0.18);">
+                      <a href="${escapeHtml(bookingHref)}" style="display:inline-block; background:${colors.accent}; color:#ffffff; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; text-decoration:none; font-weight:700; padding: 18px 32px; border-radius: 999px; min-width: 240px; font-family: Arial, Helvetica, sans-serif; box-shadow: 0 12px 20px rgba(144,138,155,0.18);">
                         CRAFT MY FACIAL →
                       </a>
                     </td>
@@ -474,12 +686,12 @@ function renderGuestEmailHtml(submission: SkinDiscoverySubmission, config: Guest
               <td style="padding: 0 32px 30px;" class="pad-mobile">
                 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-top:1px solid #e8dfe5;">
                   <tr>
-                    <td style="padding-top: 18px; font-size: 12px; line-height: 20px; color: #7d7581; text-align: center; font-family: Arial, Helvetica, sans-serif;">
+                    <td style="padding-top: 18px; font-size: 12px; line-height: 20px; color: ${isCuratedSubmission(submission) ? colors.mutedAlt : "#7d7581"};; text-align: center; font-family: Arial, Helvetica, sans-serif;">
                       ${escapeHtml(businessName)}
                     </td>
                   </tr>
                   <tr>
-                    <td style="padding-top: 12px; font-size: 12px; line-height: 20px; color: #7d7581; text-align: center; font-family: Arial, Helvetica, sans-serif;">
+                    <td style="padding-top: 12px; font-size: 12px; line-height: 20px; color: #7d7color: ${isCuratedSubmission(submission) ? colors.mutedAlt : "#7d7581"};581; text-align: center; font-family: Arial, Helvetica, sans-serif;">
                       Thoughtfully crafted, one step at a time.
                     </td>
                   </tr>
@@ -527,40 +739,90 @@ function renderGuestEmailText(submission: SkinDiscoverySubmission, config: Guest
   lines.push("");
   lines.push("YOUR FRESH PICKS");
   lines.push("Thoughtfully selected around what you shared with us.");
+  lines.push("YOUR PERSONALIZED SKINCARE RECOMMENDATIONS");
+lines.push(
+  "These product recommendations are a starting point. Your Mixo will review them with your skin's needs in mind before finalizing your Skin Plan."
+);
+lines.push("");
   for (const [step, productId] of [
     ["CLEANSE", submission.productRecommendations.featured.cleanse],
     ["TREAT", submission.productRecommendations.featured.treat],
     ["MOISTURIZE", submission.productRecommendations.featured.moisturize],
     ["PROTECT", submission.productRecommendations.featured.protect],
   ]) {
-    const product = lookupProduct(productId as string | null | undefined, submission.experience);
+    const product = lookupProduct(
+  productId as string | null | undefined,
+  submission.experience,
+  config.savedProducts,
+);
     if (product) {
-      lines.push(`${step}: ${product.name}`);
-      lines.push(product.guestBenefit);
-    }
+  lines.push(`${step}: ${product.name}`);
+  lines.push(product.guestBenefit);
+
+  const commerce = getProductCommerce(
+    productId as string | null | undefined,
+    config,
+  );
+
+  if (commerce?.productUrl) {
+    lines.push(`Shop this pick: ${commerce.productUrl}`);
+  }
+}
   }
 
   if (submission.productRecommendations.moreFreshPicks.length > 0) {
     lines.push("");
     lines.push("A FEW MORE FRESH PICKS");
     for (const productId of submission.productRecommendations.moreFreshPicks) {
-      const product = lookupProduct(productId, submission.experience);
+      const product = lookupProduct(
+  productId,
+  submission.experience,
+  config.savedProducts,
+);
       if (product) {
-        lines.push(`${product.name} - ${product.guestBenefit}`);
-      }
+  lines.push(`${product.name} - ${product.guestBenefit}`);
+
+  const commerce = getProductCommerce(productId, config);
+
+  if (commerce?.productUrl) {
+    lines.push(`Shop this pick: ${commerce.productUrl}`);
+  }
+}
     }
   }
+const cartUrl = buildRecommendedProductsCartUrl(
+  submission,
+  config,
+);
 
+if (cartUrl) {
+  lines.push("");
+  lines.push("SHOP MY FRESH PICKS");
+  lines.push("Add your recommended routine to your cart:");
+  lines.push(cartUrl);
+}
   if (submission.enhancementRecommendations.length > 0) {
     lines.push("");
     lines.push("ENHANCE YOUR JOURNEY");
     lines.push("Worth Considering");
     for (const enhancementId of submission.enhancementRecommendations) {
-      const enhancement = lookupEnhancement(enhancementId);
-      if (enhancement) {
-        lines.push(`${enhancement.name} - ${enhancement.guestBenefit}`);
-      }
-    }
+  const savedEnhancement = config.savedEnhancements?.find(
+    (item) => item.id === enhancementId,
+  );
+
+  const enhancement = config.savedEnhancements
+    ? savedEnhancement
+      ? {
+          name: savedEnhancement.name,
+          guestBenefit: savedEnhancement.description ?? "",
+        }
+      : null
+    : lookupEnhancement(enhancementId);
+
+  if (enhancement) {
+    lines.push(`${enhancement.name} - ${enhancement.guestBenefit}`);
+  }
+}
     lines.push("Your Mixo can help determine whether these Enhancements make sense for your custom facial.");
   }
 
