@@ -302,7 +302,15 @@ if (product.featuredEligible === false) {
   });
 
   if (slot === "treat") {
-  const strongCalmReactive = isStrongCalmReactive(selectedAnswers);
+    if (selectedExperience === "gentlemens-corner") {
+      pool = pool.filter(
+        (product) =>
+          primaryJourneys.includes(product.primaryJourney) ||
+          product.primaryJourney === secondaryJourney,
+      );
+    }
+
+    const strongCalmReactive = isStrongCalmReactive(selectedAnswers);
 
   if (strongCalmReactive) {
     pool = pool.filter(
