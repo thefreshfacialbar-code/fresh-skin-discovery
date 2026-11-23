@@ -115,7 +115,7 @@ const { data: skinPlanProducts, error: skinPlanProductsError } =
   "id, product_id, routine_step, routine_order, product_name_snapshot, brand_snapshot, price_snapshot, recommendation_reason, customer_guidance, usage_type, timing, frequency, status, professional_note, reviewed_at, replaces_skin_plan_product_id"
 )
     .eq("skin_plan_id", skinPlan.id)
-    .not("status", "in", '("replaced","removed")')
+    .eq("status", "confirmed")
     .order("routine_order", { ascending: true });
 
 if (skinPlanProductsError) {
