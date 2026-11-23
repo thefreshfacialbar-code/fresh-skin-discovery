@@ -158,15 +158,16 @@ if (customerError || !customer?.email) {
     { status: 500 }
   );
 }
-const accessToken = crypto.randomUUID();
+const newAccessToken = crypto.randomUUID();
 
-const { error: skinPlanTokenError } = await supabaseAdmin
-  .from("skin_plans")
-  .update({
-    access_token: accessToken,
-  })
-  .eq("consultation_id", consultationId)
-  .is("access_token", null);
+const { data: tokenUpdate, error: skinPlanTokenError } =
+  await supabaseAdmin
+    .from("skin_plans")
+    .update({ access_token: newAccessToken })
+    .eq("id", skinPlan.id)
+    .is("access_token", null)
+    .select("access_token")
+    .maybeSingle();
 
 if (skinPlanTokenError) {
   console.error("Skin Plan access token update failed:", skinPlanTokenError);
@@ -179,6 +180,30 @@ if (skinPlanTokenError) {
     { status: 500 }
   );
 }
+
+let accessToken = tokenUpdate?.access_token;
+
+if (!accessToken) {
+  const { data: existingPlan, error: existingPlanError } =
+    await supabaseAdmin
+      .from("skin_plans")
+      .select("access_token")
+      .eq("id", skinPlan.id)
+      .single();
+
+  if (existingPlanError || !existingPlan?.access_token) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Could not retrieve secure Skin Plan access.",
+      },
+      { status: 500 }
+    );
+  }
+
+  accessToken = existingPlan.access_token;
+}
+
 const { data: finalizedProducts, error: finalizedProductsError } =
   await supabaseAdmin
     .from("skin_plan_products")
