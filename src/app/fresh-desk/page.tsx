@@ -92,7 +92,14 @@ if (shopifyOrdersError) {
       Employees
     </Link>
   )}
-
+{employeeSession.employee.role === "owner_admin" && (
+  <Link
+    href="/fresh-desk/reports"
+    className="rounded-full border border-[#DAD6DB] bg-[#FFFDFC] px-4 py-2 text-sm font-semibold text-[#5A5553] transition hover:bg-[#F4F0EA]"
+  >
+    Reports
+  </Link>
+)}
   <FreshDeskLogoutButton />
 </div>
 </div>
