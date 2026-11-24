@@ -81,10 +81,12 @@ export default function RecommendationsPage() {
   const [enhancementRecommendations, setEnhancementRecommendations] = useState<RecommendedEnhancement[]>([]);
 
   useEffect(() => {
-  setIsCurated(getSelectedExperience() === "gentlemens-corner");
-
   async function loadRecommendations() {
     const journeyRecommendation = readStoredRecommendation();
+
+    setIsCurated(
+      getSelectedExperience() === "gentlemens-corner",
+    );
     if (!journeyRecommendation) {
       setProductRecommendation(null);
       setIsHydrated(true);
