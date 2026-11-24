@@ -368,7 +368,6 @@ if (product.featuredEligible === false) {
   if (pool.length === 0) {
     return null;
   }
-
   const scored = pool.map((product) => ({
   product,
   score: scoreProduct(
@@ -379,19 +378,44 @@ if (product.featuredEligible === false) {
   ),
 }));
 
-const highestScore = Math.max(...scored.map((item) => item.score));
+const ranked =
+  selectedExperience === "gentlemens-corner"
+    ? [...scored]
+        .sort((left, right) => {
+          const leftPrimaryMatch = primaryJourneys.includes(
+            left.product.primaryJourney,
+          );
+          const rightPrimaryMatch = primaryJourneys.includes(
+            right.product.primaryJourney,
+          );
 
-const ranked = scored
-  .filter((item) => highestScore - item.score <= 2)
-  .sort((left, right) => {
-    const priorityDifference =
-      getExperiencePriority(right.product, selectedExperience) -
-      getExperiencePriority(left.product, selectedExperience);
+          if (leftPrimaryMatch !== rightPrimaryMatch) {
+            return Number(rightPrimaryMatch) - Number(leftPrimaryMatch);
+          }
 
-    return priorityDifference || right.score - left.score;
-  })
-  .map((item) => item.product);
+          const priorityDifference =
+            getExperiencePriority(right.product, selectedExperience) -
+            getExperiencePriority(left.product, selectedExperience);
 
+          return priorityDifference || right.score - left.score;
+        })
+        .map((item) => item.product)
+    : (() => {
+        const highestScore = Math.max(
+          ...scored.map((item) => item.score),
+        );
+
+        return scored
+          .filter((item) => highestScore - item.score <= 2)
+          .sort((left, right) => {
+            const priorityDifference =
+              getExperiencePriority(right.product, selectedExperience) -
+              getExperiencePriority(left.product, selectedExperience);
+
+            return priorityDifference || right.score - left.score;
+          })
+          .map((item) => item.product);
+      })();
   const winner = ranked[0];
   selectedIds.add(winner.id);
   return {

@@ -25,7 +25,8 @@ function createRecommendationFingerprint(
       : null;
 
   return JSON.stringify({
-    selectedExperience:
+  recommendationEngineVersion: "fresh-method-v3",
+  selectedExperience:
       selectedExperience ?? "fresh-facial-bar-lash-lounge",
     resultType: journeyRecommendation.resultType,
     primaryJourneys: journeyRecommendation.primaryJourneys,
