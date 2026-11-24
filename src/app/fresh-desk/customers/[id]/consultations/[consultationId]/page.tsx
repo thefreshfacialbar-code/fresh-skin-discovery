@@ -131,6 +131,29 @@ if (skinPlan?.id) {
 
   skinPlanProducts = data ?? [];
 }
+// Read-only history of the original Skin Discovery recommendations.
+// This does not affect the active Skin Plan or Professional Review.
+let originalSkinDiscoveryProducts: {
+  id: string;
+  routine_step: string;
+  routine_order: number | null;
+  product_name_snapshot: string;
+  brand_snapshot: string | null;
+  status: string;
+}[] = [];
+
+if (skinPlan?.id) {
+  const { data } = await supabaseAdmin
+    .from("skin_plan_products")
+    .select(
+      "id, routine_step, routine_order, product_name_snapshot, brand_snapshot, status"
+    )
+    .eq("skin_plan_id", skinPlan.id)
+    .is("replaces_skin_plan_product_id", null)
+    .order("routine_order", { ascending: true });
+
+  originalSkinDiscoveryProducts = data ?? [];
+}
 let skinPlanEnhancements: {
   id: string;
   enhancement_name_snapshot: string;
@@ -336,6 +359,46 @@ const allProductsReviewed =
           <p className="text-sm capitalize text-[#5A5553]">
             {journey.role}
           </p>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+{skinPlan && originalSkinDiscoveryProducts.length > 0 && (
+  <div className="mt-8 rounded-2xl border border-[#DAD6DB] bg-[#F7F4F2] p-6">
+    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#908A9B]">
+      Original Skin Discovery Recommendations
+    </p>
+
+    <p className="mt-2 text-sm text-[#5A5553]">
+      Read-only history of the products initially recommended by Skin Discovery.
+    </p>
+
+    <div className="mt-4 space-y-4">
+      {originalSkinDiscoveryProducts.map((product) => (
+        <div key={product.id} className="border-b border-[#E5E0DD] pb-4 last:border-0 last:pb-0">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="font-semibold">
+                {product.product_name_snapshot}
+              </p>
+
+              <p className="mt-1 text-sm text-[#5A5553]">
+                {product.brand_snapshot}
+                {product.routine_step ? ` · ${product.routine_step}` : ""}
+              </p>
+            </div>
+
+            <span className="text-xs font-medium text-[#5A5553]">
+              {product.status === "confirmed"
+                ? "Kept"
+                : product.status === "removed"
+                  ? "Removed"
+                  : product.status === "replaced"
+                    ? "Replaced"
+                    : "Pending Review"}
+            </span>
+          </div>
         </div>
       ))}
     </div>
