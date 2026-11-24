@@ -5,7 +5,7 @@ import Image from "next/image";
 import Script from "next/script";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { getBrandLogoAlt, getBrandLogoPath, getSelectedExperience } from "@/lib/brandLogo";
+import { getSelectedExperience } from "@/lib/brandLogo";
 import {
   clearEnhancementRecommendationSession,
 } from "@/lib/enhancementRecommendationSession";
@@ -74,8 +74,8 @@ function ProductCard({
 
 export default function RecommendationsPage() {
   const router = useRouter();
-  const isCurated = getSelectedExperience() === "gentlemens-corner";
   const [isHydrated, setIsHydrated] = useState(false);
+  const [isCurated, setIsCurated] = useState(false);
   const [catalogError, setCatalogError] = useState(false);
   const [productRecommendation, setProductRecommendation] = useState<ProductRecommendationResult | null>(null);
   const [enhancementRecommendations, setEnhancementRecommendations] = useState<RecommendedEnhancement[]>([]);
@@ -83,6 +83,10 @@ export default function RecommendationsPage() {
   useEffect(() => {
   async function loadRecommendations() {
     const journeyRecommendation = readStoredRecommendation();
+
+    setIsCurated(
+      getSelectedExperience() === "gentlemens-corner",
+    );
     if (!journeyRecommendation) {
       setProductRecommendation(null);
       setIsHydrated(true);
@@ -122,8 +126,12 @@ const generatedRecommendations =
           <div className="flex justify-center">
             <div className="flex h-32 w-32 items-center justify-center sm:h-36 sm:w-36">
               <Image
-                src={getBrandLogoPath()}
-                alt={getBrandLogoAlt()}
+                src={isCurated ? "/CGC-Logo.png" : "/ffb-logo.png"}
+alt={
+  isCurated
+    ? "Curated Gentlemen's Corner"
+    : "Fresh Facial Bar & Lash Lounge"
+}
                 width={512}
                 height={512}
                 priority
@@ -205,8 +213,12 @@ if (catalogError) {
           <div className="flex justify-center pt-2">
             <div className="flex h-44 w-44 items-center justify-center sm:h-54 sm:w-54 lg:h-68 lg:w-68">
               <Image
-                src={getBrandLogoPath()}
-                alt={getBrandLogoAlt()}
+               src={isCurated ? "/CGC-Logo.png" : "/ffb-logo.png"}
+alt={
+  isCurated
+    ? "Curated Gentlemen's Corner"
+    : "Fresh Facial Bar & Lash Lounge"
+}
                 width={512}
                 height={512}
                 className="h-auto w-full opacity-90"
@@ -266,8 +278,12 @@ if (catalogError) {
         <div className="flex justify-center pt-2">
           <div className="flex h-44 w-44 items-center justify-center sm:h-54 sm:w-54 lg:h-68 lg:w-68">
             <Image
-              src={getBrandLogoPath()}
-              alt={getBrandLogoAlt()}
+              src={isCurated ? "/CGC-Logo.png" : "/ffb-logo.png"}
+alt={
+  isCurated
+    ? "Curated Gentlemen's Corner"
+    : "Fresh Facial Bar & Lash Lounge"
+}
               width={512}
               height={512}
               priority
