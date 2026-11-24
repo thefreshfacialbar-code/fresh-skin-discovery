@@ -42,8 +42,11 @@ if (!employeeSession) {
     professional_reviewed_at,
     professional_reviewed_by,
     professional_review_note,
-    customers!inner (
-      business_id
+        customers!inner (
+      business_id,
+      first_name,
+      last_name,
+      email
     )
   `)
   .eq("id", consultationId)
@@ -171,6 +174,26 @@ const allProductsReviewed =
         >
           Consultation Detail
         </h1>
+
+<div className="mt-4">
+  <h2
+    className="text-2xl font-semibold"
+    style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}
+  >
+    {[
+      consultationCustomer?.first_name,
+      consultationCustomer?.last_name,
+    ]
+      .filter(Boolean)
+      .join(" ") || "Unnamed Customer"}
+  </h2>
+
+  {consultationCustomer?.email && (
+    <p className="mt-1 text-sm text-[#5A5553]">
+      {consultationCustomer.email}
+    </p>
+  )}
+</div>
 
         {error ? (
           <p className="mt-8">Consultation could not be loaded.</p>
