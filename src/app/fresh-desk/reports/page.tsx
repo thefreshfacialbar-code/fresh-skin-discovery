@@ -57,6 +57,30 @@ export default async function FreshDeskReportsPage() {
               View Report →
             </p>
           </Link>
+          <Link
+  href="/fresh-desk/reports/skin-discovery-conversion"
+  className="rounded-2xl border border-[#DAD6DB] bg-[#FFFDFC] p-6 transition hover:border-[#908A9B] hover:shadow-sm"
+>
+  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#908A9B]">
+    Skin Discovery
+  </p>
+
+  <h2
+    className="mt-3 text-2xl"
+    style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}
+  >
+    Skin Discovery Conversion
+  </h2>
+
+  <p className="mt-3 text-sm text-[#5A5553]">
+    Track customer conversion rates and purchases following
+    Skin Discovery across Boulevard and Shopify.
+  </p>
+
+  <p className="mt-5 text-sm font-semibold text-[#6D617C]">
+    View Report →
+  </p>
+</Link>
         </section>
       </div>
     </main>
