@@ -38,6 +38,15 @@ console.error(
   "Fresh Desk authentication diagnostic:",
   error ? "Employee lookup error" : "Active employee not found"
 );
+console.error(
+  "Fresh Desk employee lookup details:",
+  {
+    hasError: Boolean(error),
+    errorCode: error?.code ?? null,
+    errorMessage: error?.message ?? null,
+    employeeFound: Boolean(employee),
+  }
+);
     if (error) {
       console.error("Fresh Desk employee lookup failed:", error);
     }
