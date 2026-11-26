@@ -12,7 +12,10 @@ export async function requireFreshDeskEmployee() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-
+console.error(
+  "Fresh Desk diagnostic - authenticated user ID:",
+  user?.id ?? "none"
+);
   if (!user) {
   console.error(
     "Fresh Desk authentication diagnostic: No authenticated server user."
