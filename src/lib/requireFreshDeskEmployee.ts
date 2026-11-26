@@ -14,8 +14,12 @@ export async function requireFreshDeskEmployee() {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return null;
-  }
+  console.error(
+    "Fresh Desk authentication diagnostic: No authenticated server user."
+  );
+
+  return null;
+}
 
   const { data: employee, error } = await supabaseAdmin
     .from("employees")
@@ -27,6 +31,10 @@ export async function requireFreshDeskEmployee() {
     .maybeSingle();
 
   if (error || !employee) {
+    console.error(
+  "Fresh Desk authentication diagnostic:",
+  error ? "Employee lookup error" : "Active employee not found"
+);
     if (error) {
       console.error("Fresh Desk employee lookup failed:", error);
     }
