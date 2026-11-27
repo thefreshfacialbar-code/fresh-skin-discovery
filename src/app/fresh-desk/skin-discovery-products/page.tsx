@@ -21,8 +21,9 @@ const { data: products, error } = await supabaseAdmin
     recommendable,
         recommendation_status,
     product_recommendation_profiles (
-      experience_ids
-    ),
+  experience_ids,
+  recommendation_enabled
+),
     product_vendor_research (
       research_status
     )

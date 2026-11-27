@@ -6,6 +6,7 @@ import Link from "next/link";
 
 type ProductProfile = {
   experience_ids: string[] | null;
+  recommendation_enabled: boolean | null;
 };
 type ManufacturerResearch = {
   research_status: "draft" | "approved" | "rejected";
@@ -35,6 +36,8 @@ type Props = {
 export default function SkinDiscoveryProductLibrary({
   products,
 }: Props) {
+  const [visibilityFilter, setVisibilityFilter] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
   const [experienceFilter, setExperienceFilter] = useState("all");
   const [brandFilter, setBrandFilter] = useState("all");
 const [manufacturerFilter, setManufacturerFilter] = useState("all");
@@ -63,7 +66,12 @@ const [manufacturerFilter, setManufacturerFilter] = useState("all");
       const men = profiles.some((profile) =>
         profile.experience_ids?.includes("gentlemens-corner")
       );
+const isSkinDiscoveryProduct = profiles.some(
+  (profile) => profile.recommendation_enabled === true
+);
 
+const matchesVisibility =
+  visibilityFilter === "all" || isSkinDiscoveryProduct;
       const matchesExperience =
         experienceFilter === "all" ||
         (experienceFilter === "fresh" && fresh) ||
@@ -72,7 +80,12 @@ const [manufacturerFilter, setManufacturerFilter] = useState("all");
 
       const matchesBrand =
   brandFilter === "all" || product.brand === brandFilter;
+const normalizedSearch = searchQuery.trim().toLowerCase();
 
+const matchesSearch =
+  normalizedSearch === "" ||
+  product.name.toLowerCase().includes(normalizedSearch) ||
+  (product.brand ?? "").toLowerCase().includes(normalizedSearch);
 const rawResearch = product.product_vendor_research;
 
 const research = Array.isArray(rawResearch)
@@ -89,20 +102,34 @@ const matchesManufacturer =
   manufacturerFilter === manufacturerStatus;
 
 return (
+  matchesVisibility &&
+  matchesSearch &&
   matchesExperience &&
   matchesBrand &&
   matchesManufacturer
 );
     });
-  }, [products, experienceFilter, brandFilter, manufacturerFilter]);
+  }, [
+  products,
+  visibilityFilter,
+   searchQuery,
+  experienceFilter,
+  brandFilter,
+  manufacturerFilter,
+]);
 
   return (
     <div>
-      <SkinDiscoveryProductFilters
+      
+<SkinDiscoveryProductFilters
   brands={brands}
+  visibilityFilter={visibilityFilter}
+  searchQuery={searchQuery}
   experienceFilter={experienceFilter}
   brandFilter={brandFilter}
   manufacturerFilter={manufacturerFilter}
+  onVisibilityChange={setVisibilityFilter}
+  onSearchChange={setSearchQuery}
   onExperienceChange={setExperienceFilter}
   onBrandChange={setBrandFilter}
   onManufacturerChange={setManufacturerFilter}
