@@ -15,6 +15,29 @@ import { readStoredRecommendation } from "@/lib/recommendationSession";
 import { clearProductRecommendationSession } from "@/lib/productRecommendationSession";
 import { readStoredSubmission } from "@/lib/skinDiscoverySubmission";
 
+function trackSkinDiscoveryCompletion(submissionId: string) {
+  const trackingKey = `skinDiscoveryAnalyticsCompleted:${submissionId}`;
+
+  if (window.sessionStorage.getItem(trackingKey) === "true") {
+    return;
+  }
+
+  const analyticsWindow = window as typeof window & {
+    gtag?: (...args: unknown[]) => void;
+  };
+
+  if (typeof analyticsWindow.gtag !== "function") {
+    console.warn("Google Analytics is not available.");
+    return;
+  }
+
+  analyticsWindow.gtag("event", "skin_discovery_complete", {
+    event_category: "Skin Discovery",
+  });
+
+  window.sessionStorage.setItem(trackingKey, "true");
+}
+
 type JourneyKey = "quench" | "calm" | "purify" | "illuminate" | "renew";
 
 type JourneyContent = {
@@ -277,19 +300,24 @@ export default function ResultsPage() {
       },
       body: JSON.stringify({ submission }),
       keepalive: true,
-        }).then(async (response) => {
-      if (response.ok) {
-        return;
-      }
+        
+}).then(async (response) => {
+  const result = await response.json().catch(() => null);
 
-      const result = await response.json().catch(() => null);
+  if (result?.persistence?.success === true) {
+    trackSkinDiscoveryCompletion(submission.submissionId);
+  }
 
-      if (result?.persistence?.success === true) {
-        console.warn(
-          "Skin Discovery was saved, but email delivery needs attention.",
-        );
-        return;
-      }
+  if (response.ok) {
+    return;
+  }
+
+  if (result?.persistence?.success === true) {
+    console.warn(
+      "Skin Discovery was saved, but email delivery needs attention.",
+    );
+    return;
+  }
 
       console.error(
         "Skin Discovery submission could not be confirmed.",
