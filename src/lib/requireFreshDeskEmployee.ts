@@ -1,7 +1,9 @@
+
 import "server-only";
 
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { createSupabaseServerClient } from "@/lib/supabaseServer";
+
 export type FreshDeskEmployeeRole =
   | "owner_admin"
   | "professional";
@@ -12,17 +14,10 @@ export async function requireFreshDeskEmployee() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-console.error(
-  "Fresh Desk diagnostic - authenticated user ID:",
-  user?.id ?? "none"
-);
-  if (!user) {
-  console.error(
-    "Fresh Desk authentication diagnostic: No authenticated server user."
-  );
 
-  return null;
-}
+  if (!user) {
+    return null;
+  }
 
   const { data: employee, error } = await supabaseAdmin
     .from("employees")
@@ -34,19 +29,6 @@ console.error(
     .maybeSingle();
 
   if (error || !employee) {
-    console.error(
-  "Fresh Desk authentication diagnostic:",
-  error ? "Employee lookup error" : "Active employee not found"
-);
-console.error(
-  "Fresh Desk employee lookup details:",
-  {
-    hasError: Boolean(error),
-    errorCode: error?.code ?? null,
-    errorMessage: error?.message ?? null,
-    employeeFound: Boolean(employee),
-  }
-);
     if (error) {
       console.error("Fresh Desk employee lookup failed:", error);
     }
@@ -59,6 +41,7 @@ console.error(
     employee,
   };
 }
+
 export async function requireFreshDeskOwnerAdmin() {
   const employeeSession = await requireFreshDeskEmployee();
 
